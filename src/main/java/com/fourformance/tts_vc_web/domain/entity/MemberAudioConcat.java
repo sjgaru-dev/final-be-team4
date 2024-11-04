@@ -1,5 +1,6 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
+import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor
-public class MemberAudioConcat {
+public class MemberAudioConcat extends BaseEntity {
     @Id
     @GeneratedValue @Column(name = "member_audio_concat_id")
     private Long id;

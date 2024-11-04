@@ -1,5 +1,6 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
+import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 
 @ToString
 @Entity
-public class Member {
+public class Member extends BaseEntity {
 
     @Id
     @Column(name = "member_id")

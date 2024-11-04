@@ -1,5 +1,6 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
+import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,7 +13,7 @@ import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
 
 @Entity
-public class TTSDetail {
+public class TTSDetail extends BaseEntity {
     @Id
     @GeneratedValue
     @Column(name = "tts_detail_id")

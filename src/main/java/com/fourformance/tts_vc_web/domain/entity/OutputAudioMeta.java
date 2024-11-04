@@ -2,6 +2,7 @@
 
     import com.fourformance.tts_vc_web.common.constant.AudioFormat;
     import com.fourformance.tts_vc_web.common.constant.ProjectType;
+    import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
     import jakarta.persistence.Column;
     import jakarta.persistence.Entity;
     import jakarta.persistence.FetchType;
@@ -13,7 +14,7 @@
     import java.time.LocalDateTime;
 
     @Entity
-    public class OutputAudioMeta {
+    public class OutputAudioMeta extends BaseEntity {
         @Id
         @GeneratedValue
         @Column(name = "generated_audio_meta_id")

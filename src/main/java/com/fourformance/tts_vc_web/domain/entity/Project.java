@@ -1,5 +1,6 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
+import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
 
@@ -9,7 +10,7 @@ import java.time.LocalDateTime;
 @Entity
 @DiscriminatorColumn // 나중에 다시 보기
 @NoArgsConstructor
-public class Project {
+public class Project extends BaseEntity {
 
     @Id @GeneratedValue @Column(name = "project_id")
     private Long id;

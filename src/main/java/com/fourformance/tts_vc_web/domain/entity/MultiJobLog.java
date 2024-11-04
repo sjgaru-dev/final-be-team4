@@ -2,6 +2,7 @@ package com.fourformance.tts_vc_web.domain.entity;
 
 import com.fourformance.tts_vc_web.common.constant.MultiJobLogStatusConst;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
+import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 
 @Entity(name = "multi_job_log")
 @NoArgsConstructor
-public class MultiJobLog {
+public class MultiJobLog extends BaseEntity {
     @Id
     @GeneratedValue
     @Column(name = "log_id")
