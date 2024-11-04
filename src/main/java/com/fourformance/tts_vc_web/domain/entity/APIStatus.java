@@ -1,6 +1,7 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
 import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
+import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
-public class APIStatus {
+public class APIStatus extends BaseEntity {
 
     @Id
     @GeneratedValue
