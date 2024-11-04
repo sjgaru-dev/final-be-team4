@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 
 @ToString
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
 
     @Id

@@ -4,10 +4,11 @@ import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
+import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class VCProject extends Project{
     private APIStatusConst apiStatus=APIStatusConst.NOT_STARTED; // enum 생성 필요
 

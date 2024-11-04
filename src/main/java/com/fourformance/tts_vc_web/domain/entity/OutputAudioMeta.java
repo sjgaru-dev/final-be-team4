@@ -10,10 +10,13 @@
     import jakarta.persistence.Id;
     import jakarta.persistence.JoinColumn;
     import jakarta.persistence.ManyToOne;
+    import lombok.AccessLevel;
+    import lombok.NoArgsConstructor;
 
     import java.time.LocalDateTime;
 
     @Entity
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public class OutputAudioMeta extends BaseEntity {
         @Id
         @GeneratedValue
