@@ -12,11 +12,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Entity(name = "multi_job_log")
+@ToString
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MultiJobLog extends BaseEntity {
     @Id

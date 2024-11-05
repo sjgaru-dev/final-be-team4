@@ -5,9 +5,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
+@ToString
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class VCProject extends Project{
     private APIStatusConst apiStatus=APIStatusConst.NOT_STARTED; // enum 생성 필요
