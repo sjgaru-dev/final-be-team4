@@ -35,17 +35,16 @@ public class MemberAudioMeta extends BaseEntity {
     private String script;
     private AudioType audioType;
     private Boolean isDeleted=false;
-    private AudioFormat audioFormat;
+    private AudioFormat audioFormat = AudioFormat.WAV;
     private LocalDateTime createdAt;
 
     // MemberAudioMeta 생성 메서드
-    public static MemberAudioMeta createMemberAudioMeta(Member member, String audioUrl, String script, AudioType audioType, AudioFormat audioFormat) {
+    public static MemberAudioMeta createMemberAudioMeta(Member member, String audioUrl, String script, AudioType audioType) {
         MemberAudioMeta memberAudioMeta = new MemberAudioMeta();
         memberAudioMeta.member = member;
         memberAudioMeta.audioUrl = audioUrl;
         memberAudioMeta.script = script;
         memberAudioMeta.audioType = audioType;
-        memberAudioMeta.audioFormat = audioFormat;
         memberAudioMeta.createdAt = LocalDateTime.now();
         return memberAudioMeta;
     }
