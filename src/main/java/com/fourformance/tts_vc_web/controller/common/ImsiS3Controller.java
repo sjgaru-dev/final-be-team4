@@ -40,32 +40,14 @@ public class ImsiS3Controller {
 
     @PostMapping("/upload_unit")
     public ResponseEntity<String> uploadUnit(@RequestParam("file") MultipartFile file, HttpSession session, Long detailId,Long projectId,String projectType) throws IOException {
-
-
         String userId = "test"; // test용, 원래는 세션 씁니다.
 //        Long userId = (Long) session.getAttribute("userId");
 
-
-
         try{
-//            // 날짜 포맷 지정
-//            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
-//            String timeStamp = formatter.format(new Date());  // 예: "20231027_235959"
-//
-//            // 파일 이름 형식: "날짜시간_원본파일명"
-//            String fileName = timeStamp +".wav";  // 예: "20231027_235959.wav"
-//
-////            String fileName = file.getOriginalFilename();
-//            String fileUrl = BASE_ROUTE + userId +"/"+projectType+"/"+projectId+"/"+detailId+"/"+fileName; //프로젝트 타입이 들어가야함.
-//            ObjectMetadata metadata = new ObjectMetadata();
-//            metadata.setContentType(file.getContentType());
-//            metadata.setContentLength(file.getSize());
-//            amazonS3Client.putObject(bucket, fileName, file.getInputStream(), metadata);
+
         String fileUrl = imsiS3Service.uploadUnitSaveFile(file, userId, projectId, detailId, projectType);
         return ResponseEntity.ok(fileUrl);
-
             // OutputAudiometa에 save하는 코드가 없음  업로드에서 끝나는게 아니라, 그 경로를 저장해야함.
-
         }catch(Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -76,23 +58,11 @@ public class ImsiS3Controller {
     public ResponseEntity<String> uploadConcat(@RequestParam("file") MultipartFile file, HttpSession session,Long projectId) throws IOException {
 
         try {
-            // 날짜 포맷 지정
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
-            String timeStamp = formatter.format(new Date());  // 예: "20231027_235959"
 
-            // 파일 이름 형식: "날짜시간_원본파일명"
-            String fileName = timeStamp +".wav";  // 예: "20231027_235959.wav"
+            String userId ="test";
+            String fileUrl = imsiS3Service.uploadConcatSaveFile(file, userId, projectId);
 
-//            String fileName = file.getOriginalFilename();
-            String userId = "test";
-//            String fileName = file.getOriginalFilename();
-            String fileUrl = BASE_ROUTE +  userId + "/" + projectId + "/" + fileName;
-            ObjectMetadata metadata = new ObjectMetadata(); // 공백 수정
-            metadata.setContentType(file.getContentType());
-            metadata.setContentLength(file.getSize());
-            amazonS3Client.putObject(bucket, fileName, file.getInputStream(), metadata);
             return ResponseEntity.ok(fileUrl);
-            // DB 저장은 ?
         }catch(Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

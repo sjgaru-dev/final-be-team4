@@ -14,6 +14,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.text.SimpleDateFormat;
@@ -21,6 +22,7 @@ import java.util.Date;
 
 @Service
 @RequiredArgsConstructor // 자동 autowired
+@Transactional
 public class ImsiS3Service {
 
     @Value("${cloud.aws.s3.bucket}")
@@ -40,27 +42,42 @@ public class ImsiS3Service {
 
 
     // DB에 저장하기 위한 메서드.
-//    public OutputAudioMeta saveTTSOrVCAudioMeta(Long DetailId, ProjectType projectType, String audioUrl, AudioFormat audioFormat) {
-//        TTSDetail ttsDetail = (ttsDetailId != null)
-//                ? ttsDetailRepository.findById(ttsDetailId).orElse(null)
-//                : null;
-//
-//        VCDetail vcDetail = (vcDetailId != null)
-//                ? vcDetailRepository.findById(vcDetailId).orElse(null)
-//                : null;
-//
-//        if (ttsDetail == null && vcDetail == null) {
-//            throw new IllegalArgumentException("TTSDetailId 또는 VCDetailId 중 하나는 반드시 존재해야 합니다.");
-//        }
-//
-//
-//        OutputAudioMeta outputAudioMeta = OutputAudioMeta.createOutputAudioMeta(
-//                ttsDetail, vcDetail, null, projectType, audioUrl, audioFormat
-//        );
-//
-//        return outputAudioMetaRepository.save(outputAudioMeta);
-//    }
+    public OutputAudioMeta saveTTSOrVCAudioMeta(Long detailId, ProjectType projectType, String audioUrl) {
+        TTSDetail ttsDetail = ttsDetailRepository.findById(detailId).orElse(null);
+        VCDetail vcDetail = null;
 
+        // TTSDetail이 null인 경우 VCDetail을 찾는다.
+        if (ttsDetail == null) {
+            vcDetail = vcDetailRepository.findById(detailId).orElse(null);
+        }
+
+        // TTSDetail과 VCDetail 둘 다 null인 경우 예외 발생
+        if (ttsDetail == null && vcDetail == null) {
+            throw new IllegalArgumentException("DetailId는 TTS 또는 VC 중 하나의 ID여야 합니다.");
+        }
+
+        OutputAudioMeta outputAudioMeta = OutputAudioMeta.createOutputAudioMeta(
+                ttsDetail, vcDetail, null, projectType, audioUrl
+        );
+
+        return outputAudioMetaRepository.save(outputAudioMeta);
+    }
+
+    public OutputAudioMeta saveConcatAudioMeta(Long projectId , String audioUrl) {
+        ConcatProject concatProject = concatProjectRepository.findById(projectId).orElse(null);
+
+
+        // TTSDetail과 VCDetail 둘 다 null인 경우 예외 발생
+        if (concatProject == null) {
+            throw new IllegalArgumentException("ProjectId는 반드시 존재해야합니다.");
+        }
+
+        OutputAudioMeta outputAudioMeta = OutputAudioMeta.createOutputAudioMeta(
+                null,null, concatProject, ProjectType.CONCAT, audioUrl
+        );
+
+        return outputAudioMetaRepository.save(outputAudioMeta);
+    }
 
     // 이제 컨트롤러에서 분리해보자.
     // 어떻게...?
@@ -80,7 +97,7 @@ public class ImsiS3Service {
             metadata.setContentLength(file.getSize());
             amazonS3Client.putObject(bucket, fileName, file.getInputStream(), metadata);
 
-
+            saveTTSOrVCAudioMeta(detailId, ProjectType.valueOf(projectType), fileUrl);
 
             return fileUrl;
 
@@ -91,6 +108,30 @@ public class ImsiS3Service {
     }
 
 
+    public String uploadConcatSaveFile(MultipartFile file, String userId, Long projectId) throws Exception {
+
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            String timeStamp = sdf.format(new Date());
+
+            String fileName = timeStamp + ".wav";
+
+            String fileUrl = BASE_ROUTE + userId + "/" + projectId + "/" + fileName;
+
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType(file.getContentType());
+            metadata.setContentLength(file.getSize());
+            amazonS3Client.putObject(bucket, fileName, file.getInputStream(), metadata);
+
+            saveConcatAudioMeta(projectId, fileUrl);
+
+            return fileUrl;
+
+        }catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception();
+        }
+    }
 
 
     //myEntityRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Entity not found with id " + id));
