@@ -11,11 +11,15 @@
     import jakarta.persistence.JoinColumn;
     import jakarta.persistence.ManyToOne;
     import lombok.AccessLevel;
+    import lombok.Getter;
     import lombok.NoArgsConstructor;
+    import lombok.ToString;
 
     import java.time.LocalDateTime;
 
     @Entity
+    @ToString
+    @Getter
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public class OutputAudioMeta extends BaseEntity {
         @Id
@@ -38,21 +42,20 @@
         private ProjectType projectType;
         private String audioUrl;
         private Boolean isDeleted=false;
-        private AudioFormat audioFormat;
+        private AudioFormat audioFormat = AudioFormat.WAV;
         private LocalDateTime createdAt;
 
         private LocalDateTime deletedAt=null;
 
         // OutputAudioMeta 생성 메서드
         public static OutputAudioMeta createOutputAudioMeta(TTSDetail ttsDetail, VCDetail vcDetail, ConcatProject concatProject,
-                                                            ProjectType projectType, String audioUrl, AudioFormat audioFormat) {
+                                                            ProjectType projectType, String audioUrl) {
             OutputAudioMeta outputAudioMeta = new OutputAudioMeta();
             outputAudioMeta.ttsDetail = ttsDetail;
             outputAudioMeta.vcDetail = vcDetail;
             outputAudioMeta.concatProject = concatProject;
             outputAudioMeta.projectType = projectType;
             outputAudioMeta.audioUrl = audioUrl;
-            outputAudioMeta.audioFormat = audioFormat;
             outputAudioMeta.createdAt = LocalDateTime.now();
             return outputAudioMeta;
         }

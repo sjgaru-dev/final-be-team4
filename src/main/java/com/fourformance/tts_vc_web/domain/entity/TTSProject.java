@@ -8,11 +8,15 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
 @Entity
+@ToString
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TTSProject extends Project {
 
