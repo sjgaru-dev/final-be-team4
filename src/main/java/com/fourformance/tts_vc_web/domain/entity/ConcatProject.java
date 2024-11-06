@@ -18,14 +18,16 @@ public class ConcatProject extends Project {
     private Float globalTotalSilenceLength = 0.0F;
 
     // 생성 메서드
-    public static ConcatProject createConcatProject() {
+    public static ConcatProject createConcatProject(String projectName) {
         ConcatProject concatProject = new ConcatProject();
+        concatProject.projectName = projectName;
         concatProject.setCreatedAt();
         return concatProject;
     }
 
     // 업데이트 메서드
-    public void updateSilenceLengths(Float globalFrontSilenceLength, Float globalTotalSilenceLength) {
+    public void updateSilenceLengths(String projectName, Float globalFrontSilenceLength, Float globalTotalSilenceLength) {
+        this.projectName = projectName;
         this.globalFrontSilenceLength = globalFrontSilenceLength;
         this.globalTotalSilenceLength = globalTotalSilenceLength;
         setUpdatedAt();
