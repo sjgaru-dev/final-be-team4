@@ -57,4 +57,31 @@ public class TTSService_team_api {
         SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
         return response.getAudioContent();
     }
+
+    public ByteString convertTextToSpeechWithOptions(String text, double speed, double volume, double pitch) throws Exception {
+        // 1. 입력 텍스트를 TTS API의 입력 형식으로 설정합니다.
+        SynthesisInput input = SynthesisInput.newBuilder()
+                .setText(text) // 변환할 텍스트 설정
+                .build();
+
+        // 2. 음성 설정을 구성합니다.
+        VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
+                .setLanguageCode("ko-KR") // 사용할 언어를 한국어로 설정
+                .setSsmlGender(SsmlVoiceGender.NEUTRAL) // 음성의 성별을 중성으로 설정
+                .build();
+
+        // 3. 오디오 설정을 구성하여 음성의 속도, 볼륨, 피치를 사용자 지정 옵션으로 설정합니다.
+        AudioConfig audioConfig = AudioConfig.newBuilder()
+                .setAudioEncoding(AudioEncoding.MP3) // 출력 오디오 형식을 MP3로 설정
+                .setSpeakingRate(speed) // 말하는 속도를 사용자 입력 값으로 설정
+                .setVolumeGainDb(volume) // 볼륨을 사용자 입력 값으로 설정 (단위: 데시벨)
+                .setPitch(pitch) // 음의 높낮이를 사용자 입력 값으로 설정
+                .build();
+
+        // 4. TTS API를 호출하여 텍스트를 음성으로 변환하고, 응답을 받습니다.
+        SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
+
+        // 5. 변환된 오디오 데이터를 반환합니다.
+        return response.getAudioContent();
+    }
 }

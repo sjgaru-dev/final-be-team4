@@ -1,45 +1,84 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>텍스트 파일을 음원으로 변환</title>
+    <meta charset="UTF-8">
+    <title>데이터 생성 및 편집 페이지 - TTS 탭</title>
     <style>
-        /* 기존 스타일 그대로 유지 */
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            background-color: #dde5ed;
+            width: 200px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .sidebar a {
+            margin: 10px 0;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .sidebar a:hover {
+            color: #0056b3;
         }
         .container {
-            background-color: #ffffff;
+            flex: 1;
             padding: 20px 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            background-color: #fdfdfd;
         }
-        h1 {
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
             color: #333;
-            margin-bottom: 20px;
         }
-        p {
-            color: #666;
-            margin-bottom: 20px;
+        .btn-save {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn-save:hover {
+            background-color: #0056b3;
+        }
+        .file-upload, .batch-settings {
+            margin: 20px 0;
+        }
+        .options {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .option-label {
             font-size: 14px;
+            color: #333;
         }
-        input[type="file"] {
-            margin-bottom: 20px;
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
         }
         button {
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 10px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
         }
         button:hover {
             background-color: #0056b3;
@@ -49,29 +88,195 @@
             font-weight: bold;
             margin-top: 20px;
         }
+        .text-list-container {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #f1f3f5;
+        }
+        .text-item {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .text-item h3 {
+            font-size: 16px;
+            margin: 0 0 10px;
+            color: #333;
+        }
+        .text-item .text-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>텍스트 파일을 음원으로 변환</h1>
-    <p>텍스트 파일을 업로드하면 Google Cloud TTS를 사용하여 음원으로 변환합니다.</p>
-    <!-- 폼 액션 경로 수정: /tts/upload -->
-    <form action="/tts/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept=".txt" required />
-        <br>
-        <button type="submit">업로드 및 변환</button>
-    </form>
-    <!-- 메시지를 표시하는 부분 -->
-    <p class="message" th:text="${message}"></p>
-    <!-- 변환된 음원 다운로드 링크를 표시하는 부분 -->
-    <div th:if="${audioFile}">
-        <a th:href="@{'/audio/' + ${audioFile}}" download>변환된 음원 다운로드</a>
-        <!-- 오디오 플레이어 추가 -->
-        <audio controls>
-            <source th:src="@{'/audio/' + ${audioFile}}" type="audio/mpeg">
-            브라우저가 오디오 요소를 지원하지 않습니다.
-        </audio>
-    </div>
+<div class="sidebar">
+    <a href="#">TTS 작업 탭</a>
+    <a href="#">VC 작업 탭</a>
+    <a href="#">Concat 작업 탭</a>
+    <a href="#">마이페이지</a>
+    <a href="#">로그아웃</a>
 </div>
+<div class="container">
+    <div class="header">
+        <h1>Project Name</h1>
+        <button class="btn-save">저장하기</button>
+    </div>
+
+    <div class="file-upload">
+        <h2>텍스트 파일 업로드</h2>
+        <p>텍스트 파일을 업로드하여 음성으로 변환할 수 있습니다.</p>
+        <form id="fileForm" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".txt" required onchange="handleFileUpload(event)" />
+            <br>
+            <button type="button" onclick="applySettings()">업로드 및 변환</button>
+        </form>
+    </div>
+
+    <!-- 일괄 설정 옵션 -->
+    <div class="batch-settings">
+        <h3>일괄 설정</h3>
+        <div class="options">
+            <label class="option-label">Speed:</label>
+            <input type="number" id="batchSpeed" min="0.25" max="4.0" step="0.1" value="1.0">
+
+            <label class="option-label">Volume:</label>
+            <input type="number" id="batchVolume" min="-96.0" max="16.0" step="1" value="0.0">
+
+            <label class="option-label">Pitch:</label>
+            <input type="number" id="batchPitch" min="-20.0" max="20.0" step="1" value="0.0">
+        </div>
+        <div class="controls">
+            <button onclick="applyBatchSettings(false)">선택 적용</button>
+            <button onclick="applyBatchSettings(true)">전체 적용</button>
+            <button onclick="resetSettings()">변경 초기화</button>
+        </div>
+    </div>
+
+    <!-- 변환된 텍스트 출력 영역 -->
+    <div class="text-list-container" id="textListContainer"></div>
+</div>
+
+<script>
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        const textListContainer = document.getElementById("textListContainer");
+        textListContainer.innerHTML = ""; // 기존 리스트 초기화
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const segments = text.split(/[\n.]+/); // 엔터 또는 점 기준으로 텍스트 분할
+
+                // 분할된 텍스트를 리스트 형태로 출력
+                segments.forEach((segment, index) => {
+                    if (segment.trim()) { // 빈 줄 무시
+                        const div = document.createElement("div");
+                        div.className = "text-item";
+                        div.innerHTML = `
+                            <h3>Text Segment ${index + 1}</h3>
+                            <p>${segment.trim()}</p>
+                            <div class="text-controls">
+                                <input type="checkbox" class="segment-checkbox" id="select-${index}">
+                                <label for="select-${index}">선택</label>
+                                <label>Speed: <input type="number" name="speed-${index}" min="0.25" max="4.0" step="0.1" value="1.0"></label>
+                                <label>Volume: <input type="number" name="volume-${index}" min="-96.0" max="16.0" step="1" value="0.0"></label>
+                                <label>Pitch: <input type="number" name="pitch-${index}" min="-20.0" max="20.0" step="1" value="0.0"></label>
+                                <button onclick="generateTTS(${index})">TTS 생성</button>
+                            </div>
+                        `;
+                        textListContainer.appendChild(div);
+                    }
+                });
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    function applyBatchSettings(applyToAll) {
+        const batchSpeed = document.getElementById("batchSpeed").value;
+        const batchVolume = document.getElementById("batchVolume").value;
+        const batchPitch = document.getElementById("batchPitch").value;
+        const textItems = document.querySelectorAll(".text-item");
+
+        textItems.forEach((item, index) => {
+            const checkbox = item.querySelector(`#select-${index}`);
+            if (applyToAll || (checkbox && checkbox.checked)) {
+                item.querySelector(`input[name="speed-${index}"]`).value = batchSpeed;
+                item.querySelector(`input[name="volume-${index}"]`).value = batchVolume;
+                item.querySelector(`input[name="pitch-${index}"]`).value = batchPitch;
+            }
+        });
+    }
+
+    function resetSettings() {
+        document.querySelectorAll(".text-item").forEach((item, index) => {
+            item.querySelector(`input[name="speed-${index}"]`).value = "1.0";
+            item.querySelector(`input[name="volume-${index}"]`).value = "0.0";
+            item.querySelector(`input[name="pitch-${index}"]`).value = "0.0";
+            item.querySelector(`#select-${index}`).checked = false;
+        });
+        document.getElementById("batchSpeed").value = "1.0";
+        document.getElementById("batchVolume").value = "0.0";
+        document.getElementById("batchPitch").value = "0.0";
+    }
+
+    function generateTTS(index) {
+        const speed = document.querySelector(`input[name="speed-${index}"]`).value;
+        const volume = document.querySelector(`input[name="volume-${index}"]`).value;
+        const pitch = document.querySelector(`input[name="pitch-${index}"]`).value;
+        const text = document.querySelector(`.text-item:nth-child(${index + 1}) p`).innerText;
+
+        const formData = new FormData();
+        formData.append("text", text);
+        formData.append("speed", speed);
+        formData.append("volume", volume);
+        formData.append("pitch", pitch);
+
+        // '/convertWithOptions' 경로로 POST 요청 전송
+        fetch("/tts/convertWithOptions", {
+            method: "POST",
+            body: formData
+        })
+            .then(response => {
+                if (response.ok) return response.blob();
+                throw new Error("TTS 생성 실패");
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const textItem = document.querySelector(`.text-item:nth-child(${index + 1})`);
+
+                // 성공 메시지와 다운로드 버튼 추가
+                textItem.querySelector(".message")?.remove();  // 이전 메시지 제거
+                const message = document.createElement("p");
+                message.className = "message";
+                message.textContent = "TTS 성공이 되었습니다.";
+
+                const downloadButton = document.createElement("button");
+                downloadButton.textContent = "다운로드";
+                downloadButton.onclick = () => {
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `segment-${index + 1}.mp3`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                };
+
+                message.appendChild(downloadButton);
+                textItem.appendChild(message);
+            })
+            .catch(error => alert(error.message));
+    }
+</script>
 </body>
 </html>

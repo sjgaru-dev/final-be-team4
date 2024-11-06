@@ -59,4 +59,30 @@ public class TTSController_team_api {
                     .body("Text-to-Speech conversion error: " + e.getMessage());
         }
     }
+
+    // 파일 업로드 및 옵션을 포함한 TTS 변환 처리
+    @PostMapping("/convertWithOptions")
+    public ResponseEntity<?> convertWithOptions(
+            @RequestParam("text") String text,
+            @RequestParam("speed") double speed,
+            @RequestParam("volume") double volume,
+            @RequestParam("pitch") double pitch) {
+        try {
+            // TTS 서비스 호출
+            ByteString audioContents = ttsService.convertTextToSpeechWithOptions(text, speed, volume, pitch);
+
+            // HTTP 응답 설정
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", "output.mp3");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(audioContents.toByteArray());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body("Text-to-Speech conversion error: " + e.getMessage());
+        }
+    }
 }
