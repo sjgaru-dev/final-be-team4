@@ -31,7 +31,8 @@ public class TTSProject extends Project {
     private APIStatusConst apiStatus=APIStatusConst.NOT_STARTED;
 
     // 여러 필드를 동시에 업데이트하는 메서드
-    public void updateTTSProject(String newFullScript, Float newGlobalSpeed, Float newGlobalPitch, Float newGlobalVolume, APIStatusConst newApiStatus) {
+    public void updateTTSProject(String projectName, String newFullScript, Float newGlobalSpeed, Float newGlobalPitch, Float newGlobalVolume, APIStatusConst newApiStatus) {
+        this.projectName = projectName;
         this.fullScript = newFullScript;
         this.globalSpeed = newGlobalSpeed;
         this.globalPitch = newGlobalPitch;
@@ -50,8 +51,9 @@ public class TTSProject extends Project {
     }
 
     // 생성 메서드
-    public static TTSProject createTTSProject(Style style, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume, APIStatusConst apiStatus) {
+    public static TTSProject createTTSProject(String projectName, Style style, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume, APIStatusConst apiStatus) {
         TTSProject ttsProject = new TTSProject();
+        ttsProject.projectName = projectName;
         ttsProject.fullScript = fullScript;
         ttsProject.setCreatedAt();
         return ttsProject;
