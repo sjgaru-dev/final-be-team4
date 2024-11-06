@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>텍스트 파일을 음원으로 변환</title>
+    <style>
+        /* 기존 스타일 그대로 유지 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 20px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>텍스트 파일을 음원으로 변환</h1>
+    <p>텍스트 파일을 업로드하면 Google Cloud TTS를 사용하여 음원으로 변환합니다.</p>
+    <!-- 폼 액션 경로 수정: /tts/upload -->
+    <form action="/tts/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".txt" required />
+        <br>
+        <button type="submit">업로드 및 변환</button>
+    </form>
+    <!-- 메시지를 표시하는 부분 -->
+    <p class="message" th:text="${message}"></p>
+    <!-- 변환된 음원 다운로드 링크를 표시하는 부분 -->
+    <div th:if="${audioFile}">
+        <a th:href="@{'/audio/' + ${audioFile}}" download>변환된 음원 다운로드</a>
+        <!-- 오디오 플레이어 추가 -->
+        <audio controls>
+            <source th:src="@{'/audio/' + ${audioFile}}" type="audio/mpeg">
+            브라우저가 오디오 요소를 지원하지 않습니다.
+        </audio>
+    </div>
+</div>
+</body>
+</html>
