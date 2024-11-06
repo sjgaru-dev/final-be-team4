@@ -22,8 +22,9 @@ public class VCProject extends Project{
         this.apiStatus = newApiStatus;
         super.updateUpdatedAt();
     }
-    public static VCProject createVCProject(String projectName) {
+    public static VCProject createVCProject(Member member, String projectName) {
         VCProject vcProject = new VCProject();
+        vcProject.member = member;
         vcProject.projectName = projectName;
         return vcProject;
     }
