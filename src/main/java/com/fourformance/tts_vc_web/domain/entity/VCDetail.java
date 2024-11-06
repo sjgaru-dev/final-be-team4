@@ -43,11 +43,11 @@ public class VCDetail extends BaseEntity {
         this.setUpdatedAt();
     }
 
-//    // isDeleted 업데이트 메서드
-//    public void markAsDeleted() {
-//        this.isDeleted = true;
-//        this.setUpdatedAt();
-//    }
+    // isDeleted 업데이트 메서드
+    public void markAsDeleted() {
+        this.isDeleted = true;
+        this.setUpdatedAt();
+    }
 
     // updatedAt 업데이트 메서드 (내부에서 호출)
     private void setUpdatedAt() {

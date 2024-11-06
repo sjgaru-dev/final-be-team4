@@ -31,7 +31,8 @@ public class TTSProject extends Project {
     private APIStatusConst apiStatus=APIStatusConst.NOT_STARTED;
 
     // 여러 필드를 동시에 업데이트하는 메서드
-    public void updateTTSProject(String projectName, String newFullScript, Float newGlobalSpeed, Float newGlobalPitch, Float newGlobalVolume, APIStatusConst newApiStatus) {
+    public void updateTTSProject(Member member, String projectName, String newFullScript, Float newGlobalSpeed, Float newGlobalPitch, Float newGlobalVolume, APIStatusConst newApiStatus) {
+        this.member = member;
         this.projectName = projectName;
         this.fullScript = newFullScript;
         this.globalSpeed = newGlobalSpeed;
