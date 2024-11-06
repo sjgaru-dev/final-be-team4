@@ -26,4 +26,15 @@ public class Style extends BaseEntity {
     private String gender;
     private Integer age;
     private Boolean isVisible;
+
+    public static Style createStyle(String language, String voice, String style, String gender, Integer age, Boolean isVisible) {
+        Style styled = new Style();
+        styled.language = language;
+        styled.voice = voice;
+        styled.style = style;
+        styled.gender = gender;
+        styled.age = age;
+        styled.isVisible = isVisible;
+        return styled;
+    }
 }
