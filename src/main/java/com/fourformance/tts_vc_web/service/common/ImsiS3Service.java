@@ -119,8 +119,8 @@ public class ImsiS3Service {
             String fileUrl = BASE_ROUTE + userId + "/" + projectId + "/" + fileName;
 
             ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType(file.getContentType());
-            metadata.setContentLength(file.getSize());
+            metadata.setContentType(file.getContentType()); // wav
+            metadata.setContentLength(file.getSize()); // 업로드 할 때 반드시 사이즈 필요
             amazonS3Client.putObject(bucket, fileName, file.getInputStream(), metadata);
 
             saveConcatAudioMeta(projectId, fileUrl);

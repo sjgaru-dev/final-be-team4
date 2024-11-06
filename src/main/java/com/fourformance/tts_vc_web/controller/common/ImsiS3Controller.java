@@ -109,7 +109,7 @@ public class ImsiS3Controller {
         request.withMethod(com.amazonaws.HttpMethod.GET)
                 .withExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5));
         URL presignedUrl = amazonS3Client.generatePresignedUrl(request);
-        return ResponseEntity.ok(presignedUrl.toString());
+        return ResponseEntity.ok(presignedUrl.toString()); // url을 반환하며, ok처리.
     }
 //    @GetMapping("/download_vc")
 //    public ResponseEntity<String> downloadVC(@RequestParam("file") MultipartFile file, HttpSession session, Long projectId, Long vcDetailId) throws IOException {
