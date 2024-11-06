@@ -43,11 +43,11 @@ public class TTSDetail extends BaseEntity {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-//    // isDeleted 업데이트 메서드
-//    public void markAsDeleted() {
-//        this.isDeleted = true;
-//        this.updatedAt = LocalDateTime.now();
-//    }
+    // isDeleted 업데이트 메서드
+    public void markAsDeleted() {
+        this.isDeleted = true;
+        this.updatedAt = LocalDateTime.now();
+    }
 
     // 여러 필드를 동시에 업데이트하는 메서드
     public void updateTTSDetails(Style style, String newUnitScript, Float newUnitSpeed, Float newUnitPitch, Float newUnitVolume, Integer newUnitSequence, Boolean newIsDeleted) {

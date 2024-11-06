@@ -64,8 +64,8 @@ public class ConcatDetail {
         return concatDetail;
     }
 
-//    public void updateIsDeleted() {
-//        this.isDeleted = true;
-//        this.updatedAt = LocalDateTime.now(); // isDeleted 상태 변경 시 업데이트 시간 기록
-//    }
+    public void updateIsDeleted() {
+        this.isDeleted = true;
+        this.updatedAt = LocalDateTime.now(); // isDeleted 상태 변경 시 업데이트 시간 기록
+    }
 }
