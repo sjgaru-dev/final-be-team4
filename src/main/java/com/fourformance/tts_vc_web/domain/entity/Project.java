@@ -14,16 +14,16 @@ import java.time.LocalDateTime;
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Project extends BaseEntity {
+public abstract class Project extends BaseEntity {
 
     @Id @GeneratedValue @Column(name = "project_id")
     private Long id;
 
     @JoinColumn(name = "member_id")
     @ManyToOne(fetch = FetchType.LAZY)
-    private Member member;
+    protected Member member;
 
-    private String projectName;
+    protected String projectName;
     private Boolean isDeleted = false;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -55,13 +55,13 @@ public class Project extends BaseEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public static Project createProject(Member member, String projectName) {
-        Project project = new Project();
-        project.member = member;
-        project.projectName = projectName;
-        project.createdAt = LocalDateTime.now(); // 생성 시간 설정
-        project.updatedAt = LocalDateTime.now(); // 최초 생성 시 업데이트 시간도 함께 설정
-        return project;
-    }
+//    public static Project createProject(Member member, String projectName) {
+//        Project project = new Project();
+//        project.member = member;
+//        project.projectName = projectName;
+//        project.createdAt = LocalDateTime.now(); // 생성 시간 설정
+//        project.updatedAt = LocalDateTime.now(); // 최초 생성 시 업데이트 시간도 함께 설정
+//        return project;
+//    }
 
 }

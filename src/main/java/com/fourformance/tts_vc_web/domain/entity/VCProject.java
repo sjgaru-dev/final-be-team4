@@ -17,12 +17,15 @@ public class VCProject extends Project{
     private APIStatusConst apiStatus=APIStatusConst.NOT_STARTED; // enum 생성 필요
 
     // apiStatus 업데이트 메서드
-    public void updateApiStatus(APIStatusConst newApiStatus) {
+    public void updateVCProject(String projectName, APIStatusConst newApiStatus) {
+        this.projectName = projectName;
         this.apiStatus = newApiStatus;
         super.updateUpdatedAt();
     }
-    public static VCProject createVCProject() {
+    public static VCProject createVCProject(Member member, String projectName) {
         VCProject vcProject = new VCProject();
+        vcProject.member = member;
+        vcProject.projectName = projectName;
         return vcProject;
     }
 
