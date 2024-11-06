@@ -4,116 +4,21 @@
     <meta charset="UTF-8">
     <title>데이터 생성 및 편집 페이지 - TTS 탭</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            display: flex;
-            height: 100vh;
-        }
-        .sidebar {
-            background-color: #dde5ed;
-            width: 200px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .sidebar a {
-            margin: 10px 0;
-            color: #007bff;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .sidebar a:hover {
-            color: #0056b3;
-        }
-        .container {
-            flex: 1;
-            padding: 20px 40px;
-            background-color: #fdfdfd;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .header h1 {
-            color: #333;
-        }
-        .btn-save {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .btn-save:hover {
-            background-color: #0056b3;
-        }
-        .file-upload, .batch-settings {
-            margin: 20px 0;
-        }
-        .options {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .option-label {
-            font-size: 14px;
-            color: #333;
-        }
-        .controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .message {
-            color: #28a745;
-            font-weight: bold;
-            margin-top: 20px;
-        }
-        .text-list-container {
-            margin-top: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            background-color: #f1f3f5;
-        }
-        .text-item {
-            background-color: #ffffff;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-        .text-item h3 {
-            font-size: 16px;
-            margin: 0 0 10px;
-            color: #333;
-        }
-        .text-item .text-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+        /* 스타일 설정 */
+        body { font-family: Arial, sans-serif; background-color: #f8f9fa; margin: 0; display: flex; height: 100vh; }
+        .sidebar { background-color: #dde5ed; width: 200px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; }
+        .sidebar a { margin: 10px 0; color: #007bff; text-decoration: none; font-weight: bold; }
+        .sidebar a:hover { color: #0056b3; }
+        .container { flex: 1; padding: 20px 40px; background-color: #fdfdfd; }
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { color: #333; }
+        .btn-save { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .btn-save:hover { background-color: #0056b3; }
+        .file-upload, .batch-settings { margin: 20px 0; }
+        .options, .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .text-list-container { margin-top: 20px; max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background-color: #f1f3f5; }
+        .text-item { background-color: #ffffff; border: 1px solid #ddd; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+        .delete-controls { margin-top: 20px; display: flex; gap: 10px; align-items: center; }
     </style>
 </head>
 <body>
@@ -132,26 +37,18 @@
 
     <div class="file-upload">
         <h2>텍스트 파일 업로드</h2>
-        <p>텍스트 파일을 업로드하여 음성으로 변환할 수 있습니다.</p>
         <form id="fileForm" enctype="multipart/form-data">
             <input type="file" name="file" accept=".txt" required onchange="handleFileUpload(event)" />
-            <br>
             <button type="button" onclick="applySettings()">업로드 및 변환</button>
         </form>
     </div>
 
-    <!-- 일괄 설정 옵션 -->
     <div class="batch-settings">
         <h3>일괄 설정</h3>
         <div class="options">
-            <label class="option-label">Speed:</label>
-            <input type="number" id="batchSpeed" min="0.25" max="4.0" step="0.1" value="1.0">
-
-            <label class="option-label">Volume:</label>
-            <input type="number" id="batchVolume" min="-96.0" max="16.0" step="1" value="0.0">
-
-            <label class="option-label">Pitch:</label>
-            <input type="number" id="batchPitch" min="-20.0" max="20.0" step="1" value="0.0">
+            <label>Speed: <input type="number" id="batchSpeed" min="0.25" max="4.0" step="0.1" value="1.0"></label>
+            <label>Volume: <input type="number" id="batchVolume" min="-96.0" max="16.0" step="1" value="0.0"></label>
+            <label>Pitch: <input type="number" id="batchPitch" min="-20.0" max="20.0" step="1" value="0.0"></label>
         </div>
         <div class="controls">
             <button onclick="applyBatchSettings(false)">선택 적용</button>
@@ -160,7 +57,12 @@
         </div>
     </div>
 
-    <!-- 변환된 텍스트 출력 영역 -->
+    <div class="delete-controls">
+        <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)">
+        <label for="selectAll">전체 선택</label>
+        <button onclick="deleteSelected()">삭제</button>
+    </div>
+
     <div class="text-list-container" id="textListContainer"></div>
 </div>
 
@@ -176,7 +78,6 @@
                 const text = e.target.result;
                 const segments = text.split(/[\n.]+/); // 엔터 또는 점 기준으로 텍스트 분할
 
-                // 분할된 텍스트를 리스트 형태로 출력
                 segments.forEach((segment, index) => {
                     if (segment.trim()) { // 빈 줄 무시
                         const div = document.createElement("div");
@@ -199,6 +100,46 @@
             };
             reader.readAsText(file);
         }
+    }
+
+    function toggleSelectAll(selectAllCheckbox) {
+        const checkboxes = document.querySelectorAll(".segment-checkbox");
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    }
+
+    function deleteSelected() {
+        const checkboxes = document.querySelectorAll(".segment-checkbox");
+        const selectedIndexes = [];
+
+        checkboxes.forEach((checkbox, index) => {
+            if (checkbox.checked) {
+                selectedIndexes.push(index);
+            }
+        });
+
+        if (selectedIndexes.length === 0) {
+            alert("삭제할 항목을 선택해 주세요.");
+            return;
+        }
+
+        // 선택된 행 삭제
+        selectedIndexes.reverse().forEach(index => {
+            document.querySelector(`.text-item:nth-child(${index + 1})`).remove();
+        });
+
+        // 백엔드로 삭제 요청 전송
+        fetch("/tts/deleteSegments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ indexes: selectedIndexes })
+        })
+            .then(response => {
+                if (response.ok) alert("삭제가 완료되었습니다.");
+                else throw new Error("삭제 실패");
+            })
+            .catch(error => alert(error.message));
     }
 
     function applyBatchSettings(applyToAll) {
@@ -241,7 +182,6 @@
         formData.append("volume", volume);
         formData.append("pitch", pitch);
 
-        // '/convertWithOptions' 경로로 POST 요청 전송
         fetch("/tts/convertWithOptions", {
             method: "POST",
             body: formData
@@ -254,8 +194,6 @@
                 const url = window.URL.createObjectURL(blob);
                 const textItem = document.querySelector(`.text-item:nth-child(${index + 1})`);
 
-                // 성공 메시지와 다운로드 버튼 추가
-                textItem.querySelector(".message")?.remove();  // 이전 메시지 제거
                 const message = document.createElement("p");
                 message.className = "message";
                 message.textContent = "TTS 성공이 되었습니다.";

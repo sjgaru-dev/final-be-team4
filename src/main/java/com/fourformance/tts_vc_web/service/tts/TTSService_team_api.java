@@ -8,11 +8,15 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class TTSService_team_api {
 
     private TextToSpeechClient textToSpeechClient;
+    private List<String> segments = new ArrayList<>(); // 세그먼트를 저장하는 리스트
+
 
     // 초기화 블록에서 Google Cloud TTS 클라이언트를 설정
     @PostConstruct
@@ -83,5 +87,29 @@ public class TTSService_team_api {
 
         // 5. 변환된 오디오 데이터를 반환합니다.
         return response.getAudioContent();
+    }
+
+    // 텍스트 세그먼트를 추가하는 메서드 (필요시 사용)
+    public void addSegment(String text) {
+        segments.add(text);
+    }
+
+    // 세그먼트 삭제 메서드
+    public boolean deleteSegment(int index) {
+        if (index >= 0 && index < segments.size()) {
+            segments.remove(index);
+            return true;
+        }
+        return false;
+    }
+
+    // 선택한 여러 세그먼트를 삭제하는 메서드
+    public void deleteSegments(List<Integer> indexes) {
+        indexes.sort((a, b) -> b - a); // 인덱스를 내림차순으로 정렬
+        for (int index : indexes) {
+            if (index >= 0 && index < segments.size()) {
+                segments.remove(index);
+            }
+        }
     }
 }

@@ -13,6 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/tts")
@@ -85,4 +87,19 @@ public class TTSController_team_api {
                     .body("Text-to-Speech conversion error: " + e.getMessage());
         }
     }
+
+    @PostMapping("/deleteSegments")
+    public ResponseEntity<?> deleteSegments(@RequestBody Map<String, List<Integer>> request) {
+        List<Integer> indexes = request.get("indexes");
+
+        try {
+            for (Integer index : indexes) {
+                ttsService.deleteSegment(index);
+            }
+            return ResponseEntity.ok("선택된 항목 삭제 완료");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("삭제 처리 중 오류 발생: " + e.getMessage());
+        }
+    }
+
 }
