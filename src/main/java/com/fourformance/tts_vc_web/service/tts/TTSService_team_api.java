@@ -18,7 +18,7 @@ public class TTSService_team_api {
     @PostConstruct
     public void init() throws IOException {
         // 리소스 폴더에서 서비스 계정 키 파일을 읽어옴
-        InputStream credentialsStream = getClass().getClassLoader().getResourceAsStream("sound-potion-440705-j8-5c7b6bb0ebd6.json");
+        InputStream credentialsStream = getClass().getClassLoader().getResourceAsStream("sound-potion-440705-j8-cc85748343a6.json");
         if (credentialsStream == null) {
             throw new IOException("Service account JSON file not found in resources.");
         }
