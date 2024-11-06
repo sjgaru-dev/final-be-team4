@@ -18,8 +18,9 @@ public class ConcatProject extends Project {
     private Float globalTotalSilenceLength = 0.0F;
 
     // 생성 메서드
-    public static ConcatProject createConcatProject(String projectName) {
+    public static ConcatProject createConcatProject(Member member, String projectName) {
         ConcatProject concatProject = new ConcatProject();
+        concatProject.member = member;
         concatProject.projectName = projectName;
         concatProject.setCreatedAt();
         return concatProject;
