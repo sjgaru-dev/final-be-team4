@@ -22,26 +22,28 @@ public class ConcatProject extends Project {
         ConcatProject concatProject = new ConcatProject();
         concatProject.member = member;
         concatProject.projectName = projectName;
-        concatProject.setCreatedAt();
+        concatProject.createdAt();
+        concatProject.updatedAt();
         return concatProject;
     }
 
     // 업데이트 메서드
-    public void updateSilenceLengths(String projectName, Float globalFrontSilenceLength, Float globalTotalSilenceLength) {
-        this.projectName = projectName;
+    public void updateConcatProject(String projectName, Float globalFrontSilenceLength, Float globalTotalSilenceLength) {
+        super.projectName = projectName;
         this.globalFrontSilenceLength = globalFrontSilenceLength;
         this.globalTotalSilenceLength = globalTotalSilenceLength;
-        setUpdatedAt();
+        super.updatedAt();
     }
 
-    // 업데이트 시간 설정 메서드
-    private void setUpdatedAt() {
-        super.updateUpdatedAt();
+    // 삭제 메서드
+    public void deleteConcatProject() {
+        super.isDeleted = true;
+        super.deletedAt();
     }
 
-    // 생성 시간 설정 메서드
-    private void setCreatedAt() {
-        super.createCreatedAt();
-        super.updateUpdatedAt();
+    // 복구 메서드
+    public void restoreConcatProject() {
+        this.isDeleted = false;
+        super.deletedAtNull();
     }
 }

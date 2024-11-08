@@ -35,7 +35,7 @@ public class ImsiS3Controller {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
     // 절대경로
-    private final String BASE_ROUTE = "https://popomance.s3.amazonaws.com/";
+    private final String BASE_ROUTE2 = "https://"+ bucket + ".s3.amazonaws.com/";
 
 
     @PostMapping("/upload_unit")
