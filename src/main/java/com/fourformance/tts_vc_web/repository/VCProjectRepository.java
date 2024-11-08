@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface VCProjectRepository extends JpaRepository<VCProject, Long> {
+
 }
