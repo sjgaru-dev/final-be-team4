@@ -2,19 +2,15 @@ package com.fourformance.tts_vc_web.domain.entity;
 
 import com.fourformance.tts_vc_web.common.constant.ConcatStatusConst;
 import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @ToString
@@ -22,7 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ConcatStatusHistory extends BaseEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "history_id")
     private Long id;
 
@@ -30,8 +26,13 @@ public class ConcatStatusHistory extends BaseEntity {
     @JoinColumn(name = "project_id")
     private ConcatProject concatProject;
 
+    @Enumerated(EnumType.STRING)
     private ConcatStatusConst concatStatusConst;
     private LocalDateTime createdAt;
+
+    @ElementCollection
+    @CollectionTable(name = "concat_user_audio", joinColumns = @JoinColumn(name = "history_id"))
+    private List<String> userAudioList = new ArrayList<>();
 
     // 상태 업데이트 메서드
     public void updateStatus(ConcatStatusConst concatStatusConst) {
