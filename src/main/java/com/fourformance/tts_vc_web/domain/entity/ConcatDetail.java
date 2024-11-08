@@ -1,6 +1,14 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
-import jakarta.persistence.*;
+import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,9 +20,10 @@ import java.time.LocalDateTime;
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ConcatDetail {
+public class ConcatDetail extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     @Column(name = "concat_detail_id")
     private Long id;
 
@@ -23,43 +32,42 @@ public class ConcatDetail {
     private ConcatProject concatProject;
 
     private Integer audioSeq;
-    private String isChecked;
+    private boolean isChecked=true;
     private String unitScript;
     private Float endSilence = 0.0F;
-    private String silenceApplication;
     private Boolean isDeleted = false;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
-    // 업데이트 메서드
-    public void updateDetails(Integer audioSeq, String isChecked, String unitScript, Float endSilence, String silenceApplication, Boolean newIsDeleted) {
-        this.audioSeq = audioSeq;
-        this.isChecked = isChecked;
-        this.unitScript = unitScript;
-        this.endSilence = endSilence;
-        this.silenceApplication = silenceApplication;
-        this.isDeleted = newIsDeleted;
-        this.updatedAt = LocalDateTime.now(); // 업데이트 시점 기록
-    }
-
-    // 생성 메서드 (isDeleted는 기본값 false)
+    // 생성 메서드
     public static ConcatDetail createConcatDetail(ConcatProject concatProject, Integer audioSeq,
-                                                  String isChecked, String unitScript,
-                                                  Float endSilence, String silenceApplication) {
+                                                  boolean isChecked, String unitScript,
+                                                  Float endSilence) {
         ConcatDetail concatDetail = new ConcatDetail();
         concatDetail.concatProject = concatProject;
         concatDetail.audioSeq = audioSeq;
         concatDetail.isChecked = isChecked;
         concatDetail.unitScript = unitScript;
         concatDetail.endSilence = endSilence;
-        concatDetail.silenceApplication = silenceApplication;
-        concatDetail.createdAt = LocalDateTime.now(); // 생성 시점 기록
-        concatDetail.updatedAt = LocalDateTime.now(); // 생성 시점과 동일하게 설정
+        concatDetail.createdAt = LocalDateTime.now();
+        concatDetail.updatedAt = LocalDateTime.now();
         return concatDetail;
     }
 
-    public void updateIsDeleted() {
+    // 업데이트 메서드
+    public void updateDetails(Integer audioSeq, boolean isChecked, String unitScript, Float endSilence, Boolean newIsDeleted) {
+        this.audioSeq = audioSeq;
+        this.isChecked = isChecked;
+        this.unitScript = unitScript;
+        this.endSilence = endSilence;
+        this.isDeleted = newIsDeleted;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 삭제 메서드
+    public void deleteConcatDetail() {
         this.isDeleted = true;
-        this.updatedAt = LocalDateTime.now(); // isDeleted 상태 변경 시 업데이트 시간 기록
+        this.deletedAt = LocalDateTime.now();
     }
 }

@@ -27,23 +27,27 @@ public class MemberAudioMeta extends BaseEntity {
 
     private String audioUrl;
     private String script;
+    @Enumerated(EnumType.STRING)
     private AudioType audioType;
     private Boolean isDeleted=false;
+    @Enumerated(EnumType.STRING)
     private AudioFormat audioFormat = AudioFormat.WAV;
     private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
 
-    // MemberAudioMeta 생성 메서드
-    public static MemberAudioMeta createMemberAudioMeta(Member member, String audioUrl, String script, AudioType audioType) {
+    // 생성 메서드
+    public static MemberAudioMeta createMemberAudioMeta(Member member, String audioUrl, AudioType audioType) {
         MemberAudioMeta memberAudioMeta = new MemberAudioMeta();
         memberAudioMeta.member = member;
         memberAudioMeta.audioUrl = audioUrl;
-        memberAudioMeta.script = script;
         memberAudioMeta.audioType = audioType;
         memberAudioMeta.createdAt = LocalDateTime.now();
         return memberAudioMeta;
     }
 
+    // 삭제 메서드
     public void delete() {
         this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 }

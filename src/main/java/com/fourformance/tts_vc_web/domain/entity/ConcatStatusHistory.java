@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @ToString
@@ -24,8 +26,13 @@ public class ConcatStatusHistory extends BaseEntity {
     @JoinColumn(name = "project_id")
     private ConcatProject concatProject;
 
+    @Enumerated(EnumType.STRING)
     private ConcatStatusConst concatStatusConst;
     private LocalDateTime createdAt;
+
+    @ElementCollection
+    @CollectionTable(name = "concat_user_audio", joinColumns = @JoinColumn(name = "history_id"))
+    private List<String> userAudioList = new ArrayList<>();
 
     // 상태 업데이트 메서드
     public void updateStatus(ConcatStatusConst concatStatusConst) {

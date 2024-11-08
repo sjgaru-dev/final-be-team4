@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "tts_detail")
 public class TTSDetail extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,22 +29,28 @@ public class TTSDetail extends BaseEntity {
     private Style style;
 
     private String unitScript;
-    private Float unitSpeed;
-    private Float unitPitch;
-    private Float unitVolume;
+    private Float unitSpeed=1f;
+    private Float unitPitch=0f;
+    private Float unitVolume=0f;
     private Boolean isDeleted = false;
     private Integer unitSequence;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
-    // isDeleted 업데이트 메서드
-    public void markAsDeleted() {
-        this.isDeleted = true;
-        this.updatedAt = LocalDateTime.now();
+    // 생성 메서드
+    public static TTSDetail createTTSDetail(TTSProject ttsProject, String unitScript, Integer unitSequence) {
+        TTSDetail ttsDetail = new TTSDetail();
+        ttsDetail.ttsProject = ttsProject;
+        ttsDetail.unitScript = unitScript;
+        ttsDetail.unitSequence = unitSequence;
+        ttsDetail.createdAt = LocalDateTime.now();
+        ttsDetail.updatedAt = LocalDateTime.now();
+        return ttsDetail;
     }
 
-    // 여러 필드를 동시에 업데이트하는 메서드
-    public void updateTTSDetails(Style style, String newUnitScript, Float newUnitSpeed, Float newUnitPitch, Float newUnitVolume, Integer newUnitSequence, Boolean newIsDeleted) {
+    // 업데이트 메서드
+    public void updateTTSDetail(Style style, String newUnitScript, Float newUnitSpeed, Float newUnitPitch, Float newUnitVolume, Integer newUnitSequence, Boolean newIsDeleted) {
         this.style = style;
         this.unitScript = newUnitScript;
         this.unitSpeed = newUnitSpeed;
@@ -53,15 +60,11 @@ public class TTSDetail extends BaseEntity {
         this.isDeleted = newIsDeleted;
         this.updatedAt = LocalDateTime.now();
     }
-    public static TTSDetail createTTSDetail(TTSProject ttsProject, String unitScript, Integer unitSequence) {
-        TTSDetail ttsDetail = new TTSDetail();
-        ttsDetail.ttsProject = ttsProject;
-        ttsDetail.unitScript = unitScript;
-        ttsDetail.unitSequence = unitSequence;
-        ttsDetail.createdAt = LocalDateTime.now(); // 생성 시간 설정
-        ttsDetail.updatedAt = LocalDateTime.now(); // 최초 생성 시 업데이트 시간도 함께 설정
-        return ttsDetail;
-    }
 
+    // 삭제 메서드
+    public void deleteTTSDetail() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
 
 }

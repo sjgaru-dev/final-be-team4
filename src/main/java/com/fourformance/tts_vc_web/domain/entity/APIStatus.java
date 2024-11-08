@@ -37,22 +37,23 @@ public class APIStatus extends BaseEntity {
     private String responsePayload;
     private Integer responseCode;
 
-    // 응답 정보 업데이트 메서드
-    public void updateResponseInfo(String responsePayload, Integer responseCode) {
+    // 생성 메서드
+    public static APIStatus createAPIStatus(VCDetail vcDetail, TTSDetail ttsDetail,
+                                            String requestPayload) {
+        APIStatus apiStatus = new APIStatus();
+        apiStatus.vcDetail = vcDetail;
+        apiStatus.ttsDetail = ttsDetail;
+        apiStatus.requestAt = LocalDateTime.now();
+        apiStatus.requestPayload = requestPayload;
+        return apiStatus;
+    }
+
+    // 업데이트 메서드 (응답 받은 시점에 호출되고 응답에 대한 필드가 채워지는 메서드입니다!)
+    public void updateResponseInfo(String responsePayload, Integer responseCode, APIUnitStatusConst apiUnitStatusConst) {
+        this.apiUnitStatusConst = apiUnitStatusConst;
         this.responseAt = LocalDateTime.now();
         this.responsePayload = responsePayload;
         this.responseCode = responseCode;
     }
 
-    public static APIStatus createAPIStatus(VCDetail vcDetail, TTSDetail ttsDetail,
-                                            APIUnitStatusConst apiUnitStatusConst,
-                                            String requestPayload) {
-        APIStatus apiStatus = new APIStatus();
-        apiStatus.vcDetail = vcDetail;
-        apiStatus.ttsDetail = ttsDetail;
-        apiStatus.apiUnitStatusConst = apiUnitStatusConst;
-        apiStatus.requestAt = LocalDateTime.now();
-        apiStatus.requestPayload = requestPayload;
-        return apiStatus;
-    }
 }

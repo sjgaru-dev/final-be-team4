@@ -14,9 +14,11 @@ import java.time.LocalDateTime;
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@DiscriminatorColumn
 public abstract class Project extends BaseEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) @Column(name = "project_id")
+    @Id     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "project_id")
     private Long id;
 
     @JoinColumn(name = "member_id")
@@ -24,44 +26,35 @@ public abstract class Project extends BaseEntity {
     protected Member member;
 
     protected String projectName;
-    private Boolean isDeleted = false;
+    protected Boolean isDeleted = false;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt=null;
+    private LocalDateTime deletedAt;
 
     // projectName 업데이트 메서드
     public void updateProjectName(String newProjectName) {
         this.projectName = newProjectName;
     }
 
-    // isDeleted 업데이트 메서드
-    public void markAsDeleted() {
-        this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
-    }
-
-    public void restore() {
-        this.isDeleted = false;
-        this.deletedAt = null;
-    }
-
     // createdAt 업데이트 메서드
-    public void createCreatedAt() {
+    public void createdAt() {
         this.createdAt = LocalDateTime.now();
     }
 
     // updatedAt 업데이트 메서드
-    public void updateUpdatedAt() {
+    public void updatedAt() {
         this.updatedAt = LocalDateTime.now();
     }
 
-//    public static Project createProject(Member member, String projectName) {
-//        Project project = new Project();
-//        project.member = member;
-//        project.projectName = projectName;
-//        project.createdAt = LocalDateTime.now(); // 생성 시간 설정
-//        project.updatedAt = LocalDateTime.now(); // 최초 생성 시 업데이트 시간도 함께 설정
-//        return project;
-//    }
+    // deletedAt 업데이트 메서드
+    public void deletedAt() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    // deletedAt 초기화 메서드
+    public void deletedAtNull() {
+            this.deletedAt = null;
+    }
+
 
 }
