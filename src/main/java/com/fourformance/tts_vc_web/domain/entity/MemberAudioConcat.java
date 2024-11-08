@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -19,18 +20,19 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberAudioConcat extends BaseEntity {
     @Id
-    @GeneratedValue @Column(name = "member_audio_concat_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "member_audio_concat_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_auido_id")
+    @JoinColumn(name = "member_audio_id")
     private MemberAudioMeta memberAudioMeta;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private ConcatProject concatProject;
 
-    // MemberAudioConcat 생성 메서드
+    // 생성 메서드
     public static MemberAudioConcat createMemberAudioConcat(MemberAudioMeta memberAudioMeta, ConcatProject concatProject) {
         MemberAudioConcat memberAudioConcat = new MemberAudioConcat();
         memberAudioConcat.memberAudioMeta = memberAudioMeta;
