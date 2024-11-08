@@ -2,13 +2,7 @@ package com.fourformance.tts_vc_web.domain.entity;
 
 import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
 import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +17,7 @@ import java.time.LocalDateTime;
 public class APIStatus extends BaseEntity {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "request_id")
     private Long id;
 
@@ -35,29 +29,31 @@ public class APIStatus extends BaseEntity {
     @JoinColumn(name = "tts_detail_id")
     private TTSDetail ttsDetail;
 
+    @Enumerated(EnumType.STRING)
     private APIUnitStatusConst apiUnitStatusConst;
     private LocalDateTime requestAt;
     private LocalDateTime responseAt;
-    private String requestPaylaod;
-    private String responsePaylaod;
+    private String requestPayload;
+    private String responsePayload;
     private Integer responseCode;
 
-    // 응답 정보 업데이트 메서드
-    public void updateResponseInfo(String responsePayload, Integer responseCode) {
-        this.responseAt = LocalDateTime.now();
-        this.responsePaylaod = responsePayload;
-        this.responseCode = responseCode;
-    }
-
+    // 생성 메서드
     public static APIStatus createAPIStatus(VCDetail vcDetail, TTSDetail ttsDetail,
-                                            APIUnitStatusConst apiUnitStatusConst,
                                             String requestPayload) {
         APIStatus apiStatus = new APIStatus();
         apiStatus.vcDetail = vcDetail;
         apiStatus.ttsDetail = ttsDetail;
-        apiStatus.apiUnitStatusConst = apiUnitStatusConst;
         apiStatus.requestAt = LocalDateTime.now();
-        apiStatus.requestPaylaod = requestPayload;
+        apiStatus.requestPayload = requestPayload;
         return apiStatus;
     }
+
+    // 업데이트 메서드 (응답 받은 시점에 호출되고 응답에 대한 필드가 채워지는 메서드입니다!)
+    public void updateResponseInfo(String responsePayload, Integer responseCode, APIUnitStatusConst apiUnitStatusConst) {
+        this.apiUnitStatusConst = apiUnitStatusConst;
+        this.responseAt = LocalDateTime.now();
+        this.responsePayload = responsePayload;
+        this.responseCode = responseCode;
+    }
+
 }
