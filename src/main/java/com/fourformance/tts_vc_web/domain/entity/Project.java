@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class Project extends BaseEntity {
 
-    @Id @GeneratedValue @Column(name = "project_id")
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) @Column(name = "project_id")
     private Long id;
 
     @JoinColumn(name = "member_id")
