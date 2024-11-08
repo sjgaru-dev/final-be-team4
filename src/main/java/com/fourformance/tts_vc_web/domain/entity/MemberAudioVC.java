@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -19,7 +20,8 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MemberAudioVC extends BaseEntity {
     @Id
-    @GeneratedValue @Column(name = "member_audio_vc_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "member_audio_vc_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -30,7 +32,7 @@ public class MemberAudioVC extends BaseEntity {
     @JoinColumn(name = "project_id")
     private VCProject vcProject;
 
-    // MemberAudioVC 생성 메서드
+    // 생성 메서드
     public static MemberAudioVC createMemberAudioVC(MemberAudioMeta memberAudioMeta, VCProject vcProject) {
         MemberAudioVC memberAudioVC = new MemberAudioVC();
         memberAudioVC.memberAudioMeta = memberAudioMeta;
