@@ -2,13 +2,7 @@ package com.fourformance.tts_vc_web.domain.entity;
 
 import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
 import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +17,7 @@ import java.time.LocalDateTime;
 public class APIStatus extends BaseEntity {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "request_id")
     private Long id;
 
@@ -35,17 +29,18 @@ public class APIStatus extends BaseEntity {
     @JoinColumn(name = "tts_detail_id")
     private TTSDetail ttsDetail;
 
+    @Enumerated(EnumType.STRING)
     private APIUnitStatusConst apiUnitStatusConst;
     private LocalDateTime requestAt;
     private LocalDateTime responseAt;
-    private String requestPaylaod;
-    private String responsePaylaod;
+    private String requestPayload;
+    private String responsePayload;
     private Integer responseCode;
 
     // 응답 정보 업데이트 메서드
     public void updateResponseInfo(String responsePayload, Integer responseCode) {
         this.responseAt = LocalDateTime.now();
-        this.responsePaylaod = responsePayload;
+        this.responsePayload = responsePayload;
         this.responseCode = responseCode;
     }
 
@@ -57,7 +52,7 @@ public class APIStatus extends BaseEntity {
         apiStatus.ttsDetail = ttsDetail;
         apiStatus.apiUnitStatusConst = apiUnitStatusConst;
         apiStatus.requestAt = LocalDateTime.now();
-        apiStatus.requestPaylaod = requestPayload;
+        apiStatus.requestPayload = requestPayload;
         return apiStatus;
     }
 }

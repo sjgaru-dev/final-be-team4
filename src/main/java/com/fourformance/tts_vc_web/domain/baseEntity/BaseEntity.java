@@ -30,5 +30,4 @@ public abstract class BaseEntity {
 
     @LastModifiedBy
     public String lastModifiedBy = "imsi";
-
 }
