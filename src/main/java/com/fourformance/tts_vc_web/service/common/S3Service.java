@@ -39,7 +39,7 @@ public class S3Service {
     private final ProjectRepository projectRepository;
 
     // TTS와 VC에 대한 유닛 오디오를 S3 버킷에 저장
-    public String uploadUnitSaveFile(MultipartFile file, String userId, Long projectId, Long detailId) throws Exception {
+    public String uploadUnitSaveFile(MultipartFile file, Long userId, Long projectId, Long detailId) throws Exception {
 
         try {
             // 오디오파일 이름으로 사용할 날짜 포맷 지정
@@ -83,7 +83,7 @@ public class S3Service {
     }
 
     // Concat 기능을 수행해서 반환한 오디오를 S3 버킷에 저장
-    public String uploadConcatSaveFile(MultipartFile file, String userId, Long projectId) throws Exception {
+    public String uploadConcatSaveFile(MultipartFile file, Long userId, Long projectId) throws Exception {
 
         try {
             // 오디오파일 이름으로 사용할 날짜 포맷 지정
@@ -92,7 +92,7 @@ public class S3Service {
 
             // 전체 경로를 포함한 파일 이름 설정
 
-            String fileName = userId + "/Concat" + "/" + projectId + "/" + timeStamp + ".wav";
+            String fileName = userId + "/CONCAT" + "/" + projectId + "/" + timeStamp + ".wav";
 
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentType(file.getContentType()); // wav
@@ -165,20 +165,26 @@ public class S3Service {
 
 
 
-    public String generatePresignedUrl(Long userId,Long projectId, Long ttsDetailId, String fileName)throws Exception{
+    public String generatePresignedUrl(Long userId,Long projectId, Long detailId, String fileName) throws Exception{
         try{
+
             // Project의 실제 타입에 따라 ProjectType 설정
             Project project = projectRepository.findById(projectId).orElse(null);
             ProjectType projectType = null;
-            if (project instanceof VCProject) {
-                projectType = ProjectType.VC;
-            } else if (project instanceof TTSProject) {
+            String filePath = null;
+            if (project instanceof TTSProject) {
                 projectType = ProjectType.TTS;
+                filePath = userId + "/" + projectType + "/"  + projectId + "/" + detailId + "/" + fileName;
+            } else if (project instanceof VCProject) {
+                projectType = ProjectType.VC;
+                filePath = userId + "/" + projectType + "/"  + projectId + "/" + detailId + "/" + fileName;
             } else if (project instanceof ConcatProject) {
                 projectType = ProjectType.CONCAT;
+                filePath = userId + "/" + projectType + "/"  + projectId +  "/" + fileName;
+            } else {
+                throw new IllegalArgumentException("지정된 타입의 프로젝트가 들어와야 합니다.");
             }
-            String Filepath = userId + "/" + projectType + "/"  + projectId + "/" + ttsDetailId + "/" + fileName;
-            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, Filepath);
+            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, filePath);
             request.withMethod(com.amazonaws.HttpMethod.GET)
                     .withExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5));
             URL presignedUrl = amazonS3Client.generatePresignedUrl(request);
