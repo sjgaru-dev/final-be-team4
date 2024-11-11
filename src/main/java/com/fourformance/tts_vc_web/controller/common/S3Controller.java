@@ -96,26 +96,38 @@ public class S3Controller {
 
 
     // 임시로 해보는거
-    @GetMapping("/{userId}/{projectId}/{ttsDetailId}/{fileName}")
+//    @GetMapping("/{userId}/{projectId}/{ttsDetailId}/{fileName}")
+//    public ResponseEntity<String> downloadTTS(
+//            @PathVariable Long userId, @PathVariable Long projectId, @PathVariable Long ttsDetailId, @PathVariable String fileName) throws IOException {
+//        return generatePresignedUrl(userId, projectId, ttsDetailId, fileName); // url만들기
+//    }
+//
+//    // url만드는 메서드
+//    private ResponseEntity<String> generatePresignedUrl(Long userId, Long projectId, Long ttsDetailId, String fileName) {
+//        try {
+//            // 파일경롱를 생성
+//            String Filepath = userId + "/" + projectId + "/" + ttsDetailId + "/" + fileName;
+//
+////         presignedurl생성요청 + 제한시간 걸어줘야함 ( 보안 문제 )
+//            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, Filepath);
+//            request.withMethod(com.amazonaws.HttpMethod.GET)
+//                    .withExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5));
+//
+//            URL presignedUrl = amazonS3Client.generatePresignedUrl(request);
+//
+//            return ResponseEntity.ok(presignedUrl.toString());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+//        }
+//    }
+
+    @GetMapping("presigned_url")
     public ResponseEntity<String> downloadTTS(
-            @PathVariable Long userId, @PathVariable Long projectId, @PathVariable Long ttsDetailId, @PathVariable String fileName) throws IOException {
-        return generatePresignedUrl(userId, projectId, ttsDetailId, fileName); // url만들기
-    }
-
-    // url만드는 메서드
-    private ResponseEntity<String> generatePresignedUrl(Long userId, Long projectId, Long ttsDetailId, String fileName) {
+            @RequestParam Long userId, @RequestParam Long projectId, @RequestParam Long ttsDetailId, @RequestParam String fileName) throws Exception {
         try {
-            // 파일경롱를 생성
-            String Filepath = userId + "/" + projectId + "/" + ttsDetailId + "/" + fileName;
-
-//         presignedurl생성요청 + 제한시간 걸어줘야함 ( 보안 문제 )
-            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, Filepath);
-            request.withMethod(com.amazonaws.HttpMethod.GET)
-                    .withExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5));
-
-            URL presignedUrl = amazonS3Client.generatePresignedUrl(request);
-
-            return ResponseEntity.ok(presignedUrl.toString());
+            String presignedUrl = S3Service.generatePresignedUrl(userId, projectId, ttsDetailId, fileName);
+            return ResponseEntity.ok(presignedUrl);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
