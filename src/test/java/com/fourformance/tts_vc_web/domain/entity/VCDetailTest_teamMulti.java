@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 //@InjectMocks: vcDetail 객체를 테스트할 대상 객체로 생성하고, @Mock으로 생성된 vcProject와 memberAudioMeta를 자동으로 주입
 @SpringBootTest
 @Transactional
-@Rollback(value = false)
+//@Rollback(value = false)
 @ExtendWith(MockitoExtension.class)
 class VCDetailTest_teamMulti {
     @Autowired

@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional //테스트 클래스에 적용되면 각 테스트가 독립적인 트랜잭션 내에서 실행
-@Rollback(false) //롤백 여부를 제어
+//@Rollback(false) //롤백 여부를 제어
 class MultiJobLogRepositoryTest {
     @Autowired
     private MultiJobLogRepository multiJobLogRepository;
