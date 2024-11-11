@@ -1,142 +1,134 @@
-//package com.fourformance.tts_vc_web.domain.entity;
-//
-//import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
-//import com.fourformance.tts_vc_web.repository.MemberRepository;
-//import com.fourformance.tts_vc_web.repository.VCProjectRepository;
-//import jakarta.persistence.EntityManager;
-//import jakarta.persistence.PersistenceContext;
-//import org.aspectj.lang.annotation.After;
-//import org.junit.jupiter.api.AfterEach;
-//import org.junit.jupiter.api.Assertions;
-//import org.junit.jupiter.api.Test;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.boot.test.context.SpringBootTest;
-//import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-//import org.springframework.test.annotation.Rollback;
-//import org.springframework.transaction.annotation.Transactional;
-//
-//import java.time.LocalDateTime;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//
-//@SpringBootTest
-//@Transactional
-//@Rollback(false)
-//class VCProjectTest {
-//
-//    @Autowired
-//    VCProjectRepository repository;
-//
-//    @Autowired
-//    MemberRepository memberRepository;
-//
-//    @PersistenceContext
-//    private EntityManager em;
-//
-//    public Member 멤버_생성기() {
-////        memberRepository.deleteAll();
-//        return new Member();
-//    }
-//
-////    @AfterEach
-////    public void afterEach() {
-////        repository.deleteAll(); // 프로젝트 엔티티 먼저 삭제
-////        memberRepository.deleteAll();
-////    }
-//
-//    @Test
-//    public void VC프로젝트_생성_테스트() {
-//
-//        // 멤버 객체 생성
-//        Member member = 멤버_생성기();
-//
-//        // 멤버를 DB에 저장
-//        memberRepository.save(member);
-//
-//        // VC 프로젝트 객체 생성
-//        VCProject project = VCProject.createVCProject(member, "vc프로젝트2");
-//
-//        // VC 프로젝트 객체가 생성되었는지 확인
-//        System.out.println("VC 프로젝트 : " + project);
-//        assertNotNull(project);
-//
-//        // DB에 저장
-//        repository.save(project);
-//
-//        // DB에서 VC 프로젝트를 조회
-//        VCProject readProject = em.find(VCProject.class, project.getId());
-//
-//        // 생성한 프로젝트와 조회한 프로젝트가 같은지 검증
-//        assertEquals(project, readProject);
-//
-//    }
-//
-//    @Test
-//    public void VC프로젝트_업데이트_테스트() {
-//
-//        // 멤버 객체 생성
-//        Member member = 멤버_생성기();
-//
-//        // 멤버를 DB에 저장
-//        memberRepository.save(member);
-//
-//        // VC 프로젝트 객체 생성
-//        VCProject project = VCProject.createVCProject(member, "vc프로젝트1");
-//
-//        // VC 프로젝트 객체가 생성되었는지 확인
-//        System.out.println("업데이트 전 VC 프로젝트 : " + project);
-//        assertNotNull(project);
-//
-//        // DB에 저장
-//        repository.save(project);
-//
-//        // 업데이트 전 VC 프로젝트 객체가 DB에 잘 저장되었는지 검증
-//        VCProject beforeVCProject = repository.findById(project.getId()).orElse(null);
-//        assertEquals(beforeVCProject.getProjectName(),project.getProjectName());
-//        assertEquals(beforeVCProject.getApiStatus(),project.getApiStatus());
-//
-//        // 생성한 VC 프로젝트의 객체의 이름과 API 상태 변경
-//        project.updateVCProject("바뀐 VC 프로젝트");
-//        System.out.println("업데이트 후 VC 프로젝트 : " + project);
-//
-//        // 업데이트된 VC 프로젝트 검증
-//        assertEquals(project.getProjectName(),"바뀐 VC 프로젝트");
-//
-//    }
-//
-//    @Test
-//    public void VC프로젝트_삭제_테스트() {
-//
-//        // 멤버 객체 생성
-//        Member member = 멤버_생성기();
-//
-//        // 멤버를 DB에 저장
-//        memberRepository.save(member);
-//
-//
-//        // VC 프로젝트 객체 생성
-//        VCProject project = VCProject.createVCProject(member, "vc프로젝트1");
-//
-//        // VC 프로젝트 객체가 생성되었는지 확인
-//        System.out.println("업데이트 전 VC 프로젝트 : " + project);
-//        assertNotNull(project);
-//
-//        // DB에 저장
-//        repository.save(project);
-//
-//        // 업데이트 전 VC 프로젝트 객체가 DB에 잘 저장되었는지 검증
-//        VCProject beforeVCProject = repository.findById(project.getId()).orElse(null);
-//        assertEquals(beforeVCProject.getProjectName(), project.getProjectName());
-//        assertEquals(beforeVCProject.getApiStatus(), project.getApiStatus());
-//
+package com.fourformance.tts_vc_web.domain.entity;
+
+import com.fourformance.tts_vc_web.common.constant.AudioType;
+import com.fourformance.tts_vc_web.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+@SpringBootTest
+@Transactional
+@Rollback(value= false)
+class VCProjectTest {
+
+    @Autowired
+    MemberRepository memberRepository;
+    @Autowired
+    private VCProjectRepository vcProjectRepository;
+
+    @Autowired
+    private VCDetailRepository vcDetailRepository;
+
+    @Autowired
+    private MemberAudioMetaRepository memberAudioMetaRepository;
+
+    @PersistenceContext
+    EntityManager em;
+
+
+    public Member createTestMember() {
+        Member member = Member.createMember("aaa@aaa.com", "1234","imsi",0, LocalDateTime.now(),"01012341234");
+
+        return member;
+    }
+
+
+
+
+    // 1. 저장 테스트
+    @Test
+    @DisplayName("VCProjectCreateTest")
+    public void createVCProject() {
+
+        Member member = createTestMember();
+        // 생성된 멤버를 저장한다.
+        memberRepository.save(member);
+        // 프로젝트 생성한다.
+        VCProject vcProject = VCProject.createVCProject(member,"VC프로젝트1");
+        // 프로젝트를 저장한다.
+        vcProjectRepository.save(vcProject);
+        // 쌓인 쿼리문을 쭉 날리고
+        em.flush();
+        // 영속성컨텍스트를 비운다.
+        em.clear();
+        // 프로젝트를 id로 찾고, 없으면 null반환한다.
+        VCProject afterVCProject = vcProjectRepository.findById(vcProject.getId()).orElse(null);
+        // assertNotNull을 통해서 afterVCProject가 있는지 확인하고,
+        assertNotNull(afterVCProject);
+        // 기존에 생성한 VCProject와 Id로 꺼낸 VCProject가 같은 프로젝트인지 확인한다.
+        assertEquals(vcProject.getId(), afterVCProject.getId());
+
+    }
+
+    // 2.삭제 테스트
+    @Test
+    @DisplayName("VCProject 삭제테스트")
+    public void deleteVCProject() {
+        // 멤버를 생성하고
+        Member member = createTestMember();
+        // 멤버를 저장하고
+        memberRepository.save(member);
+        // VCProject를 생성하고 저장한다.
+        VCProject vcProject = VCProject.createVCProject(member,"삭제할 프로젝트");
+        vcProjectRepository.save(vcProject);
+        em.flush();
+        em.clear();
+        // VC프로젝트를 Id로 찾고,
+        VCProject afterVCProject =vcProjectRepository.findById(vcProject.getId()).orElse(null);
+        // VCProject가 NotNull이면?
+        assertNotNull(afterVCProject);
+        //VCProject삭제
+
+        vcProjectRepository.deleteById(afterVCProject.getId());
+        VCProject deletedVCProject = vcProjectRepository.findById(afterVCProject.getId()).orElse(null);
+        em.flush();
+        em.clear();
+        assertNull(deletedVCProject);
+    }
+
+
+    // 3. 업데이트 테스트
+    @Test
+    @DisplayName("업데이트 테스트 ")
+    public void updateVCProject() {
+
+        // given
+        // 멤버를 생성하고
+        Member member = createTestMember();
+        // 멤버를 저장하고
+        memberRepository.save(member);
+        // VCProject를 생성하고 저장한다.
+        VCProject vcProject = VCProject.createVCProject(member,"업데이트할 프로젝트");
+        vcProjectRepository.save(vcProject);
+        //타켓 오디오 메타 생성하고 저장하고
+        MemberAudioMeta targetAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, "/경로1", AudioType.VC_TRG);
+        memberAudioMetaRepository.save(targetAudioMeta);
+
 //        em.flush();
 //        em.clear();
-//
-//        // DB에 저장된 VC 프로젝트 삭제
-//        repository.delete(project);
-//
-//        // 삭제 되었는지 검증 (Optional 사용으로 변경)
-//        assertFalse(repository.findById(project.getId()).isPresent());
-//    }
-//
-//}
+
+        //when
+        VCProject findVCProject =vcProjectRepository.findById(vcProject.getId()).orElse(null);
+        findVCProject.updateVCProject("업데이트된 프로젝트",targetAudioMeta);
+
+        vcProjectRepository.save(findVCProject);
+        em.flush();
+        em.clear();
+
+        VCProject afterVCProject =vcProjectRepository.findById(findVCProject.getId()).orElse(null);
+
+        //then
+        assertEquals(afterVCProject.getProjectName(),findVCProject.getProjectName());
+
+    }
+}
