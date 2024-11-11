@@ -29,9 +29,11 @@ public class TTSProject extends Project {
     private Style style;
 
     private String fullScript;
-    private Float globalSpeed;
-    private Float globalPitch;
-    private Float globalVolume;
+
+    private Float globalSpeed=1f;
+    private Float globalPitch=0f;
+    private Float globalVolume=0f;
+
     @Enumerated(EnumType.STRING)
     private APIStatusConst apiStatus = APIStatusConst.NOT_STARTED;
     private LocalDateTime APIStatusModifiedAt;

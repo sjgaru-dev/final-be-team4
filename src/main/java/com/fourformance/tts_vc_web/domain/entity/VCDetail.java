@@ -40,7 +40,9 @@ public class VCDetail extends BaseEntity {
     // 오디오를 유저오디오_메타에서 가져오든 로컬에서 가져오든 이 메서드로 VC디테일을 생성합니다.
     // 프로젝트 저장시점에 이 객체의 유저오디오_메타가 null이라면, 유저오디오_메타 DB에 저장하는 로직은 담당하신 분이 서비스에서 구현하셔야 합니다.
     // 유저오디오를 S3에 업로드하는 작업은 team_aws가 합니다. team_aws에서 만든 서비스를 호출해서 사용하시면 됩니다.
-    public static VCDetail createVCDetailFromUserAudio(VCProject vcProject, MemberAudioMeta memberAudioMeta) {
+
+    public static VCDetail createVCDetail(VCProject vcProject, MemberAudioMeta memberAudioMeta) {
+
         VCDetail vcDetail = new VCDetail();
         vcDetail.vcProject = vcProject;
         vcDetail.memberAudioMeta = memberAudioMeta;
