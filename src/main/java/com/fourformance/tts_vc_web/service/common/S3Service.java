@@ -1,6 +1,7 @@
 package com.fourformance.tts_vc_web.service.common;
 
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.fourformance.tts_vc_web.common.constant.AudioFormat;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -162,6 +164,33 @@ public class S3Service {
     }
 
 
+
+    public String generatePresignedUrl(Long userId,Long projectId, Long ttsDetailId, String fileName)throws Exception{
+        try{
+            // Project의 실제 타입에 따라 ProjectType 설정
+            Project project = projectRepository.findById(projectId).orElse(null);
+            ProjectType projectType = null;
+            if (project instanceof VCProject) {
+                projectType = ProjectType.VC;
+            } else if (project instanceof TTSProject) {
+                projectType = ProjectType.TTS;
+            } else if (project instanceof ConcatProject) {
+                projectType = ProjectType.CONCAT;
+            }
+            String Filepath = userId + "/" + projectType + "/"  + projectId + "/" + ttsDetailId + "/" + fileName;
+            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, Filepath);
+            request.withMethod(com.amazonaws.HttpMethod.GET)
+                    .withExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5));
+            URL presignedUrl = amazonS3Client.generatePresignedUrl(request);
+
+            return presignedUrl.toString();
+
+
+        }catch(Exception e){
+            e.printStackTrace();
+            throw new Exception();
+        }
+    }
 
     //myEntityRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Entity not found with id " + id));
 }
