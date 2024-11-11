@@ -3,7 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/final-be-team4.iml" filepath="$PROJECT_DIR$/.idea/final-be-team4.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tts_vc_web.iml" filepath="$PROJECT_DIR$/.idea/modules/tts_vc_web.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/tts_vc_web.main.iml" filepath="$PROJECT_DIR$/.idea/modules/tts_vc_web.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tts_vc_web.test.iml" filepath="$PROJECT_DIR$/.idea/modules/tts_vc_web.test.iml" />
     </modules>
   </component>
 </project>

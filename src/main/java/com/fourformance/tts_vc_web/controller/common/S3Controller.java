@@ -4,12 +4,19 @@ package com.fourformance.tts_vc_web.controller.common;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.fourformance.tts_vc_web.service.common.ImsiS3Service;
+import com.fourformance.tts_vc_web.common.constant.ProjectType;
+import com.fourformance.tts_vc_web.service.common.S3Service;
+import com.fourformance.tts_vc_web.service.common.S3Service;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,51 +26,69 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import io.swagger.v3.oas.annotations.Parameter;
+
 import static com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta.createOutputAudioMeta;
 
 @RestController
 @RequestMapping("/s3")
 @RequiredArgsConstructor
-public class ImsiS3Controller {
+public class S3Controller {
 
 
     private final AmazonS3Client amazonS3Client;
 
-    private final ImsiS3Service imsiS3Service;
+    private final S3Service S3Service;
 
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
     // 절대경로
-    private final String BASE_ROUTE2 = "https://"+ bucket + ".s3.amazonaws.com/";
+   private final String BASE_ROUTE2 = "https://"+ bucket + ".s3.amazonaws.com/";
 
-
-    @PostMapping("/upload_unit")
-    public ResponseEntity<String> uploadUnit(@RequestParam("file") MultipartFile file, HttpSession session, Long detailId,Long projectId,String projectType) throws IOException {
-        String userId = "test"; // test용, 원래는 세션 씁니다.
+    // TTS나 VC로 반환한 유닛 오디오를 업로드하는 api
+    @Operation(
+            summary = "유닛(TTS or VC) 오디오 업로드",
+            description = "유닛 오디오를 S3 버킷에 저장하고 메타데이터를 DB에 저장하는 api입니다." +
+                    "<br><br>매개변수 : <br>- 유닛 id, <br>- 프로젝트 id, <br>- 프로젝트 타입 (TTS, VC, Concat), <br>- 오디오 파일")
+    @PostMapping(value = "/upload_unit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadUnit(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("detailId") Long detailId,
+            @RequestParam("projectId") Long projectId,
+//            @RequestParam("projectType") ProjectType projectType,
+            HttpSession session
+    ) throws IOException {
+        String userId = "test"; // 실제 프로젝트에서는 세션을 사용하여 사용자 ID를 가져옵니다.
 //        Long userId = (Long) session.getAttribute("userId");
-
-        try{
-
-        String fileUrl = imsiS3Service.uploadUnitSaveFile(file, userId, projectId, detailId, projectType);
-        return ResponseEntity.ok(fileUrl);
-            // OutputAudiometa에 save하는 코드가 없음  업로드에서 끝나는게 아니라, 그 경로를 저장해야함.
-        }catch(Exception e) {
+        try {
+            // TTS&VC 반환 유닛 오디오 업로드 메서드 호출
+//            String fileUrl = S3Service.uploadUnitSaveFile(file, userId, projectId, detailId, projectType); // 서비스 변경 전 (삭제 예정)
+            String fileUrl = S3Service.uploadUnitSaveFile(file, userId, projectId, detailId); // 서비스 변경 후
+            return ResponseEntity.ok(fileUrl);
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 
-    @PostMapping("/upload_concat")
-    public ResponseEntity<String> uploadConcat(@RequestParam("file") MultipartFile file, HttpSession session,Long projectId) throws IOException {
-
+    // VC로 반환한 오디오를 업로드하는 api
+    @Operation(
+            summary = "Concat 오디오 업로드",
+            description = "컨캣 오디오를 S3 버킷에 저장하고 메타데이터를 DB에 저장하는 api입니다." +
+                    "<br><br>매개변수 : <br>- 프로젝트 id, <br>- 오디오 파일")
+    @PostMapping(value = "/upload_concat", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadConcat(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("projectId") Long projectId,
+            HttpSession session
+    ) throws IOException {
+        String userId = "test"; // 실제 프로젝트에서는 세션을 사용하여 사용자 ID를 가져옵니다.
+//        Long userId = (Long) session.getAttribute("userId");
         try {
-
-            String userId ="test";
-            String fileUrl = imsiS3Service.uploadConcatSaveFile(file, userId, projectId);
-
+            String fileUrl = S3Service.uploadConcatSaveFile(file, userId, projectId);
             return ResponseEntity.ok(fileUrl);
-        }catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
@@ -73,8 +98,8 @@ public class ImsiS3Controller {
     // 임시로 해보는거
     @GetMapping("/{userId}/{projectId}/{ttsDetailId}/{fileName}")
     public ResponseEntity<String> downloadTTS(
-            @PathVariable Long userId,@PathVariable Long projectId,@PathVariable Long ttsDetailId,@PathVariable String fileName) throws IOException {
-        return generatePresignedUrl(userId, projectId, ttsDetailId,fileName); // url만들기
+            @PathVariable Long userId, @PathVariable Long projectId, @PathVariable Long ttsDetailId, @PathVariable String fileName) throws IOException {
+        return generatePresignedUrl(userId, projectId, ttsDetailId, fileName); // url만들기
     }
 
     // url만드는 메서드
@@ -91,7 +116,7 @@ public class ImsiS3Controller {
             URL presignedUrl = amazonS3Client.generatePresignedUrl(request);
 
             return ResponseEntity.ok(presignedUrl.toString());
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
@@ -99,10 +124,11 @@ public class ImsiS3Controller {
 
     @GetMapping("/{userId}/{projectId}/{vcDetailId}/{fileName}")
     public ResponseEntity<String> downloadVC(
-            @PathVariable Long userId, @PathVariable Long projectId,@PathVariable Long vcDetailId,@PathVariable String fileName
-                                                )throws IOException {
+            @PathVariable Long userId, @PathVariable Long projectId, @PathVariable Long vcDetailId, @PathVariable String fileName
+    ) throws IOException {
         return vcGeneratePresignedUrl(userId, projectId, vcDetailId, fileName);
     }
+
     private ResponseEntity<String> vcGeneratePresignedUrl(Long userId, Long projectId, Long vcDetailId, String fileName) {
         String path = userId + "/" + projectId + "/" + vcDetailId + "/" + fileName;
         GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, path);

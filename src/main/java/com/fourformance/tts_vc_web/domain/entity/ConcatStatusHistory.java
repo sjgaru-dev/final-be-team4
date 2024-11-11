@@ -34,11 +34,6 @@ public class ConcatStatusHistory extends BaseEntity {
     @CollectionTable(name = "concat_user_audio", joinColumns = @JoinColumn(name = "history_id"))
     private List<String> userAudioList = new ArrayList<>();
 
-    // 상태 업데이트 메서드
-    public void updateStatus(ConcatStatusConst concatStatusConst) {
-        this.concatStatusConst = concatStatusConst;
-    }
-
     // 생성 메서드
     public static ConcatStatusHistory createConcatStatusHistory(ConcatProject concatProject, ConcatStatusConst concatStatusConst) {
         ConcatStatusHistory history = new ConcatStatusHistory();
