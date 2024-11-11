@@ -15,7 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.fourformance.tts_vc_web.domain.entity.VCDetail.createVCDetailFromUserAudio;
+import static com.fourformance.tts_vc_web.domain.entity.VCDetail.createVCDetail;
 import static com.fourformance.tts_vc_web.domain.entity.VCProject.createVCProject;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -52,7 +52,7 @@ class VCDetailTest_teamMulti {
     @DisplayName("vcDetail 생성 테스트")
     public void testVCDetailCreation() {
         // Given: VCDetail을 특정 상태로 초기화
-        vcDetail = VCDetail.createVCDetailFromUserAudio(vcProject, memberAudioMeta);
+        vcDetail = VCDetail.createVCDetail(vcProject, memberAudioMeta);
 
         // When: VCDetail이 생성되었을 때
 
@@ -66,7 +66,7 @@ class VCDetailTest_teamMulti {
     @Test
     public void testUpdateDetails() {
         // Given: 초기 상태로 VCDetail 생성
-        vcDetail = VCDetail.createVCDetailFromUserAudio(vcProject, memberAudioMeta);
+        vcDetail = VCDetail.createVCDetail(vcProject, memberAudioMeta);
 
         // When: 특정 필드를 업데이트
         vcDetail.updateDetails(false, "Updated Script");
@@ -81,7 +81,7 @@ class VCDetailTest_teamMulti {
     @Test
     public void testMarkAsDeleted() {
         // Given: 초기 상태로 VCDetail 생성
-        vcDetail = VCDetail.createVCDetailFromUserAudio(vcProject, memberAudioMeta);
+        vcDetail = VCDetail.createVCDetail(vcProject, memberAudioMeta);
 
         // When: 삭제 메서드 호출
         vcDetail.markAsDeleted();
