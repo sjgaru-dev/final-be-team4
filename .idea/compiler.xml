@@ -11,6 +11,10 @@
         <module name="tts_vc_web.main" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="17" />
+    <bytecodeTargetLevel>
+      <module name="tts_vc_web" target="17" />
+      <module name="tts_vc_web.main" target="17" />
+      <module name="tts_vc_web.test" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>
