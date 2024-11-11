@@ -53,7 +53,7 @@ class ConcatStatusHistoryTest {
     @Test
     public void 컨캣_상태_생성_테스트() {
         // given
-            // 멤버, 컨캣 프로젝트 객체 생성 후 DB에 저장
+        // 멤버, 컨캣 프로젝트 객체 생성 후 DB에 저장
         Member member = 멤버_생성기();
         ConcatProject concatProject = ConcatProject.createConcatProject(member,"컨캣_프로젝트_1");
         concatProjectRepository.save(concatProject);
@@ -61,22 +61,22 @@ class ConcatStatusHistoryTest {
         em.clear();
 
         // when
-            // Concat_상태_이력 객체 생성
+        // Concat_상태_이력 객체 생성
         ConcatStatusHistory beforeConcatStatusHistory = ConcatStatusHistory.createConcatStatusHistory(concatProject, ConcatStatusConst.SUCCESS);
-            // Concat_상태 이력 객체 DB에 저장
+        // Concat_상태 이력 객체 DB에 저장
         ConcatStatusHistoryRepository.save(beforeConcatStatusHistory);
         em.flush();
         em.clear();
-            // 저장한 Concat_상태_이력 조회
+        // 저장한 Concat_상태_이력 조회
         ConcatStatusHistory afterConcatStatusHistory = ConcatStatusHistoryRepository.findById(beforeConcatStatusHistory.getId()).get();
 
 
         // then
-            // 생성한 객체와 DB에서 조회한 객체 비교
-                // 컨캣_상태 비교
+        // 생성한 객체와 DB에서 조회한 객체 비교
+        // 컨캣_상태 비교
         assertEquals(beforeConcatStatusHistory.getConcatStatusConst(), afterConcatStatusHistory.getConcatStatusConst());
         assertEquals(ConcatStatusConst.SUCCESS, afterConcatStatusHistory.getConcatStatusConst());
-                // 컨캣_프로젝트 이름 비교
+        // 컨캣_프로젝트 이름 비교
         System.out.println("afterConcatStatusHistory.getConcatProject().getProjectName() = " + afterConcatStatusHistory.getConcatProject().getProjectName());
         System.out.println("beforeConcatStatusHistory.getConcatProject().getProjectName() = " + beforeConcatStatusHistory.getConcatProject().getProjectName());
         assertEquals(beforeConcatStatusHistory.getConcatProject().getProjectName(), afterConcatStatusHistory.getConcatProject().getProjectName());
@@ -86,18 +86,18 @@ class ConcatStatusHistoryTest {
     @Test
     public void 컨캣_상태_생성_실패_테스트() {
         // given
-            // 멤버, 컨캣 프로젝트 객체 생성 후 DB에 저장
+        // 멤버, 컨캣 프로젝트 객체 생성 후 DB에 저장
         Member member = 멤버_생성기();
         ConcatProject concatProject = ConcatProject.createConcatProject(member,"컨캣_프로젝트_1");
 
         // when
-            // Concat_상태_이력 객체 생성
+        // Concat_상태_이력 객체 생성
         ConcatStatusHistory beforeConcatStatusHistory = ConcatStatusHistory.createConcatStatusHistory(concatProject, ConcatStatusConst.SUCCESS);
-            // Concat_상태 이력 객체 DB에 저장하지 않음 -> 실패 테스트를 위해
+        // Concat_상태 이력 객체 DB에 저장하지 않음 -> 실패 테스트를 위해
 //        ConcatStatusHistoryRepository.save(beforeConcatStatusHistory);
 
         // then
-            // 예외가 발생해야 하는 부분 검증
+        // 예외가 발생해야 하는 부분 검증
         assertThrows(Exception.class, () -> {
             // DB에 저장하지 않은 상태 이력을 조회
             ConcatStatusHistory afterConcatStatusHistory = ConcatStatusHistoryRepository.findById(beforeConcatStatusHistory.getId()).get();
