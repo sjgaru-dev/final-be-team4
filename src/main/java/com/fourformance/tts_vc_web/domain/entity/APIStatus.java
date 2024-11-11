@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "api_status")
 public class APIStatus extends BaseEntity {
 
     @Id
