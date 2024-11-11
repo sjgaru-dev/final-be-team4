@@ -57,14 +57,12 @@ public class S3Controller {
             @RequestParam("file") MultipartFile file,
             @RequestParam("detailId") Long detailId,
             @RequestParam("projectId") Long projectId,
-//            @RequestParam("projectType") ProjectType projectType,
             HttpSession session
     ) throws IOException {
         String userId = "test"; // 실제 프로젝트에서는 세션을 사용하여 사용자 ID를 가져옵니다.
 //        Long userId = (Long) session.getAttribute("userId");
         try {
             // TTS&VC 반환 유닛 오디오 업로드 메서드 호출
-//            String fileUrl = S3Service.uploadUnitSaveFile(file, userId, projectId, detailId, projectType); // 서비스 변경 전 (삭제 예정)
             String fileUrl = S3Service.uploadUnitSaveFile(file, userId, projectId, detailId); // 서비스 변경 후
             return ResponseEntity.ok(fileUrl);
         } catch (Exception e) {
