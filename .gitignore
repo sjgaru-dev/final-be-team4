@@ -314,3 +314,7 @@ gradle-app.setting
 *.hprof
 
 # End of https://www.toptal.com/developers/gitignore/api/java,macos,maven,windows,intellij,eclipse,gradle
+
+# 추가할 비밀 파일
+*.json
+src/main/resources/sound-potion-440705-j8-5c7b6bb0ebd6.json
