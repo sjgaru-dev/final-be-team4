@@ -28,7 +28,7 @@ public class FileUploadController {
     public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) { // 공백 수정
         try {
             String fileName = file.getOriginalFilename(); // 공백 수정
-            String fileUrl = "https://" + bucket + ".s3.amazonaws.com/" + fileName; // 버킷 주소 수정
+            String fileUrl = "https://" + bucket + ".s3.amazonaws.com/" + fileName; // 버킷 주소
             ObjectMetadata metadata = new ObjectMetadata(); // 공백 수정
             metadata.setContentType(file.getContentType());
             metadata.setContentLength(file.getSize());
