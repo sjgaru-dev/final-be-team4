@@ -36,43 +36,6 @@ public class S3Service {
     private final AmazonS3Client amazonS3Client;
     private final ProjectRepository projectRepository;
 
-    // 삭제 예정 : 파일 경로는 amazonS3Client에서 알아서 만들어줍니다. (.getUrl)
-//    private final String BASE_ROUTE = "https://" + bucket + ".s3.amazonaws.com/";
-
-
-    // TTS와 VC에 대한 유닛 오디오를 S3 버킷에 저장
-//    public String uploadUnitSaveFile(MultipartFile file, String userId, Long projectId, Long detailId, ProjectType projectType) throws Exception {
-//
-//        try {
-//            // 오디오파일 이름으로 사용할 날짜 포맷 지정
-//            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
-//            String timeStamp = sdf.format(new Date());
-//
-//            // 전체 경로를 포함한 파일 이름 설정
-//            String fileName = userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + timeStamp + ".wav";
-//
-//            // 메타데이터 저장
-//            ObjectMetadata metadata = new ObjectMetadata();
-//            metadata.setContentType(file.getContentType()); // wav
-//            metadata.setContentLength(file.getSize()); // 업로드 할 때 사이즈 반드시 필요
-//
-//            // S3에 파일 업로드 (전체 경로 포함)
-//            amazonS3Client.putObject(bucket, fileName, file.getInputStream(), metadata);
-//
-//            // 파일의 전체 URL 반환
-//            String fileUrl = amazonS3Client.getUrl(bucket, fileName).toString();
-//
-//            // 반환된 오디오 메타를 DB에 저장
-//            saveTTSOrVCOutputAudioMeta(detailId, projectType, fileUrl);
-//
-//            return fileUrl;
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            throw new Exception("파일 업로드 실패", e);
-//        }
-//    }
-
     // TTS와 VC에 대한 유닛 오디오를 S3 버킷에 저장
     public String uploadUnitSaveFile(MultipartFile file, String userId, Long projectId, Long detailId) throws Exception {
 
