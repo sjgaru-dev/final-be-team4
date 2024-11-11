@@ -1,8 +1,8 @@
 package com.fourformance.tts_vc_web.common.config;
 
-import com.fourformance.tts_vc_web.common.config.AuditorAwareImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
