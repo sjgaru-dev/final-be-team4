@@ -1,115 +1,143 @@
 package com.fourformance.tts_vc_web.service.tts;
 
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.texttospeech.v1.*;
 import com.google.protobuf.ByteString;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 @Service
 public class TTSService_team_api {
 
-    private TextToSpeechClient textToSpeechClient;
-    private List<String> segments = new ArrayList<>(); // 세그먼트를 저장하는 리스트
+    private static final String OUTPUT_DIR = "output/"; // WAV 파일 저장 디렉토리
+    private static final Logger LOGGER = Logger.getLogger(TTSService_team_api.class.getName());
 
+    public TTSService_team_api() {
+        // 출력 디렉토리가 존재하지 않으면 생성합니다.
+        File outputDir = new File(OUTPUT_DIR);
+        if (!outputDir.exists()) {
+            outputDir.mkdirs();
+        }
+    }
 
-    // 초기화 블록에서 Google Cloud TTS 클라이언트를 설정
-    @PostConstruct
-    public void init() throws IOException {
-        // 리소스 폴더에서 서비스 계정 키 파일을 읽어옴
-        InputStream credentialsStream = getClass().getClassLoader().getResourceAsStream("sound-potion-440705-j8-cc85748343a6.json");
-        if (credentialsStream == null) {
-            throw new IOException("Service account JSON file not found in resources.");
+    /**
+     * 개별 텍스트 변환 메서드
+     * Google TTS API를 사용하여 입력된 텍스트를 WAV 형식으로 변환하고, 파일로 저장합니다.
+     *
+     * @param text   변환할 텍스트
+     * @param speed  말하는 속도
+     * @param volume 볼륨 조정 (데시벨)
+     * @param pitch  음의 높낮이
+     * @return 저장된 WAV 파일의 경로
+     * @throws Exception 변환 또는 파일 저장 중 오류 발생 시
+     */
+    public String convertSingleText(String text, double speed, double volume, double pitch) throws Exception {
+        String fileName = "tts_output_" + System.currentTimeMillis() + ".wav";
+        String filePath = OUTPUT_DIR + fileName;
+
+        // Google TTS API 호출
+        ByteString audioContent = callTTSApi(text, speed, volume, pitch);
+
+        // WAV 파일로 저장
+        saveAudioContent(audioContent, filePath);
+
+        LOGGER.info("WAV 파일이 저장되었습니다: " + filePath);
+        return filePath;
+    }
+
+    /**
+     * 전체 텍스트 변환 메서드
+     * 여러 텍스트 세그먼트를 한꺼번에 변환하고, 각 WAV 파일의 경로를 반환합니다.
+     *
+     * @param texts 변환할 텍스트 세그먼트 리스트
+     * @return 변환된 WAV 파일의 URL 리스트
+     * @throws Exception 변환 또는 파일 저장 중 오류 발생 시
+     */
+    public List<Map<String, String>> convertAllTexts(List<Map<String, Object>> texts) throws Exception {
+        List<Map<String, String>> fileUrls = new ArrayList<>();
+
+        for (Map<String, Object> textData : texts) {
+            String text = (String) textData.get("text");
+            double speed = (double) textData.get("speed");
+            double volume = (double) textData.get("volume");
+            double pitch = (double) textData.get("pitch");
+
+            // 개별 텍스트 변환 호출
+            String filePath = convertSingleText(text, speed, volume, pitch);
+            fileUrls.add(Map.of("fileUrl", "/api/tts/download?path=" + filePath));
         }
 
-        // GoogleCredentials 객체를 생성하여 인증 설정
-        GoogleCredentials credentials = GoogleCredentials.fromStream(credentialsStream);
-
-        // TTS 클라이언트 설정을 위한 TextToSpeechSettings 생성
-        TextToSpeechSettings settings = TextToSpeechSettings.newBuilder()
-                .setCredentialsProvider(() -> credentials)
-                .build();
-
-        // TextToSpeechClient 생성
-        textToSpeechClient = TextToSpeechClient.create(settings);
+        return fileUrls;
     }
 
-    // TTS 변환 메서드
-    public ByteString convertTextToSpeech(String text) throws Exception {
-        // TTS 요청 구성
-        SynthesisInput input = SynthesisInput.newBuilder()
-                .setText(text)
-                .build();
+    /**
+     * Google TTS API 호출 메서드
+     * Google TTS API를 사용하여 텍스트를 WAV 형식으로 변환합니다.
+     *
+     * @param text   변환할 텍스트
+     * @param speed  말하는 속도
+     * @param volume 볼륨 조정 (데시벨)
+     * @param pitch  음의 높낮이
+     * @return 변환된 오디오 콘텐츠 (WAV 형식)
+     */
+    private ByteString callTTSApi(String text, double speed, double volume, double pitch) {
+        try {
+            SynthesisInput input = SynthesisInput.newBuilder().setText(text).build();
+            VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
+                    .setLanguageCode("ko-KR")
+                    .setSsmlGender(SsmlVoiceGender.NEUTRAL)
+                    .build();
+            AudioConfig audioConfig = AudioConfig.newBuilder()
+                    .setAudioEncoding(AudioEncoding.LINEAR16) // WAV 형식 고정
+                    .setSpeakingRate(speed)
+                    .setVolumeGainDb(volume)
+                    .setPitch(pitch)
+                    .build();
 
-        // 음성 설정
-        VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
-                .setLanguageCode("ko-KR")
-                .setSsmlGender(SsmlVoiceGender.NEUTRAL)
-                .build();
-
-        // 오디오 설정 (MP3 포맷)
-        AudioConfig audioConfig = AudioConfig.newBuilder()
-                .setAudioEncoding(AudioEncoding.MP3)
-                .build();
-
-        // TTS 요청 및 응답 처리
-        SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
-        return response.getAudioContent();
-    }
-
-    public ByteString convertTextToSpeechWithOptions(String text, double speed, double volume, double pitch) throws Exception {
-        // 1. 입력 텍스트를 TTS API의 입력 형식으로 설정합니다.
-        SynthesisInput input = SynthesisInput.newBuilder()
-                .setText(text) // 변환할 텍스트 설정
-                .build();
-
-        // 2. 음성 설정을 구성합니다.
-        VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
-                .setLanguageCode("ko-KR") // 사용할 언어를 한국어로 설정
-                .setSsmlGender(SsmlVoiceGender.NEUTRAL) // 음성의 성별을 중성으로 설정
-                .build();
-
-        // 3. 오디오 설정을 구성하여 음성의 속도, 볼륨, 피치를 사용자 지정 옵션으로 설정합니다.
-        AudioConfig audioConfig = AudioConfig.newBuilder()
-                .setAudioEncoding(AudioEncoding.MP3) // 출력 오디오 형식을 MP3로 설정
-                .setSpeakingRate(speed) // 말하는 속도를 사용자 입력 값으로 설정
-                .setVolumeGainDb(volume) // 볼륨을 사용자 입력 값으로 설정 (단위: 데시벨)
-                .setPitch(pitch) // 음의 높낮이를 사용자 입력 값으로 설정
-                .build();
-
-        // 4. TTS API를 호출하여 텍스트를 음성으로 변환하고, 응답을 받습니다.
-        SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
-
-        // 5. 변환된 오디오 데이터를 반환합니다.
-        return response.getAudioContent();
-    }
-
-    // 텍스트 세그먼트를 추가하는 메서드 (필요시 사용)
-    public void addSegment(String text) {
-        segments.add(text);
-    }
-
-    // 세그먼트 삭제 메서드
-    public boolean deleteSegment(int index) {
-        if (index >= 0 && index < segments.size()) {
-            segments.remove(index);
-            return true;
+            SynthesizeSpeechResponse response = TextToSpeechClient.create().synthesizeSpeech(input, voice, audioConfig);
+            return response.getAudioContent();
+        } catch (Exception e) {
+            LOGGER.severe("TTS API 호출 중 오류 발생: " + e.getMessage());
+            throw new RuntimeException("TTS 변환 실패", e);
         }
-        return false;
     }
 
-    // 선택한 여러 세그먼트를 삭제하는 메서드
-    public void deleteSegments(List<Integer> indexes) {
-        indexes.sort((a, b) -> b - a); // 인덱스를 내림차순으로 정렬
-        for (int index : indexes) {
-            if (index >= 0 && index < segments.size()) {
-                segments.remove(index);
-            }
+    /**
+     * 오디오 콘텐츠를 WAV 파일로 저장하는 메서드
+     *
+     * @param audioContent 변환된 오디오 콘텐츠
+     * @param filePath     저장할 파일 경로
+     * @throws IOException 파일 저장 중 오류 발생 시
+     */
+    private void saveAudioContent(ByteString audioContent, String filePath) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(filePath)) {
+            fos.write(audioContent.toByteArray());
         }
+    }
+
+    /**
+     * 파일 로드 메서드
+     * 저장된 파일을 로드하여 다운로드 가능하도록 반환합니다.
+     *
+     * @param filePath 로드할 파일 경로
+     * @return 로드된 파일의 리소스 객체
+     * @throws IOException 파일이 존재하지 않거나 접근 불가능할 때
+     */
+    public Resource loadFileAsResource(String filePath) throws IOException {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            LOGGER.severe("파일을 찾을 수 없습니다: " + filePath);
+            throw new IOException("파일이 존재하지 않습니다: " + filePath);
+        }
+
+        return new FileSystemResource(file);
     }
 }
