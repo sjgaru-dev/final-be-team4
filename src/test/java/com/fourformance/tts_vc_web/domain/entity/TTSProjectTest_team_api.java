@@ -35,7 +35,7 @@ class TTSProjectTest_team_api {
                 LocalDateTime.now(), "010-1234-5678");
         memberRepository.save(member);
 
-        TTSProject project = TTSProject.createTTSProject(member, "Sample Project");
+        TTSProject project = TTSProject.createTTSProject(member, "Sample Project",null,null,null,null);
         ttsProjectRepository.save(project);
         em.flush();
         em.clear();
@@ -57,7 +57,7 @@ class TTSProjectTest_team_api {
                 LocalDateTime.now(), "010-1234-5678");
         memberRepository.save(member);
 
-        TTSProject project = TTSProject.createTTSProject(member, "Old Project");
+        TTSProject project = TTSProject.createTTSProject(member, "Old Project",null,null,null,null);
         ttsProjectRepository.save(project);
         em.flush();
         em.clear();
@@ -86,7 +86,7 @@ class TTSProjectTest_team_api {
                 LocalDateTime.now(), "010-1234-5678");
         memberRepository.save(member);
 
-        TTSProject project = TTSProject.createTTSProject(member, "API Project");
+        TTSProject project = TTSProject.createTTSProject(member, "API Project",null,null,null,null);
         ttsProjectRepository.save(project);
         em.flush();
         em.clear();
@@ -114,7 +114,7 @@ class TTSProjectTest_team_api {
                 LocalDateTime.now(), "010-1234-5678");
         memberRepository.save(member);
 
-        TTSProject project = TTSProject.createTTSProject(member, "Delete Test Project");
+        TTSProject project = TTSProject.createTTSProject(member, "Delete Test Project",null,null,null,null);
         ttsProjectRepository.save(project);
         em.flush();
         em.clear();
