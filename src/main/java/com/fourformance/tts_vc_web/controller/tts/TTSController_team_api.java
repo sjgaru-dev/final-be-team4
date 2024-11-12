@@ -68,6 +68,21 @@ public class TTSController_team_api {
         }
     }
 
+    @PostMapping("/convert/single2")
+    public ResponseEntity<Map<String, String>> convertSingleText2(
+            @RequestParam("id") Long id,
+            @RequestParam("languageCode") String languageCode,
+            @RequestParam("gender") String gender) {
+        try {
+            String filePath = ttsService.convertSingleText(id, languageCode, gender);
+            return ResponseEntity.ok(Map.of("fileUrl", "/api/tts/download?path=" + filePath));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     /**
      * 전체 텍스트 변환 API
      * 여러 텍스트 세그먼트를 한꺼번에 WAV 파일로 변환합니다.
