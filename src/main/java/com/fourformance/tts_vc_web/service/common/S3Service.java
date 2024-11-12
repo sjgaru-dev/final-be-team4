@@ -58,7 +58,7 @@ public class S3Service {
             }
 
             // 전체 경로를 포함한 파일 이름 설정
-            String fileName = userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + timeStamp + ".wav";
+            String fileName = "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + timeStamp + ".wav";
 
             // 메타데이터 저장
             ObjectMetadata metadata = new ObjectMetadata();
@@ -92,7 +92,7 @@ public class S3Service {
 
             // 전체 경로를 포함한 파일 이름 설정
 
-            String fileName = userId + "/CONCAT" + "/" + projectId + "/" + timeStamp + ".wav";
+            String fileName = "Generated/" + userId + "/CONCAT" + "/" + projectId + "/" + timeStamp + ".wav";
 
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentType(file.getContentType()); // wav
@@ -174,16 +174,18 @@ public class S3Service {
             String filePath = null;
             if (project instanceof TTSProject) {
                 projectType = ProjectType.TTS;
-                filePath = userId + "/" + projectType + "/"  + projectId + "/" + detailId + "/" + fileName;
+                filePath = "Generated/" + userId + "/" + projectType + "/"  + projectId + "/" + detailId + "/" + fileName;
             } else if (project instanceof VCProject) {
                 projectType = ProjectType.VC;
-                filePath = userId + "/" + projectType + "/"  + projectId + "/" + detailId + "/" + fileName;
+                filePath = "Generated/" + userId + "/" + projectType + "/"  + projectId + "/" + detailId + "/" + fileName;
             } else if (project instanceof ConcatProject) {
                 projectType = ProjectType.CONCAT;
-                filePath = userId + "/" + projectType + "/"  + projectId +  "/" + fileName;
+                filePath = "Generated/" + userId + "/" + projectType + "/"  + projectId +  "/" + fileName;
             } else {
                 throw new IllegalArgumentException("지정된 타입의 프로젝트가 들어와야 합니다.");
             }
+
+            // presigned url 생성
             GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, filePath);
             request.withMethod(com.amazonaws.HttpMethod.GET)
                     .withExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5));
