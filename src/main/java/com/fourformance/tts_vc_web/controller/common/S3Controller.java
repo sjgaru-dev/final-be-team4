@@ -98,7 +98,7 @@ public class S3Controller {
             description = "TTS, VC, CONCAT으로 변환된 오디오를 S3 버킷으로부터 다운로드 받는 api입니다." +
                     "<br><br>매개변수:<br>- 프로젝트ID<br>- 유닛ID<br>- 오디오파일명" +
                     "<br><br> 프로젝트 타입이 CONCAT일 경우는 유닛 ID를 null로 받습니다.")
-    @GetMapping(value={"/tts/download-generated-audio-from-s3","/vc/download-generated-audio-from-s3","/concat/download-generated-audio-from-s3"})
+    @GetMapping(value={"/tts/download-generated-audio-from-bucket","/vc/download-generated-audio-from-bucket","/concat/download-generated-audio-from-bucket"})
     public ResponseEntity<String> downloadGeneratedAudio(
             HttpSession session,
             @RequestParam("projectId") Long projectId,
