@@ -199,66 +199,95 @@ public class TTSService_team_api {
 
     // APIStatus 생성 메서드를 반영한 메서드
     private ByteString callTTSApi(Long id, String text, String languageCode, String gender, double speed, double volume, double pitch) {
+        TTSDetail ttsDetail = ttsDetailRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Invalid TTS Detail ID: " + id));
+
+        // 요청 페이로드 생성
+        String requestPayload = String.format(
+                "Text: %s, Language: %s, Gender: %s, Speed: %.2f, Volume: %.2f, Pitch: %.2f",
+                text, languageCode, gender, speed, volume, pitch
+        );
+
         try {
+            // TTS API 입력 구성
             SynthesisInput input = SynthesisInput.newBuilder().setText(text).build();
 
-            SsmlVoiceGender ssmlGender;
-            switch (gender.toLowerCase()) {
-                case "male":
-                    ssmlGender = SsmlVoiceGender.MALE;
-                    break;
-                case "female":
-                    ssmlGender = SsmlVoiceGender.FEMALE;
-                    break;
-                default:
-                    ssmlGender = SsmlVoiceGender.NEUTRAL;
-                    break;
-            }
+            // 성별 파라미터 설정
+            SsmlVoiceGender ssmlGender = switch (gender.toLowerCase()) {
+                case "male" -> SsmlVoiceGender.MALE;
+                case "female" -> SsmlVoiceGender.FEMALE;
+                default -> SsmlVoiceGender.NEUTRAL;
+            };
 
+            // 음성 및 오디오 설정
             VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
                     .setLanguageCode(languageCode)
                     .setSsmlGender(ssmlGender)
                     .build();
 
             AudioConfig audioConfig = AudioConfig.newBuilder()
-                    .setAudioEncoding(AudioEncoding.LINEAR16)
+                    .setAudioEncoding(AudioEncoding.LINEAR16) // WAV 형식
                     .setSpeakingRate(speed)
                     .setVolumeGainDb(volume)
                     .setPitch(pitch)
                     .build();
 
+            // Google TTS API 호출
             SynthesizeSpeechResponse response = TextToSpeechClient.create().synthesizeSpeech(input, voice, audioConfig);
 
-            // 응답 디버깅 정보 출력
-            System.out.println("Response: " + response);
-            System.out.println("Audio Content Size: " + response.getAudioContent().size());
+            // 응답 페이로드 생성
+            String responsePayload = String.format(
+                    "AudioContentSize: %d bytes, Language: %s, Gender: %s, Speed: %.2f, Volume: %.2f, Pitch: %.2f",
+                    response.getAudioContent().size(),
+                    languageCode,
+                    gender,
+                    speed,
+                    volume,
+                    pitch
+            );
 
-            TTSDetail ttsDetail = ttsDetailRepository.findById(id).get();
-
-            // response AudioContent 크기가 0보다 크면 API 요청 성공 아니면 실패
-            if(response.getAudioContent().size() > 0){
-                APIStatus apiStatus =
-                        APIStatus.createAPIStatus(null, ttsDetail, "", "", 200, APIUnitStatusConst.SUCCESS);
-                apiStatusRepository.save(apiStatus);
-            }else{
-                APIStatus apiStatus =
-                        APIStatus.createAPIStatus(null, ttsDetail, "", "", 500, APIUnitStatusConst.FAILURE);
-                apiStatusRepository.save(apiStatus);
-
+            // APIStatus 생성 및 저장
+            APIStatus apiStatus;
+            if (response.getAudioContent().size() > 0) {
+                apiStatus = APIStatus.createAPIStatus(
+                        null, // VCDetail이 필요 없을 경우 null 전달
+                        ttsDetail,
+                        requestPayload,
+                        responsePayload,
+                        200,
+                        APIUnitStatusConst.SUCCESS
+                );
+            } else {
+                apiStatus = APIStatus.createAPIStatus(
+                        null,
+                        ttsDetail,
+                        requestPayload,
+                        responsePayload,
+                        500,
+                        APIUnitStatusConst.FAILURE
+                );
             }
+            apiStatusRepository.save(apiStatus);
 
             return response.getAudioContent();
-        } catch (Exception e) {
 
-            TTSDetail ttsDetail = ttsDetailRepository.findById(id).get();
-            APIStatus apiStatus =
-                    APIStatus.createAPIStatus(null, ttsDetail, "", "", 500, APIUnitStatusConst.FAILURE);
+        } catch (Exception e) {
+            // 예외 발생 시 APIStatus 생성 및 저장
+            String errorPayload = "Error: " + e.getMessage();
+            APIStatus apiStatus = APIStatus.createAPIStatus(
+                    null, // VCDetail이 필요 없을 경우 null 전달
+                    ttsDetail,
+                    requestPayload,
+                    errorPayload,
+                    500,
+                    APIUnitStatusConst.FAILURE
+            );
             apiStatusRepository.save(apiStatus);
 
             LOGGER.severe("TTS API 호출 중 오류 발생: " + e.getMessage());
             throw new RuntimeException("TTS 변환 실패", e);
         }
     }
+
 
     /**
      * 오디오 콘텐츠를 WAV 파일로 저장하는 메서드
