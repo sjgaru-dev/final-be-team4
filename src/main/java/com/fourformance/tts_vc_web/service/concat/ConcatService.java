@@ -21,11 +21,11 @@ public class ConcatService {
             File file1 = convertToFile(audioFile1);
             File file2 = convertToFile(audioFile2);
 
-            FFmpeg.atPath()
-                    .addInput(UrlInput.fromPath(file1.toPath()))
-                    .addInput(UrlInput.fromPath(file2.toPath()))
-                    .addOutput(UrlOutput.toPath(mergedFilePath))
-                    .execute();
+//            FFmpeg.atPath()
+//                    .addInput(UrlInput.fromPath(file1.toPath()))
+//                    .addInput(UrlInput.fromPath(file2.toPath()))
+//                    .addOutput(UrlOutput.toPath(mergedFilePath))
+//                    .execute();
 
             return new UrlResource(mergedFilePath.toUri());
         } catch (Exception e) {
