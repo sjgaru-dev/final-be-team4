@@ -40,12 +40,16 @@ public class APIStatus extends BaseEntity {
 
     // 생성 메서드
     public static APIStatus createAPIStatus(VCDetail vcDetail, TTSDetail ttsDetail,
-                                            String requestPayload) {
+                                            String requestPayload, String responsePayload, Integer responseCode, APIUnitStatusConst apiUnitStatusConst) {
         APIStatus apiStatus = new APIStatus();
         apiStatus.vcDetail = vcDetail;
         apiStatus.ttsDetail = ttsDetail;
         apiStatus.requestAt = LocalDateTime.now();
         apiStatus.requestPayload = requestPayload;
+        apiStatus.responseAt = LocalDateTime.now();
+        apiStatus.responsePayload = responsePayload;
+        apiStatus.responseCode = responseCode;
+        apiStatus.apiUnitStatusConst = apiUnitStatusConst;
         return apiStatus;
     }
 
