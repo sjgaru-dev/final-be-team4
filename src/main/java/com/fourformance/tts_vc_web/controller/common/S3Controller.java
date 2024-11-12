@@ -31,7 +31,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import static com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta.createOutputAudioMeta;
 
 @RestController
-@RequestMapping("/s3")
 @RequiredArgsConstructor
 public class S3Controller {
 
@@ -51,7 +50,8 @@ public class S3Controller {
             summary = "유닛(TTS or VC) 오디오 업로드",
             description = "유닛 오디오를 S3 버킷에 저장하고 메타데이터를 DB에 저장하는 api입니다." +
                     "<br><br>매개변수 : <br>- 유닛 id, <br>- 프로젝트 id, <br>- 프로젝트 타입 (TTS, VC, Concat), <br>- 오디오 파일")
-    @PostMapping(value = "/upload_unit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    @PostMapping(value = "/upload_unit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = {"/tts/upload-generated-audio-to-bucket", "/vc/upload-generated-audio-to-bucket"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadUnit(
             @RequestParam("file") MultipartFile file,
             @RequestParam("detailId") Long detailId,
@@ -70,12 +70,12 @@ public class S3Controller {
         }
     }
 
-    // VC로 반환한 오디오를 업로드하는 api
+    // Concat으로 반환한 오디오를 업로드하는 api
     @Operation(
             summary = "Concat 오디오 업로드",
             description = "컨캣 오디오를 S3 버킷에 저장하고 메타데이터를 DB에 저장하는 api입니다." +
                     "<br><br>매개변수 : <br>- 프로젝트 id, <br>- 오디오 파일")
-    @PostMapping(value = "/upload_concat", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/concat/upload-generated-audio-to-bucket", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadConcat(
             @RequestParam("file") MultipartFile file,
             @RequestParam("projectId") Long projectId,
@@ -92,12 +92,13 @@ public class S3Controller {
         }
     }
 
+    // 생성된 오디오를 다운받을 수 있는 presigned url을 제공하는 api
     @Operation(
             summary = "생성된 오디오 다운로드",
             description = "TTS, VC, CONCAT으로 변환된 오디오를 S3 버킷으로부터 다운로드 받는 api입니다." +
                     "<br><br>매개변수:<br>- 프로젝트ID<br>- 유닛ID<br>- 오디오파일명" +
                     "<br><br> 프로젝트 타입이 CONCAT일 경우는 유닛 ID를 null로 받습니다.")
-    @GetMapping("download-generated-audio")
+    @GetMapping(value={"/tts/download-generated-audio-from-s3","/vc/download-generated-audio-from-s3","/concat/download-generated-audio-from-s3"})
     public ResponseEntity<String> downloadGeneratedAudio(
             HttpSession session,
             @RequestParam("projectId") Long projectId,
@@ -105,10 +106,10 @@ public class S3Controller {
             @RequestParam("fileName") String fileName) throws Exception {
         try {
 //            String userId = session.getAttribute("userId").toString();
-
-            System.out.println("fileName = " + fileName);
             Long userId = 0L;  // 개발 단계 임시 하드코딩
 //            Long userId = (Long) session.getAttribute("userId");
+
+            // presigned url을 반환하는 서비스 호출
             String presignedUrl = S3Service.generatePresignedUrl(userId, projectId, detailId, fileName);
             return ResponseEntity.ok(presignedUrl);
         } catch (Exception e) {
