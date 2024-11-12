@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-@Rollback(value = false)
+//@Rollback(value = false)
 @ExtendWith(MockitoExtension.class)
 class MultiJobLogTest_teamMulti {
   

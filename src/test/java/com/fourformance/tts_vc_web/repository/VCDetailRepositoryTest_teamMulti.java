@@ -23,7 +23,7 @@ import java.util.Random;
 
 @SpringBootTest
 @Transactional //테스트 클래스에 적용되면 각 테스트가 독립적인 트랜잭션 내에서 실행
-@Rollback(false) //롤백 여부를 제어
+//@Rollback(false) //롤백 여부를 제어
 class VCDetailRepositoryTest_teamMulti {
 
     @Autowired
@@ -82,7 +82,7 @@ class VCDetailRepositoryTest_teamMulti {
         MemberAudioMeta savedAudioMeta = memberAudioMetaRepository.save(createMemberAudioMeta(savedMember));
 
         // VCDetail 생성 및 저장
-        VCDetail vcDetail = VCDetail.createVCDetailFromUserAudio(savedProject, savedAudioMeta);
+        VCDetail vcDetail = VCDetail.createVCDetail(savedProject, savedAudioMeta);
         VCDetail savedDetail = vcDetailRepository.save(vcDetail);
 
         // 저장 확인
@@ -103,7 +103,7 @@ class VCDetailRepositoryTest_teamMulti {
 
         // VCDetail 20개 생성 및 저장
         for (int i = 0; i < 20; i++) {
-            VCDetail vcDetail = VCDetail.createVCDetailFromUserAudio(savedProject, audioMetaList.get(i));
+            VCDetail vcDetail = VCDetail.createVCDetail(savedProject, audioMetaList.get(i));
             vcDetail.updateDetails(false, "UnitScript " + (i + 1)); // 고유한 unitScript 설정
             vcDetailRepository.save(vcDetail);
 
@@ -118,7 +118,7 @@ class VCDetailRepositoryTest_teamMulti {
         Member savedMember = memberRepository.save(createMember());
         VCProject savedProject = vcProjectRepository.save(createVCProject(savedMember));
         MemberAudioMeta savedAudioMeta = memberAudioMetaRepository.save(createMemberAudioMeta(savedMember));
-        VCDetail savedDetail = vcDetailRepository.save(VCDetail.createVCDetailFromUserAudio(savedProject, savedAudioMeta));
+        VCDetail savedDetail = vcDetailRepository.save(VCDetail.createVCDetail(savedProject, savedAudioMeta));
 
         // ID로 조회
         Optional<VCDetail> foundDetail = vcDetailRepository.findById(savedDetail.getId());
@@ -140,7 +140,7 @@ class VCDetailRepositoryTest_teamMulti {
         List<VCDetail> vcDetails = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
             MemberAudioMeta savedAudioMeta = memberAudioMetaRepository.save(createMemberAudioMeta(savedMember));
-            VCDetail vcDetail = VCDetail.createVCDetailFromUserAudio(savedProject, savedAudioMeta);
+            VCDetail vcDetail = VCDetail.createVCDetail(savedProject, savedAudioMeta);
             vcDetail.updateDetails(false, "UnitScript " + i);
             vcDetails.add(vcDetailRepository.save(vcDetail));
         }
@@ -161,7 +161,7 @@ class VCDetailRepositoryTest_teamMulti {
         Member savedMember = memberRepository.save(createMember());
         VCProject savedProject = vcProjectRepository.save(createVCProject(savedMember));
         MemberAudioMeta savedAudioMeta = memberAudioMetaRepository.save(createMemberAudioMeta(savedMember));
-        VCDetail savedDetail = vcDetailRepository.save(VCDetail.createVCDetailFromUserAudio(savedProject, savedAudioMeta));
+        VCDetail savedDetail = vcDetailRepository.save(VCDetail.createVCDetail(savedProject, savedAudioMeta));
 
         // 업데이트: isChecked와 unitScript 업데이트
         savedDetail.updateDetails(true, "Updated UnitScript");
@@ -187,7 +187,7 @@ class VCDetailRepositoryTest_teamMulti {
         List<VCDetail> vcDetails = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
             MemberAudioMeta savedAudioMeta = memberAudioMetaRepository.save(createMemberAudioMeta(savedMember));
-            VCDetail vcDetail = VCDetail.createVCDetailFromUserAudio(savedProject, savedAudioMeta);
+            VCDetail vcDetail = VCDetail.createVCDetail(savedProject, savedAudioMeta);
             vcDetail.updateDetails(false, "UnitScript " + i);
             vcDetails.add(vcDetailRepository.save(vcDetail));
         }
@@ -217,7 +217,7 @@ class VCDetailRepositoryTest_teamMulti {
         Member savedMember = memberRepository.save(createMember());
         VCProject savedProject = vcProjectRepository.save(createVCProject(savedMember));
         MemberAudioMeta savedAudioMeta = memberAudioMetaRepository.save(createMemberAudioMeta(savedMember));
-        VCDetail savedDetail = vcDetailRepository.save(VCDetail.createVCDetailFromUserAudio(savedProject, savedAudioMeta));
+        VCDetail savedDetail = vcDetailRepository.save(VCDetail.createVCDetail(savedProject, savedAudioMeta));
 
         // 삭제
         vcDetailRepository.delete(savedDetail);
