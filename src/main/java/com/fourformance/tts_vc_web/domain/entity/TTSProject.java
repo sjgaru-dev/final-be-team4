@@ -29,19 +29,25 @@ public class TTSProject extends Project {
     private Style style;
 
     private String fullScript;
+
     private Float globalSpeed;
     private Float globalPitch;
     private Float globalVolume;
+
     @Enumerated(EnumType.STRING)
     private APIStatusConst apiStatus = APIStatusConst.NOT_STARTED;
     private LocalDateTime APIStatusModifiedAt;
 
 
     // 생성 메서드
-    public static TTSProject createTTSProject(Member member, String projectName) {
+    public static TTSProject createTTSProject(Member member, String projectName, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
         TTSProject ttsProject = new TTSProject();
         ttsProject.member = member;
         ttsProject.projectName = projectName;
+        ttsProject.fullScript = fullScript;
+        ttsProject.globalSpeed = globalSpeed;
+        ttsProject.globalPitch = globalPitch;
+        ttsProject.globalVolume = globalVolume;
         ttsProject.createdAt();
         ttsProject.updatedAt();
         return ttsProject;
