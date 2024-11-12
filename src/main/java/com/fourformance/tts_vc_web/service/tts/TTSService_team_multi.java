@@ -22,7 +22,7 @@ public class TTSService_team_multi {
     private final TTSDetailRepository ttsDetailRepository;
     private final StyleRepository styleRepository;
 
-    //해당 프로젝트가 없으면 생성하고, 이미 값이 있으면 update쳐야함
+    //해당 프로젝트가 없으면 생성하고, 이미 있으면 update쳐야함 => 관심사 분리 해야할 것 같음
     //unitSequence도 순서대로 잘 들어왔는지, 중복된 값은 없는지 체크 필요
     //projectId는 존재하고 detailId를 모두 null로 한 테스트 통과함
     public Long saveTTSProjectAndDetail(TtsProjectDetailDto dto) {

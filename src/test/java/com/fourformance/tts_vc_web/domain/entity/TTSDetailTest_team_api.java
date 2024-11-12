@@ -43,7 +43,7 @@ class TTSDetailTest {
     // 테스트용 TTSProject 객체 생성 메서드
     public TTSProject createTestTTSProject(Member member) {
         // TTS 프로젝트 생성
-        return TTSProject.createTTSProject(member, "Test TTS Project");
+        return TTSProject.createTTSProject(member, "Test TTS Project", null, 1.0f,1.0f,1.0f);
     }
 
     // 테스트용 Style 객체 생성 메서드
