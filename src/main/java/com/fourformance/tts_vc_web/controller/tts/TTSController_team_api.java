@@ -1,9 +1,7 @@
 package com.fourformance.tts_vc_web.controller.tts;
 
 import com.fourformance.tts_vc_web.service.tts.TTSService_team_api;
-import com.google.protobuf.ByteString;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.core.io.Resource;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -31,55 +28,96 @@ public class TTSController_team_api {
     /**
      * 개별 텍스트 변환 API
      * Google TTS API를 사용하여 개별 텍스트를 WAV 파일로 변환합니다.
+     *
+     * 매개변수:
+     * - text: 변환할 텍스트 (예: "안녕하세요")
+     * - languageCode: 언어 코드 (예: "ko-KR", "en-US")
+     * - gender: 성별 ("male", "female", "neutral")
+     * - speed: 말하는 속도 (범위: 0.25 ~ 4.0, 기본값: 1.0)
+     * - volume: 볼륨 조정 (범위: -96.0 ~ 16.0 데시벨, 기본값: 0.0)
+     * - pitch: 음의 높낮이 (범위: -20.0 ~ 20.0, 기본값: 0.0)
      */
-    @Operation(summary = "Convert Single Text to WAV", description = "Google TTS API를 사용하여 개별 텍스트를 WAV 형식으로 변환합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "WAV 파일 변환 성공", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "500", description = "서버 오류 발생", content = @Content)
+    @Operation(summary = "Convert Single Text to WAV", description = "Google TTS API를 사용하여 개별 텍스트를 WAV 형식으로 변환합니다.\n\n" +
+            "매개변수:\n" +
+            "- text: 변환할 텍스트 (예: '안녕하세요')\n" +
+            "- languageCode: 언어 코드 (예: 'ko-KR', 'en-US')\n" +
+            "- gender: 성별 ('male', 'female', 'neutral')\n" +
+            "- speed: 말하는 속도 (범위: 0.25 ~ 4.0, 기본값: 1.0)\n" +
+            "- volume: 볼륨 조정 (범위: -96.0 ~ 16.0 데시벨, 기본값: 0.0)\n" +
+            "- pitch: 음의 높낮이 (범위: -20.0 ~ 20.0, 기본값: 0.0)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "WAV 파일 변환 성공"),
+            @ApiResponse(responseCode = "400", description = "언어 불일치 오류"),
+            @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
     @PostMapping("/convert/single")
     public ResponseEntity<Map<String, String>> convertSingleText(
             @RequestParam("text") String text,
+            @RequestParam("languageCode") String languageCode,
+            @RequestParam("gender") String gender,
             @RequestParam("speed") double speed,
             @RequestParam("volume") double volume,
             @RequestParam("pitch") double pitch) {
         try {
-            String filePath = ttsService.convertSingleText(text, speed, volume, pitch);
-            return ResponseEntity.ok(Map.of("status", "success", "fileUrl", "/api/tts/download?path=" + filePath));
+            String filePath = ttsService.convertSingleText(text, languageCode, gender, speed, volume, pitch);
+            return ResponseEntity.ok(Map.of("fileUrl", "/api/tts/download?path=" + filePath));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
 
     /**
      * 전체 텍스트 변환 API
      * 여러 텍스트 세그먼트를 한꺼번에 WAV 파일로 변환합니다.
+     *
+     * 매개변수:
+     * - text: 변환할 텍스트 세그먼트 리스트 (JSON 형식)
+     *   - text: 변환할 텍스트 (예: "Hello")
+     *   - languageCode: 언어 코드 (예: "en-US")
+     *   - gender: 성별 ("male", "female", "neutral")
+     *   - speed: 말하는 속도 (범위: 0.25 ~ 4.0, 기본값: 1.0)
+     *   - volume: 볼륨 조정 (범위: -96.0 ~ 16.0 데시벨, 기본값: 0.0)
+     *   - pitch: 음의 높낮이 (범위: -20.0 ~ 20.0, 기본값: 0.0)
      */
-    @Operation(summary = "Convert Batch of Texts to WAV", description = "여러 텍스트 세그먼트를 한꺼번에 WAV 형식으로 변환합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "WAV 파일 변환 성공", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "500", description = "서버 오류 발생", content = @Content)
+    @Operation(summary = "Convert Batch of Texts to WAV", description = "여러 텍스트 세그먼트를 한꺼번에 WAV 형식으로 변환합니다.\n\n" +
+            "매개변수:\n" +
+            "- text: 변환할 텍스트 세그먼트 리스트 (JSON 형식)\n" +
+            "  - text: 변환할 텍스트 (예: 'Hello')\n" +
+            "  - languageCode: 언어 코드 (예: 'en-US')\n" +
+            "  - gender: 성별 ('male', 'female', 'neutral')\n" +
+            "  - speed: 말하는 속도 (범위: 0.25 ~ 4.0, 기본값: 1.0)\n" +
+            "  - volume: 볼륨 조정 (범위: -96.0 ~ 16.0 데시벨, 기본값: 0.0)\n" +
+            "  - pitch: 음의 높낮이 (범위: -20.0 ~ 20.0, 기본값: 0.0)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "WAV 파일 변환 성공"),
+            @ApiResponse(responseCode = "400", description = "언어 불일치 오류"),
+            @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
     @PostMapping("/convert/batch")
     public ResponseEntity<?> convertBatchTexts(@RequestBody List<Map<String, Object>> texts) {
         try {
             List<Map<String, String>> fileUrls = ttsService.convertAllTexts(texts);
             return ResponseEntity.ok(Map.of("status", "success", "files", fileUrls));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
 
     /**
-     * WAV 파일 다운로드 API
-     * 변환된 WAV 파일을 다운로드합니다.
+     * 변환된 WAV 파일 다운로드 API
      */
-    @Operation(summary = "Download Converted WAV File", description = "변환된 WAV 파일을 다운로드합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "WAV 파일 다운로드 성공", content = @Content),
-            @ApiResponse(responseCode = "404", description = "파일을 찾을 수 없음", content = @Content)
+    @Operation(summary = "Download Converted WAV File", description = "변환된 WAV 파일을 다운로드합니다.\n\n" +
+            "매개변수:\n" +
+            "- path: 다운로드할 WAV 파일의 경로 (예: 'output/tts_output_123456.wav')")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "WAV 파일 다운로드 성공"),
+            @ApiResponse(responseCode = "404", description = "파일을 찾을 수 없음")
     })
-    @GetMapping("/download")
+    @GetMapping("/converted/download")
     public ResponseEntity<Resource> downloadFile(@RequestParam("path") String filePath) {
         try {
             Resource resource = ttsService.loadFileAsResource(filePath);

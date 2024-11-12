@@ -20,8 +20,8 @@ public class TTSService_team_api {
     private static final String OUTPUT_DIR = "output/"; // WAV 파일 저장 디렉토리
     private static final Logger LOGGER = Logger.getLogger(TTSService_team_api.class.getName());
 
+    // 생성자: 출력 디렉토리가 존재하지 않으면 생성합니다.
     public TTSService_team_api() {
-        // 출력 디렉토리가 존재하지 않으면 생성합니다.
         File outputDir = new File(OUTPUT_DIR);
         if (!outputDir.exists()) {
             outputDir.mkdirs();
@@ -32,21 +32,27 @@ public class TTSService_team_api {
      * 개별 텍스트 변환 메서드
      * Google TTS API를 사용하여 입력된 텍스트를 WAV 형식으로 변환하고, 파일로 저장합니다.
      *
-     * @param text   변환할 텍스트
-     * @param speed  말하는 속도
-     * @param volume 볼륨 조정 (데시벨)
-     * @param pitch  음의 높낮이
+     * @param text         변환할 텍스트
+     * @param languageCode 언어 코드 (예: "ko-KR", "en-US")
+     * @param gender       성별 ("male", "female", "neutral")
+     * @param speed        말하는 속도
+     * @param volume       볼륨 조정 (데시벨)
+     * @param pitch        음의 높낮이
      * @return 저장된 WAV 파일의 경로
      * @throws Exception 변환 또는 파일 저장 중 오류 발생 시
      */
-    public String convertSingleText(String text, double speed, double volume, double pitch) throws Exception {
+    public String convertSingleText(String text, String languageCode, String gender, double speed, double volume, double pitch) throws Exception {
+        // Google TTS API 호출 전에 언어 검증 수행
+        checkTextLanguage(text, languageCode);
+
+        // 파일 이름과 경로 생성
         String fileName = "tts_output_" + System.currentTimeMillis() + ".wav";
         String filePath = OUTPUT_DIR + fileName;
 
         // Google TTS API 호출
-        ByteString audioContent = callTTSApi(text, speed, volume, pitch);
+        ByteString audioContent = callTTSApi(text, languageCode, gender, speed, volume, pitch);
 
-        // WAV 파일로 저장
+        // 오디오 데이터를 WAV 파일로 저장
         saveAudioContent(audioContent, filePath);
 
         LOGGER.info("WAV 파일이 저장되었습니다: " + filePath);
@@ -64,14 +70,17 @@ public class TTSService_team_api {
     public List<Map<String, String>> convertAllTexts(List<Map<String, Object>> texts) throws Exception {
         List<Map<String, String>> fileUrls = new ArrayList<>();
 
+        // 입력된 텍스트 세그먼트를 순차적으로 변환합니다.
         for (Map<String, Object> textData : texts) {
             String text = (String) textData.get("text");
+            String languageCode = (String) textData.get("languageCode");
+            String gender = (String) textData.get("gender");
             double speed = (double) textData.get("speed");
             double volume = (double) textData.get("volume");
             double pitch = (double) textData.get("pitch");
 
             // 개별 텍스트 변환 호출
-            String filePath = convertSingleText(text, speed, volume, pitch);
+            String filePath = convertSingleText(text, languageCode, gender, speed, volume, pitch);
             fileUrls.add(Map.of("fileUrl", "/api/tts/download?path=" + filePath));
         }
 
@@ -79,24 +88,61 @@ public class TTSService_team_api {
     }
 
     /**
+     * 언어 검증 메서드
+     * 텍스트의 언어가 선택된 언어 코드와 일치하는지 확인합니다.
+     *
+     * @param text         변환할 텍스트
+     * @param languageCode 사용자가 선택한 언어 코드
+     * @throws IllegalArgumentException 언어 불일치 시 예외 발생
+     */
+    private void checkTextLanguage(String text, String languageCode) {
+        boolean isKorean = text.matches(".*[가-힣].*");
+        boolean isEnglish = text.matches(".*[A-Za-z].*");
+
+        if (languageCode.equals("ko-KR") && !isKorean) {
+            throw new IllegalArgumentException("언어 코드가 'ko-KR'로 설정되었지만, 텍스트는 한국어가 아닙니다.");
+        }
+        if (languageCode.equals("en-US") && !isEnglish) {
+            throw new IllegalArgumentException("언어 코드가 'en-US'로 설정되었지만, 텍스트는 영어가 아닙니다.");
+        }
+    }
+
+    /**
      * Google TTS API 호출 메서드
      * Google TTS API를 사용하여 텍스트를 WAV 형식으로 변환합니다.
      *
-     * @param text   변환할 텍스트
-     * @param speed  말하는 속도
-     * @param volume 볼륨 조정 (데시벨)
-     * @param pitch  음의 높낮이
-     * @return 변환된 오디오 콘텐츠 (WAV 형식)
+     * @param text         변환할 텍스트
+     * @param languageCode 언어 코드
+     * @param gender       성별
+     * @param speed        말하는 속도
+     * @param volume       볼륨 조정 (데시벨)
+     * @param pitch        음의 높낮이
+     * @return 변환된 오디오 콘텐츠 (ByteString)
      */
-    private ByteString callTTSApi(String text, double speed, double volume, double pitch) {
+    private ByteString callTTSApi(String text, String languageCode, String gender, double speed, double volume, double pitch) {
         try {
             SynthesisInput input = SynthesisInput.newBuilder().setText(text).build();
+
+            SsmlVoiceGender ssmlGender;
+            switch (gender.toLowerCase()) {
+                case "male":
+                    ssmlGender = SsmlVoiceGender.MALE;
+                    break;
+                case "female":
+                    ssmlGender = SsmlVoiceGender.FEMALE;
+                    break;
+                default:
+                    ssmlGender = SsmlVoiceGender.NEUTRAL;
+                    break;
+            }
+
             VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
-                    .setLanguageCode("ko-KR")
-                    .setSsmlGender(SsmlVoiceGender.NEUTRAL)
+                    .setLanguageCode(languageCode)
+                    .setSsmlGender(ssmlGender)
                     .build();
+
             AudioConfig audioConfig = AudioConfig.newBuilder()
-                    .setAudioEncoding(AudioEncoding.LINEAR16) // WAV 형식 고정
+                    .setAudioEncoding(AudioEncoding.LINEAR16)
                     .setSpeakingRate(speed)
                     .setVolumeGainDb(volume)
                     .setPitch(pitch)
@@ -125,11 +171,11 @@ public class TTSService_team_api {
 
     /**
      * 파일 로드 메서드
-     * 저장된 파일을 로드하여 다운로드 가능하도록 반환합니다.
+     * 저장된 WAV 파일을 로드하여 다운로드 가능하도록 반환합니다.
      *
      * @param filePath 로드할 파일 경로
      * @return 로드된 파일의 리소스 객체
-     * @throws IOException 파일이 존재하지 않거나 접근 불가능할 때
+     * @throws IOException 파일이 존재하지 않거나 접근 불가능할 때 예외 발생
      */
     public Resource loadFileAsResource(String filePath) throws IOException {
         File file = new File(filePath);
