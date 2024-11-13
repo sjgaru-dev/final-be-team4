@@ -35,7 +35,7 @@ class TTSProjectTest_team_api {
                 LocalDateTime.now(), "010-1234-5678");
         memberRepository.save(member);
 
-        TTSProject project = TTSProject.createTTSProject(member, "Sample Project",null,null,null,null);
+        TTSProject project = TTSProject.createTTSProject(member, "Sample Project",null,null,null,null,null);
         ttsProjectRepository.save(project);
         em.flush();
         em.clear();
@@ -57,7 +57,7 @@ class TTSProjectTest_team_api {
                 LocalDateTime.now(), "010-1234-5678");
         memberRepository.save(member);
 
-        TTSProject project = TTSProject.createTTSProject(member, "Old Project",null,null,null,null);
+        TTSProject project = TTSProject.createTTSProject(member, "Old Project",null,null,null,null,null);
         ttsProjectRepository.save(project);
         em.flush();
         em.clear();
@@ -65,7 +65,7 @@ class TTSProjectTest_team_api {
         TTSProject foundProject = ttsProjectRepository.findById(project.getId()).get();
 
         // when - TTS 프로젝트 업데이트 및 저장
-        foundProject.updateTTSProject("Updated Project", "New Script", 1.2f, 0.8f, 0.9f);
+        foundProject.updateTTSProject("Updated Project", null,"New Script", 1.2f, 0.8f, 0.9f);
         ttsProjectRepository.save(foundProject);
         em.flush();
         em.clear();
@@ -86,7 +86,7 @@ class TTSProjectTest_team_api {
                 LocalDateTime.now(), "010-1234-5678");
         memberRepository.save(member);
 
-        TTSProject project = TTSProject.createTTSProject(member, "API Project",null,null,null,null);
+        TTSProject project = TTSProject.createTTSProject(member, "API Project",null,null,null,null,null);
         ttsProjectRepository.save(project);
         em.flush();
         em.clear();
@@ -114,7 +114,7 @@ class TTSProjectTest_team_api {
                 LocalDateTime.now(), "010-1234-5678");
         memberRepository.save(member);
 
-        TTSProject project = TTSProject.createTTSProject(member, "Delete Test Project",null,null,null,null);
+        TTSProject project = TTSProject.createTTSProject(member, "Delete Test Project",null,null,null,null,null);
         ttsProjectRepository.save(project);
         em.flush();
         em.clear();

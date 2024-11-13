@@ -29,7 +29,7 @@ class TTSDetailTest {
     private MemberRepository memberRepository;
 
     @Autowired
-    private StyleRepository styleRepository;
+    private VoiceStyleRepository VoiceStyleRepository;
 
     @PersistenceContext
     private EntityManager em;
@@ -43,15 +43,15 @@ class TTSDetailTest {
     // 테스트용 TTSProject 객체 생성 메서드
     public TTSProject createTestTTSProject(Member member) {
         // TTS 프로젝트 생성
-        return TTSProject.createTTSProject(member, "Test TTS Project", null, 1.0f,1.0f,1.0f);
+        return TTSProject.createTTSProject(member, "Test TTS Project", null,null, 1.0f,1.0f,1.0f);
     }
 
-    // 테스트용 Style 객체 생성 메서드
-    public Style createTestStyle() {
+    // 테스트용 VoiceStyle 객체 생성 메서드
+    public VoiceStyle createTestStyle() {
         // 스타일 생성
-        Style style = new Style();
-        styleRepository.save(style);
-        return style;
+        VoiceStyle voiceStyle = VoiceStyle.createVoiceStyle("대한민국", "ko-KR", "standard", "수연", "female", "차분한");
+        VoiceStyleRepository.save(voiceStyle);
+        return voiceStyle;
     }
 
     // 1. TTSDetail 생성 테스트
@@ -69,7 +69,7 @@ class TTSDetailTest {
         ttsProjectRepository.saveAndFlush(ttsProject);
 
         // 스타일 생성 및 저장
-        Style style = createTestStyle();
+        VoiceStyle VoiceStyle = createTestStyle();
 
         // when
         // TTSDetail 생성 및 저장
@@ -106,7 +106,7 @@ class TTSDetailTest {
         ttsProjectRepository.saveAndFlush(ttsProject);
 
         // 스타일 생성 및 저장
-        Style style = createTestStyle();
+        VoiceStyle VoiceStyle = createTestStyle();
 
         // TTSDetail 생성 및 저장
         TTSDetail ttsDetail = TTSDetail.createTTSDetail(ttsProject, "Old Script", 1);
@@ -119,7 +119,7 @@ class TTSDetailTest {
         // when
         // TTSDetail 객체 조회 및 업데이트
         TTSDetail foundTTSDetail = ttsDetailRepository.findById(ttsDetail.getId()).orElse(null);
-        foundTTSDetail.updateTTSDetail(style, "Updated Script", 1.5f, 0.5f, 0.8f, 2, false);
+        foundTTSDetail.updateTTSDetail(VoiceStyle, "Updated Script", 1.5f, 0.5f, 0.8f, 2, false);
 
         // 업데이트된 TTSDetail 저장
         ttsDetailRepository.save(foundTTSDetail);

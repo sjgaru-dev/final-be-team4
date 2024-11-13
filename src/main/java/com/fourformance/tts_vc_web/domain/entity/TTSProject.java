@@ -25,8 +25,8 @@ import java.time.LocalDateTime;
 public class TTSProject extends Project {
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "style_id")
-    private Style style;
+    @JoinColumn(name = "voice_style_id")
+    private VoiceStyle voiceStyle;
 
     private String fullScript;
 
@@ -40,10 +40,11 @@ public class TTSProject extends Project {
 
 
     // 생성 메서드
-    public static TTSProject createTTSProject(Member member, String projectName, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
+    public static TTSProject createTTSProject(Member member, String projectName, VoiceStyle voiceStyle,String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
         TTSProject ttsProject = new TTSProject();
         ttsProject.member = member;
         ttsProject.projectName = projectName;
+        ttsProject.voiceStyle = voiceStyle;
         ttsProject.fullScript = fullScript;
         ttsProject.globalSpeed = globalSpeed;
         ttsProject.globalPitch = globalPitch;
@@ -54,8 +55,9 @@ public class TTSProject extends Project {
     }
 
     // 업데이트 메서드
-    public void updateTTSProject(String projectName, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
+    public void updateTTSProject(String projectName, VoiceStyle voiceStyle, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
         super.projectName = projectName;
+        this.voiceStyle = voiceStyle;
         this.fullScript = fullScript;
         this.globalSpeed = globalSpeed;
         this.globalPitch = globalPitch;
@@ -68,7 +70,5 @@ public class TTSProject extends Project {
         this.apiStatus = newApiStatus;
         this.APIStatusModifiedAt = LocalDateTime.now();
     }
-
-
 
 }
