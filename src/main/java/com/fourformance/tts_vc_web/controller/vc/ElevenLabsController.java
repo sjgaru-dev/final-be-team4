@@ -13,7 +13,8 @@ import java.time.Instant;
 public class ElevenLabsController {
 
     private static final String BASE_URL = "https://api.elevenlabs.io/v1";
-    private final String apiKey = "sk_40dde343a836275e2ce55fc046313220e0e71ca4b24c7843";
+    //private final String apiKey = "sk_40dde343a836275e2ce55fc046313220e0e71ca4b24c7843";
+    private final String apiKey = "api키";
     private final OkHttpClient client = new OkHttpClient();
 
     public String uploadVoice(String targetAudioPath) throws IOException {
