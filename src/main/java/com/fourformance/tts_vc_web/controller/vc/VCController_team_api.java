@@ -1,6 +1,7 @@
 package com.fourformance.tts_vc_web.controller.vc;
 
-import com.fourformance.tts_vc_web.service.VCService_team_api;
+
+import com.fourformance.tts_vc_web.service.vc.VCService_team_api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
