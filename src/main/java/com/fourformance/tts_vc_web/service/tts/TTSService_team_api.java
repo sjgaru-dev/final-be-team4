@@ -34,7 +34,7 @@ public class TTSService_team_api {
     APIStatusRepository apiStatusRepository;
 
 
-    private static final String OUTPUT_DIR = "src/resources/static/audio/"; // WAV 파일 저장 디렉토리
+    private static final String OUTPUT_DIR = "output/"; // WAV 파일 저장 디렉토리
     private static final Logger LOGGER = Logger.getLogger(TTSService_team_api.class.getName());
 
     // 생성자: 출력 디렉토리가 존재하지 않으면 생성합니다.
