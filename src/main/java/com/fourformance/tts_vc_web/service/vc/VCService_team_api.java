@@ -1,4 +1,4 @@
-package com.fourformance.tts_vc_web.service;
+package com.fourformance.tts_vc_web.service.vc;
 
 
 import com.fourformance.tts_vc_web.controller.vc.ElevenLabsController;

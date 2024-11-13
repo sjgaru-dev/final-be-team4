@@ -1,5 +1,7 @@
 package com.fourformance.tts_vc_web.controller.tts;
 
+import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.service.tts.TTSService_team_api;
@@ -42,6 +44,7 @@ public class TTSController_team_api {
      * - speed: 말하는 속도 (범위: 0.25 ~ 4.0, 기본값: 1.0)
      * - volume: 볼륨 조정 (범위: -96.0 ~ 16.0 데시벨, 기본값: 0.0)
      * - pitch: 음의 높낮이 (범위: -20.0 ~ 20.0, 기본값: 0.0)
+     * - id: 변환할 ttsDetail ID (예: 1, 2, ...)
      */
     @Operation(summary = "Convert Single Text to WAV", description = "Google TTS API를 사용하여 개별 텍스트를 WAV 형식으로 변환합니다.\n\n" +
             "매개변수:\n" +
@@ -50,78 +53,27 @@ public class TTSController_team_api {
             "- gender: 성별 ('male', 'female', 'neutral')\n" +
             "- speed: 말하는 속도 (범위: 0.25 ~ 4.0, 기본값: 1.0)\n" +
             "- volume: 볼륨 조정 (범위: -96.0 ~ 16.0 데시벨, 기본값: 0.0)\n" +
-            "- pitch: 음의 높낮이 (범위: -20.0 ~ 20.0, 기본값: 0.0)")
+            "- pitch: 음의 높낮이 (범위: -20.0 ~ 20.0, 기본값: 0.0)\n"+
+            "- id: 변환하고자 하는 tts_Detail ID 값 (예: 1, 2, 3, ...)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "WAV 파일 변환 성공"),
             @ApiResponse(responseCode = "400", description = "언어 불일치 오류"),
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
     @PostMapping("/convert/single")
-    public ResponseEntity<Map<String, String>> convertSingleText(
-            @RequestParam("text") String text,
-            @RequestParam("languageCode") String languageCode,
-            @RequestParam("gender") String gender,
-            @RequestParam("speed") double speed,
-            @RequestParam("volume") double volume,
-            @RequestParam("pitch") double pitch) {
-        try {
-            // TTS 변환 후 파일명 반환 (파일 경로가 아닌 파일명만 반환)
-            String fileName = ttsService.convertSingleText(text, languageCode, gender, speed, volume, pitch);
+    public ResponseDto convertSingleText(@RequestParam("id") Long id) throws Exception {
 
-            // 전체 URL 생성 (output/ 경로는 한 번만 추가)
-            String fullFileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/output/")
-                    .path(fileName)
-                    .toUriString();
+         String filePath = ttsService.convertSingleText(id);
 
-            return ResponseEntity.ok(Map.of("fileUrl", fullFileUrl));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        if (filePath == null) {
+            throw new BusinessException(ErrorCode.NOT_EXISTS_AUDIO);
         }
-    }
 
+        LOGGER.info("TTS 변환 완료: filePath=" + filePath);
 
+        // 성공적인 응답 반환
+        return DataResponseDto.of(filePath);
 
-
-    @PostMapping("/convert/single2")
-    public ResponseEntity<Map<String, String>> convertSingleText2(
-            @RequestParam("id") Long id,
-            @RequestParam("languageCode") String languageCode,
-            @RequestParam("gender") String gender) {
-        try {
-            String filePath = ttsService.convertSingleText(id, languageCode, gender);
-
-            // 전체 URL 생성
-            String fullFileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/converted/download")
-                    .queryParam("path", filePath)
-                    .toUriString();
-
-            return ResponseEntity.ok(Map.of("fileUrl", fullFileUrl));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    @PostMapping("/convert/single3")
-    public ResponseEntity<?> convertSingleText3(@RequestParam("id") Long id) {
-        try {
-            String filePath = ttsService.convertSingleText(id);
-
-            LOGGER.info("TTS 변환 완료: filePath=" + filePath);
-
-            return ResponseEntity.ok(DataResponseDto.of(Map.of("filePath", filePath, "status", "success")));
-        } catch (IllegalArgumentException e) {
-            LOGGER.warning("잘못된 요청: " + e.getMessage());
-            return ResponseEntity.badRequest().body(DataResponseDto.of(Map.of("error", e.getMessage(), "status", "failure")));
-        } catch (Exception e) {
-            LOGGER.severe("TTS 변환 중 오류 발생: " + e.getMessage());
-            return ResponseEntity.status(500).body(DataResponseDto.of(Map.of("error", "TTS 변환 실패: 서버 내부 오류", "status", "failure")));
-        }
     }
 
 
