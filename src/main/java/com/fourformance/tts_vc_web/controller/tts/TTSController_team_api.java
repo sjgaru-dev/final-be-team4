@@ -105,9 +105,9 @@ public class TTSController_team_api {
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
     @PostMapping("/convert/batch")
-    public ResponseEntity<?> convertBatchTexts(@RequestBody List<Map<String, Object>> texts) {
+    public ResponseEntity<?> convertBatchTexts(@RequestBody List<Long> ids) {
         try {
-            List<Map<String, String>> fileUrls = ttsService.convertAllTexts(texts);
+            List<Map<String, String>> fileUrls = ttsService.convertAllTexts(ids);
 
             // 전체 URL 리스트 생성
             List<Map<String, String>> fullFileUrls = fileUrls.stream().map(fileUrlMap -> {
@@ -126,6 +126,29 @@ public class TTSController_team_api {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
+
+//    @PostMapping("/convert/batch2")
+//    public ResponseEntity<?> convertBatchTexts2(@RequestBody List<Integer> ttsDetailIds) {
+//        try {
+//            List<Map<String, String>> fileUrls = ttsService.convertAllTexts(ttsDetailIds);
+//
+//            // 전체 URL 리스트 생성
+//            List<Map<String, String>> fullFileUrls = fileUrls.stream().map(fileUrlMap -> {
+//                String filePath = fileUrlMap.get("fileUrl");
+//                String fullFileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+//                        .path("/converted/download")
+//                        .queryParam("path", filePath)
+//                        .toUriString();
+//                return Map.of("fileUrl", fullFileUrl);
+//            }).toList();
+//
+//            return ResponseEntity.ok(Map.of("status", "success", "files", fullFileUrls));
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+//        } catch (Exception e) {
+//            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+//        }
+//    }
 
     /**
      * 변환된 WAV 파일 다운로드 API
