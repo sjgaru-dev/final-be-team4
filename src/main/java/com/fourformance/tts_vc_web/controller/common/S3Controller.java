@@ -4,6 +4,7 @@ package com.fourformance.tts_vc_web.controller.common;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.service.common.S3Service;
 import com.fourformance.tts_vc_web.service.common.S3Service;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import io.swagger.v3.oas.annotations.Parameter;
 
@@ -118,4 +120,26 @@ public class S3Controller {
         }
     }
 
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFiles( // 정상적인 처리에서는 List<String>을 반환하고, 예외가 발생할 경우 String으로 에러 메시지를 반환할 때 유용합니다.
+            @RequestParam List<MultipartFile> files,
+            @RequestParam Long memberId,
+            @RequestParam Long projectId,
+            @RequestParam String audioType
+    ) {
+        try {
+            AudioType enumAudioType = AudioType.valueOf(audioType);
+
+            List<String> uploadedUrls = S3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType);
+
+            return ResponseEntity.ok(uploadedUrls);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("유효하지 않은 AudioType입니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("파일 업로드 중 오류가 발생했습니다.");
+        }
+    }
 }
+
+
