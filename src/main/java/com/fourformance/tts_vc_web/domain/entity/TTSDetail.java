@@ -25,8 +25,8 @@ public class TTSDetail extends BaseEntity {
     private TTSProject ttsProject;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "style_id")
-    private Style style;
+    @JoinColumn(name = "voice_style_id")
+    private VoiceStyle voiceStyle;
 
     private String unitScript;
     private Float unitSpeed=1f;
@@ -50,8 +50,8 @@ public class TTSDetail extends BaseEntity {
     }
 
     // 업데이트 메서드
-    public void updateTTSDetail(Style style, String newUnitScript, Float newUnitSpeed, Float newUnitPitch, Float newUnitVolume, Integer newUnitSequence, Boolean newIsDeleted) {
-        this.style = style;
+    public void updateTTSDetail(VoiceStyle voiceStyle, String newUnitScript, Float newUnitSpeed, Float newUnitPitch, Float newUnitVolume, Integer newUnitSequence, Boolean newIsDeleted) {
+        this.voiceStyle = voiceStyle;
         this.unitScript = newUnitScript;
         this.unitSpeed = newUnitSpeed;
         this.unitPitch = newUnitPitch;
