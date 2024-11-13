@@ -1,7 +1,13 @@
 package com.fourformance.tts_vc_web.dto.tts;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
+@Setter
 public class TTSProjectWithDetailsDto {
     private TTSProjectDto ttsProject;
     private List<TTSDetailDto> ttsDetails;
@@ -11,19 +17,4 @@ public class TTSProjectWithDetailsDto {
         this.ttsDetails = ttsDetails;
     }
 
-    public TTSProjectDto getTtsProject() {
-        return ttsProject;
-    }
-
-    public void setTtsProject(TTSProjectDto ttsProject) {
-        this.ttsProject = ttsProject;
-    }
-
-    public List<TTSDetailDto> getTtsDetails() {
-        return ttsDetails;
-    }
-
-    public void setTtsDetails(List<TTSDetailDto> ttsDetails) {
-        this.ttsDetails = ttsDetails;
-    }
 }

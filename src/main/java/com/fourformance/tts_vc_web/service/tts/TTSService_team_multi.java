@@ -25,6 +25,7 @@ public class TTSService_team_multi {
     private final TTSDetailRepository ttsDetailRepository;
 
 
+    // TTS 프로젝트 값 조회하기
     @Transactional(readOnly = true)
     public TTSProjectDto getTTSProjectDto(Long projectId) {
         // 프로젝트 조회
@@ -32,9 +33,10 @@ public class TTSService_team_multi {
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
         // TTSProjectDTO로 변환
-        return TTSProjectDto.fromEntity(ttsProject);
+        return TTSProjectDto.createTTSProjectDto(ttsProject);
     }
 
+    // TTS 프로젝트 상세 값 조회하기
     @Transactional(readOnly = true)
     public List<TTSDetailDto> getTTSDetailsDto(Long projectId) {
         List<TTSDetail> ttsDetails = ttsDetailRepository.findByTtsProjectId(projectId);
@@ -42,8 +44,9 @@ public class TTSService_team_multi {
         // isDeleted가 false인 경우에만 TTSDetailDTO 목록으로 변환
         return ttsDetails.stream()
                 .filter(detail -> !detail.getIsDeleted()) // isDeleted가 false인 경우만 필터링
-                .map(TTSDetailDto::fromEntity) // TTSDetailDto로 변환
+                .map(TTSDetailDto::createTTSDetailDto) // ModelMapper를 통해 TTSDetailDto로 변환
                 .collect(Collectors.toList());
     }
+
 
 }

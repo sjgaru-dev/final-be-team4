@@ -1,10 +1,13 @@
 package com.fourformance.tts_vc_web.dto.tts;
 
 import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
+import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.config.Configuration;
 
 import java.time.LocalDateTime;
 
@@ -20,22 +23,19 @@ public class TTSProjectDto {
     private Float globalPitch; // 글로벌 피치
     private Float globalVolume; // 글로벌 볼륨
     private APIStatusConst apiStatus; // API 상태
-    private LocalDateTime apiStatusModifiedAt; // API 상태 수정 시간
     //private String styleName; // 스타일 이름 (optional, lazy load 대신 포함할 수 있는 필드)
 
-    // TTSProject 엔티티를 TTSProjectDTO로 변환하는 생성자
-    public static TTSProjectDto fromEntity(TTSProject ttsProject) {
-        //String styleName = ttsProject.getStyle() != null ? ttsProject.getStyle().getName() : null; // 스타일 이름을 포함
-        return new TTSProjectDto(
-                ttsProject.getId(),
-                ttsProject.getProjectName(),
-                ttsProject.getFullScript(),
-                ttsProject.getGlobalSpeed(),
-                ttsProject.getGlobalPitch(),
-                ttsProject.getGlobalVolume(),
-                ttsProject.getApiStatus(),
-                ttsProject.getAPIStatusModifiedAt()
-        );
+    private static ModelMapper modelMapper = new ModelMapper();
+
+    public TTSProject createTTSProject(){
+        modelMapper.getConfiguration()
+                .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE)
+                .setFieldMatchingEnabled(true);
+        return modelMapper.map(this, TTSProject.class);
+    }
+
+    public static TTSProjectDto createTTSProjectDto(TTSProject ttsProject) {
+        return modelMapper.map(ttsProject, TTSProjectDto.class);
     }
 
 }
