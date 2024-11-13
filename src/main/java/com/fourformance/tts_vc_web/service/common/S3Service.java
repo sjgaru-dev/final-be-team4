@@ -4,11 +4,9 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.fourformance.tts_vc_web.common.constant.AudioFormat;
-import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.domain.entity.*;
 import com.fourformance.tts_vc_web.repository.ConcatProjectRepository;
-import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.ProjectRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
@@ -22,10 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URL;
-import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +37,6 @@ public class S3Service {
     private final ConcatProjectRepository concatProjectRepository;
     private final AmazonS3Client amazonS3Client;
     private final ProjectRepository projectRepository;
-    private final MemberAudioMetaRepository memberAudioMetaRepository;
 
     // TTS와 VC로 반환한 유닛 오디오를 S3 버킷에 저장
     public String uploadUnitSaveFile(MultipartFile file, Long userId, Long projectId, Long detailId) throws Exception {
@@ -205,4 +200,5 @@ public class S3Service {
         }
     }
 
+    //myEntityRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Entity not found with id " + id));
 }
