@@ -1,5 +1,7 @@
 package com.fourformance.tts_vc_web.controller.tts;
 
+import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
+import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.service.tts.TTSService_team_api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,10 +16,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 @RestController
 @RequestMapping("/tts")
 public class TTSController_team_api {
+
+    private static final Logger LOGGER = Logger.getLogger(TTSController_team_api.class.getName());
 
     private final TTSService_team_api ttsService;
 
@@ -101,6 +106,24 @@ public class TTSController_team_api {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/convert/single3")
+    public ResponseEntity<?> convertSingleText3(@RequestParam("id") Long id) {
+        try {
+            String filePath = ttsService.convertSingleText(id);
+
+            LOGGER.info("TTS 변환 완료: filePath=" + filePath);
+
+            return ResponseEntity.ok(DataResponseDto.of(Map.of("filePath", filePath, "status", "success")));
+        } catch (IllegalArgumentException e) {
+            LOGGER.warning("잘못된 요청: " + e.getMessage());
+            return ResponseEntity.badRequest().body(DataResponseDto.of(Map.of("error", e.getMessage(), "status", "failure")));
+        } catch (Exception e) {
+            LOGGER.severe("TTS 변환 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.status(500).body(DataResponseDto.of(Map.of("error", "TTS 변환 실패: 서버 내부 오류", "status", "failure")));
+        }
+    }
+
 
     /**
      * 전체 텍스트 변환 API
