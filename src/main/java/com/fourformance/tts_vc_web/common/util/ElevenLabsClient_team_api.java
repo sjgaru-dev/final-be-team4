@@ -1,4 +1,4 @@
-package com.fourformance.tts_vc_web.controller.vc;
+package com.fourformance.tts_vc_web.client;
 
 import okhttp3.*;
 import org.springframework.stereotype.Component;
@@ -10,12 +10,18 @@ import java.nio.file.Paths;
 import java.time.Instant;
 
 @Component
-public class ElevenLabsController {
+public class ElevenLabsClient_team_api {
 
     private static final String BASE_URL = "https://api.elevenlabs.io/v1";
-    private final String apiKey = "sk_40dde343a836275e2ce55fc046313220e0e71ca4b24c7843";
+    private final String apiKey = "your-api-key"; // 여기에 실제 API 키를 입력하세요.
     private final OkHttpClient client = new OkHttpClient();
 
+    /**
+     * 타겟 오디오 파일을 업로드하여 새로운 Voice ID 생성
+     * @param targetAudioPath 타겟 오디오 파일 경로
+     * @return 생성된 Voice ID
+     * @throws IOException 파일 처리 중 예외
+     */
     public String uploadVoice(String targetAudioPath) throws IOException {
         MultipartBody.Builder builder = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
@@ -34,7 +40,7 @@ public class ElevenLabsController {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                throw new IOException("Voice ID creation failed: " + response.body().string());
+                throw new IOException("Failed to create voice ID: " + response.body().string());
             }
 
             String responseBody = response.body().string();
@@ -42,6 +48,13 @@ public class ElevenLabsController {
         }
     }
 
+    /**
+     * 생성된 Voice ID를 사용하여 소스 오디오를 변환
+     * @param voiceId 변환에 사용할 Voice ID
+     * @param audioFilePath 소스 오디오 파일 경로
+     * @return 변환된 오디오 파일 경로
+     * @throws IOException 파일 처리 중 예외
+     */
     public String convertSpeechToSpeech(String voiceId, String audioFilePath) throws IOException {
         MultipartBody.Builder builder = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
@@ -64,12 +77,18 @@ public class ElevenLabsController {
             }
 
             String fileName = Instant.now().toEpochMilli() + "_converted.mp3";
-            Files.write(Paths.get(System.getProperty("user.home") + "/uploads/" + fileName), response.body().bytes());
+            Files.write(Paths.get("src/main/resources/static/" + fileName), response.body().bytes());
             return fileName;
         }
     }
 
+    /**
+     * API 응답에서 Voice ID 추출
+     * @param responseBody API 응답 본문
+     * @return 추출된 Voice ID
+     */
     private String extractVoiceId(String responseBody) {
+        // JSON 파싱 없이 간단한 문자열 추출 (간단한 예시)
         String prefix = "voice_id\":\"";
         int startIndex = responseBody.indexOf(prefix) + prefix.length();
         int endIndex = responseBody.indexOf("\"", startIndex);
