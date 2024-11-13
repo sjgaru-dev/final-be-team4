@@ -65,7 +65,7 @@ public class TTSController_team_api {
 
             // 전체 URL 생성 (output/ 경로는 한 번만 추가)
             String fullFileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/output/")
+                    .path("/audio/")
                     .path(fileName)
                     .toUriString();
 
