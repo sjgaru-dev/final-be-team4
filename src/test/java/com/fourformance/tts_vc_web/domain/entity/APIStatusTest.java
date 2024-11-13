@@ -61,7 +61,7 @@ class APIStatusTest {
         em.clear();
 
         // TTS 프로젝트 생성
-        TTSProject ttsProject = createTTSProject(m, "new Create test");
+        TTSProject ttsProject = createTTSProject(m, "new Create test",null,null,null,null,null);
         ttsProjectRepository.save(ttsProject);
 
         em.flush();
@@ -106,7 +106,7 @@ class APIStatusTest {
         em.clear();
 
         // TTS 프로젝트 생성
-        TTSProject ttsProject = createTTSProject(m, "new Create test");
+        TTSProject ttsProject = createTTSProject(m, "new Create test",null,null,null,null,null);
         ttsProjectRepository.save(ttsProject);
         em.flush();
         em.clear();
@@ -155,7 +155,7 @@ class APIStatusTest {
         em.clear();
 
         // TTS 프로젝트 생성
-        TTSProject ttsProject = createTTSProject(m, "new Create test");
+        TTSProject ttsProject = createTTSProject(m, "new Create test",null,null,null,null,null);
         ttsProjectRepository.save(ttsProject);
         em.flush();
         em.clear();

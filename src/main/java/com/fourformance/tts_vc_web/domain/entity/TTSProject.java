@@ -25,14 +25,14 @@ import java.time.LocalDateTime;
 public class TTSProject extends Project {
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "style_id")
-    private Style style;
+    @JoinColumn(name = "voice_style_id")
+    private VoiceStyle voiceStyle;
 
     private String fullScript;
 
-    private Float globalSpeed=1f;
-    private Float globalPitch=0f;
-    private Float globalVolume=0f;
+    private Float globalSpeed;
+    private Float globalPitch;
+    private Float globalVolume;
 
     @Enumerated(EnumType.STRING)
     private APIStatusConst apiStatus = APIStatusConst.NOT_STARTED;
@@ -40,18 +40,24 @@ public class TTSProject extends Project {
 
 
     // 생성 메서드
-    public static TTSProject createTTSProject(Member member, String projectName) {
+    public static TTSProject createTTSProject(Member member, String projectName, VoiceStyle voiceStyle,String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
         TTSProject ttsProject = new TTSProject();
         ttsProject.member = member;
         ttsProject.projectName = projectName;
+        ttsProject.voiceStyle = voiceStyle;
+        ttsProject.fullScript = fullScript;
+        ttsProject.globalSpeed = globalSpeed;
+        ttsProject.globalPitch = globalPitch;
+        ttsProject.globalVolume = globalVolume;
         ttsProject.createdAt();
         ttsProject.updatedAt();
         return ttsProject;
     }
 
     // 업데이트 메서드
-    public void updateTTSProject(String projectName, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
+    public void updateTTSProject(String projectName, VoiceStyle voiceStyle, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
         super.projectName = projectName;
+        this.voiceStyle = voiceStyle;
         this.fullScript = fullScript;
         this.globalSpeed = globalSpeed;
         this.globalPitch = globalPitch;
@@ -64,7 +70,5 @@ public class TTSProject extends Project {
         this.apiStatus = newApiStatus;
         this.APIStatusModifiedAt = LocalDateTime.now();
     }
-
-
 
 }
