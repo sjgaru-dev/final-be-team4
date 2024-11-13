@@ -18,7 +18,6 @@ public class TtsProjectDto {
     private Float globalPitch;
     private Float globalVolume;
     private APIStatusConst apiStatus;
-    private LocalDateTime apiStatusModifiedAt;
     private Long styleId;
 
 }
