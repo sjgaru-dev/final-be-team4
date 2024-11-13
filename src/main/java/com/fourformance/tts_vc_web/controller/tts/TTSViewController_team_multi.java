@@ -45,7 +45,7 @@ public class TTSViewController_team_multi {
 
     // TTS 상태 저장 메서드
     @PostMapping("/{projectId}/save")
-    public ResponseEntity<TtsStatusSaveResponseDto> save(@RequestBody TtsProjectDetailDto ttsProjectDetailDto) {
+    public ResponseEntity<TtsStatusSaveResponseDto> save(@RequestBody TTSProjectWithDetailsDto ttsProjectDetailDto) {
         // service 호출 및 저장된 project ID 반환, 새 프로젝트(projectId=null) 저장 시 project ID를 생성함
         Long projectId = ttsService.saveTTSProjectAndDetail(ttsProjectDetailDto);
 
