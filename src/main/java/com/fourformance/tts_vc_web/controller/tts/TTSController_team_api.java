@@ -10,12 +10,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.core.io.Resource;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/tts")
+@RequestMapping("/tts")
 public class TTSController_team_api {
 
     private final TTSService_team_api ttsService;
@@ -59,14 +60,25 @@ public class TTSController_team_api {
             @RequestParam("volume") double volume,
             @RequestParam("pitch") double pitch) {
         try {
-            String filePath = ttsService.convertSingleText(text, languageCode, gender, speed, volume, pitch);
-            return ResponseEntity.ok(Map.of("fileUrl", "/api/tts/download?path=" + filePath));
+            // TTS 변환 후 파일명 반환 (파일 경로가 아닌 파일명만 반환)
+            String fileName = ttsService.convertSingleText(text, languageCode, gender, speed, volume, pitch);
+
+            // 전체 URL 생성 (output/ 경로는 한 번만 추가)
+            String fullFileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/output/")
+                    .path(fileName)
+                    .toUriString();
+
+            return ResponseEntity.ok(Map.of("fileUrl", fullFileUrl));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
+
+
+
 
     @PostMapping("/convert/single2")
     public ResponseEntity<Map<String, String>> convertSingleText2(
@@ -75,7 +87,14 @@ public class TTSController_team_api {
             @RequestParam("gender") String gender) {
         try {
             String filePath = ttsService.convertSingleText(id, languageCode, gender);
-            return ResponseEntity.ok(Map.of("fileUrl", "/api/tts/download?path=" + filePath));
+
+            // 전체 URL 생성
+            String fullFileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/converted/download")
+                    .queryParam("path", filePath)
+                    .toUriString();
+
+            return ResponseEntity.ok(Map.of("fileUrl", fullFileUrl));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
@@ -114,7 +133,18 @@ public class TTSController_team_api {
     public ResponseEntity<?> convertBatchTexts(@RequestBody List<Map<String, Object>> texts) {
         try {
             List<Map<String, String>> fileUrls = ttsService.convertAllTexts(texts);
-            return ResponseEntity.ok(Map.of("status", "success", "files", fileUrls));
+
+            // 전체 URL 리스트 생성
+            List<Map<String, String>> fullFileUrls = fileUrls.stream().map(fileUrlMap -> {
+                String filePath = fileUrlMap.get("fileUrl");
+                String fullFileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/converted/download")
+                        .queryParam("path", filePath)
+                        .toUriString();
+                return Map.of("fileUrl", fullFileUrl);
+            }).toList();
+
+            return ResponseEntity.ok(Map.of("status", "success", "files", fullFileUrls));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {

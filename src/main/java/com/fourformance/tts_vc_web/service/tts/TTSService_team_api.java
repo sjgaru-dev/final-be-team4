@@ -73,7 +73,7 @@ public class TTSService_team_api {
         saveAudioContent(audioContent, filePath);
 
         LOGGER.info("WAV 파일이 저장되었습니다: " + filePath);
-        return filePath;
+        return fileName;
     }
 
     public String convertSingleText(Long id, String languageCode, String gender) throws Exception {
