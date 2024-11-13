@@ -4,6 +4,8 @@ import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
 import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
+import com.fourformance.tts_vc_web.dto.tts.TTSDetailDto;
+import com.fourformance.tts_vc_web.dto.tts.TTSProjectDto;
 import com.fourformance.tts_vc_web.dto.tts.TtsDetailDto;
 import com.fourformance.tts_vc_web.dto.tts.TtsProjectDetailDto;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
@@ -13,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -28,7 +33,7 @@ public class TTSService_team_multi {
     //projectId는 존재하고 detailId를 모두 null로 한 테스트 통과함
     public Long saveTTSProjectAndDetail(TtsProjectDetailDto dto) {
         TTSProject ttsProject;
-        
+
         //dto에서는 voiceStyleId를 Long타입으로 받고 있지만, ttsProject 생성 메서드에서는 VoiceStyle객체를 매개변수로 넘겨야함
         VoiceStyle voiceStyle = voiceStyleRepository.findById(dto.getStyleId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid VoiceStyle ID: " + dto.getStyleId()));
@@ -70,6 +75,29 @@ public class TTSService_team_multi {
         }
 
         return ttsProject.getId();  // 저장된 TTSProject의 ID 반환
+    }
+
+    // TTS 프로젝트 값 조회하기
+    @Transactional(readOnly = true)
+    public TTSProjectDto getTTSProjectDto(Long projectId) {
+        // 프로젝트 조회
+        TTSProject ttsProject = ttsProjectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        // TTSProjectDTO로 변환
+        return TTSProjectDto.createTTSProjectDto(ttsProject);
+    }
+
+    // TTS 프로젝트 상세 값 조회하기
+    @Transactional(readOnly = true)
+    public List<TTSDetailDto> getTTSDetailsDto(Long projectId) {
+        List<TTSDetail> ttsDetails = ttsDetailRepository.findByTtsProjectId(projectId);
+
+        // isDeleted가 false인 경우에만 TTSDetailDTO 목록으로 변환
+        return ttsDetails.stream()
+                .filter(detail -> !detail.getIsDeleted()) // isDeleted가 false인 경우만 필터링
+                .map(TTSDetailDto::createTTSDetailDto) // ModelMapper를 통해 TTSDetailDto로 변환
+                .collect(Collectors.toList());
     }
 
 }
