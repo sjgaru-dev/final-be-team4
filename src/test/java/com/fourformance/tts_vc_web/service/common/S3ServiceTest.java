@@ -44,7 +44,7 @@ class S3ServiceTest {
     @Test
     public void 테스트용_TTS_디테일_생성() {
         Member member = Member.createMember("abc@abc.com", "abc123", "철수",0,now(), "010123123");
-        TTSProject ttsProject = TTSProject.createTTSProject(member, "테스트 tts 프로젝트");
+        TTSProject ttsProject = TTSProject.createTTSProject(member, "테스트 tts 프로젝트",null,null,null,null,null);
         TTSDetail ttsDetail = TTSDetail.createTTSDetail(ttsProject, "테스트 tts 스크립트", 1);
 
         memberRepository.save(member);
