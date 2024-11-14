@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -68,33 +67,12 @@ public class S3Controller {
         }
     }
 
-//    // 생성된 오디오를 다운받을 수 있는 presigned url을 제공하는 api
-//    @Operation(summary = "생성된 오디오 다운로드", description = "TTS, VC, CONCAT으로 변환된 오디오를 S3 버킷으로부터 다운로드 받는 api입니다."
-//            + "<br><br>매개변수:<br>- 프로젝트ID<br>- 유닛ID<br>- 오디오파일명" + "<br><br> 프로젝트 타입이 CONCAT일 경우는 유닛 ID를 null로 받습니다.")
-//    @GetMapping(value = {"/tts/download-generated-audio-from-bucket", "/vc/download-generated-audio-from-bucket",
-//            "/concat/download-generated-audio-from-bucket"})
-//    public ResponseDto downloadGeneratedAudio(HttpSession session, @RequestParam("projectId") Long projectId,
-//                                              @RequestParam(value = "detailId", required = false) Long detailId,
-//                                              @RequestParam("fileName") String fileName) {
-//        try {
-//            Long userId = 0L;  // 개발 단계 임시 하드코딩
-////            Long userId = (Long) session.getAttribute("userId");
-//
-//            // presigned url을 반환하는 서비스 호출
-//            String presignedUrl = S3Service.generatePresignedUrl(userId, projectId, detailId, fileName);
-//            return DataResponseDto.of(presignedUrl, "파일 다운로드 URL 생성 성공");
-//        } catch (Exception e) {
-//            // 예외는 추후에 정리할 예정s
-//            throw new BusinessException(ErrorCode.UNKNOWN_ERROR);
-//        }
-//    }
-
     // 생성된 오디오를 다운받을 수 있는 presigned url을 제공하는 api
     @Operation(summary = "버킷에 있는 오디오 다운로드", description =
             "오디오를 S3 버킷으로부터 다운로드 받을수 있는 URL을 제공하는 API 입니다."
                     + "<br><br>매개변수:<br>- 버킷 경로")
     @GetMapping(value = {"/tts/download-generated-audio-from-bucket", "/vc/download-generated-audio-from-bucket",
-            "/concat/download-generated-audio-from-bucket","/vc/download-to-generate-audio-from-bucket",
+            "/concat/download-generated-audio-from-bucket", "/vc/download-to-generate-audio-from-bucket",
             "/concat/download-to-generate-audio-from-bucket"})
     public ResponseDto downloadGeneratedAudio(@RequestParam("bucketRoute") String bucketRoute) {
         try {
@@ -117,7 +95,6 @@ public class S3Controller {
     @PostMapping(value = {"/vc/upload-local-to-bucket",
             "/concat/upload-local-to-bucket"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseDto uploadFiles(
-            // 정상적인 처리에서는 List<String>을 반환하고, 예외가 발생할 경우 String으로 에러 메시지를 반환할 때 유용합니다.
             @RequestParam("files") List<MultipartFile> files, @RequestParam("memberId") Long memberId,
             @RequestParam("projectId") Long projectId, @RequestParam("audioType") String audioType) {
         try {
