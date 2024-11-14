@@ -107,25 +107,6 @@ public class S3Controller {
             throw new BusinessException(ErrorCode.UNKNOWN_ERROR);
         }
     }
-
-//    @Operation(summary = "버킷에 저장된 클라이언트의 오디오를 다운로드", description =
-//            "VC, CONCAT으로 변환할 오디오를 버킷으로부터 다운로드 받을수 있는 URL을 제공하는 API 입니다."
-//                    + "<br><br>매개변수:<br>- 버킷 경로")
-//    @GetMapping(value = { "/vc/download-to-generate-audio-from-bucket",
-//            "/concat/download-to-generate-audio-from-bucket"})
-//    public ResponseDto downloadToGenerateAudio(@RequestParam("bucketRoute") String bucketRoute) {
-//        try {
-//            Long userId = 0L;  // 개발 단계 임시 하드코딩
-////            Long userId = (Long) session.getAttribute("userId");
-//
-//            // presigned url을 반환하는 서비스 호출
-//            String presignedUrl = S3Service.generatePresignedUrl(bucketRoute);
-//            return DataResponseDto.of(presignedUrl, "파일 다운로드 URL 생성 성공");
-//        } catch (Exception e) {
-//            // 예외는 추후에 정리할 예정s
-//            throw new BusinessException(ErrorCode.UNKNOWN_ERROR);
-//        }
-//    }
 }
 
 
