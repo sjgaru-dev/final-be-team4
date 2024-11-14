@@ -37,8 +37,8 @@ public class TTSService_team_multi {
 
 
         //dto에서는 voiceStyleId를 Long타입으로 받고 있지만, ttsProject 생성 메서드에서는 VoiceStyle객체를 매개변수로 넘겨야함
-        VoiceStyle voiceStyle = voiceStyleRepository.findById(prjDto.getVoiceStyle().getId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid VoiceStyle ID: " + prjDto.getVoiceStyle().getId()));
+        VoiceStyle voiceStyle = voiceStyleRepository.findById(prjDto.getVoiceStyleId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid VoiceStyle ID: " + prjDto.getVoiceStyleId()));
 
         // projectId가 null이면 새 프로젝트 생성
         if (prjDto.getId() == null) {
@@ -57,7 +57,7 @@ public class TTSService_team_multi {
         if (detailDtoList != null) {
             // TTSDetail 리스트를 처리
             for (TTSDetailDto detailDto : detailDtoList) {
-                VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyle().getId())
+                VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyleId())
                         .orElseThrow(() -> new IllegalArgumentException("Invalid detail VoiceStyle ID"));
 
                 TTSDetail ttsDetail;
