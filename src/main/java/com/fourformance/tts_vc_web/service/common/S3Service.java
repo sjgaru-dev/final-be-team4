@@ -3,25 +3,37 @@ package com.fourformance.tts_vc_web.service.common;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.fourformance.tts_vc_web.common.constant.AudioFormat;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
-import com.fourformance.tts_vc_web.domain.entity.*;
-import com.fourformance.tts_vc_web.repository.*;
-
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
+import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.domain.entity.ConcatProject;
+import com.fourformance.tts_vc_web.domain.entity.Member;
+import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
+import com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta;
+import com.fourformance.tts_vc_web.domain.entity.Project;
+import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
+import com.fourformance.tts_vc_web.domain.entity.TTSProject;
+import com.fourformance.tts_vc_web.domain.entity.VCDetail;
+import com.fourformance.tts_vc_web.domain.entity.VCProject;
+import com.fourformance.tts_vc_web.repository.ConcatProjectRepository;
+import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
+import com.fourformance.tts_vc_web.repository.MemberRepository;
+import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
+import com.fourformance.tts_vc_web.repository.ProjectRepository;
+import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
+import com.fourformance.tts_vc_web.repository.VCDetailRepository;
 import java.net.URL;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -51,16 +63,19 @@ public class S3Service {
             // Project의 실제 타입에 따라 ProjectType 설정
             Project project = projectRepository.findById(projectId).orElse(null);
             ProjectType projectType = null;
-            if (project instanceof VCProject) {
-                 projectType = ProjectType.VC;
-            } else if (project instanceof TTSProject) {
-                 projectType = ProjectType.TTS;
-            } else if (project instanceof ConcatProject) {
-                 projectType = ProjectType.CONCAT;
-            }
+            String fileName = null;
+            if (project instanceof TTSProject) {
+                projectType = ProjectType.TTS;
+                fileName = "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + detailId + ".wav";
 
-            // 전체 경로를 포함한 파일 이름 설정
-            String fileName = "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + timeStamp + ".wav";
+            } else if (project instanceof VCProject) {
+                projectType = ProjectType.VC;
+                fileName =
+                        "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + timeStamp
+                                + ".wav";
+            } else {
+                throw new BusinessException(ErrorCode.UNKNOWN_ERROR);
+            }
 
             // 메타데이터 저장
             ObjectMetadata metadata = new ObjectMetadata();
@@ -74,7 +89,7 @@ public class S3Service {
             String fileUrl = amazonS3Client.getUrl(bucket, fileName).toString();
 
             // 반환된 오디오 메타를 DB에 저장
-            saveTTSOrVCOutputAudioMeta(detailId, projectType, fileUrl);
+            saveTTSOrVCOutputAudioMeta(fileName, detailId, projectType, fileUrl);
 
             return fileUrl;
 
@@ -107,11 +122,11 @@ public class S3Service {
             String fileUrl = amazonS3Client.getUrl(bucket, fileName).toString();
 
             // 반환된 오디오 메타를 DB에 저장
-            saveConcatAudioMeta(projectId, fileUrl);
+            saveConcatAudioMeta(fileName, projectId, fileUrl);
 
             return fileUrl;
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             throw new Exception();
         }
@@ -119,37 +134,34 @@ public class S3Service {
 
 
     // DB에 TTS와 VC에 대한 오디오 메타를 저장
-    public OutputAudioMeta saveTTSOrVCOutputAudioMeta(Long detailId, ProjectType projectType, String audioUrl) {
+    public OutputAudioMeta saveTTSOrVCOutputAudioMeta(String fileName, Long detailId, ProjectType projectType,
+                                                      String audioUrl) {
 
         TTSDetail ttsDetail;
         VCDetail vcDetail;
 
         // TTS 프로젝트인지 VC 프로젝트인지 판별
         if (projectType.equals(ProjectType.TTS)) {
-             ttsDetail = ttsDetailRepository.findById(detailId).orElse(null);
-             vcDetail = null;
-        }
-        else if (projectType.equals(ProjectType.VC)) {
-             vcDetail = vcDetailRepository.findById(detailId).orElse(null);
-             ttsDetail = null;
-        }
-        else {
+            ttsDetail = ttsDetailRepository.findById(detailId).orElse(null);
+            vcDetail = null;
+        } else if (projectType.equals(ProjectType.VC)) {
+            vcDetail = vcDetailRepository.findById(detailId).orElse(null);
+            ttsDetail = null;
+        } else {
             throw new IllegalArgumentException("DetailId는 TTS 또는 VC 중 하나의 ID여야 합니다.");
         }
 
         // OutputAudioMeta 객체 생성
-        OutputAudioMeta outputAudioMeta = OutputAudioMeta.createOutputAudioMeta(
-                ttsDetail, vcDetail, null, projectType, audioUrl
-        );
+        OutputAudioMeta outputAudioMeta = OutputAudioMeta.createOutputAudioMeta(fileName, ttsDetail, vcDetail, null,
+                projectType, audioUrl);
 
         // 생성한 OutputAudioMeta를 DB에 저장
         return outputAudioMetaRepository.save(outputAudioMeta);
     }
 
     // DB에 Concat 기능을 수행해서 반환한 오디오 메타를 저장
-    public OutputAudioMeta saveConcatAudioMeta(Long projectId , String audioUrl) {
+    public OutputAudioMeta saveConcatAudioMeta(String fileName, Long projectId, String audioUrl) {
         ConcatProject concatProject = concatProjectRepository.findById(projectId).orElse(null);
-
 
         // 존재하는 프로젝트인지 판별
         if (concatProject == null) {
@@ -157,46 +169,62 @@ public class S3Service {
         }
 
         // OutputAudioMeta 객체 생성
-        OutputAudioMeta outputAudioMeta = OutputAudioMeta.createOutputAudioMeta(
-                null,null, concatProject, ProjectType.CONCAT, audioUrl
-        );
+        OutputAudioMeta outputAudioMeta = OutputAudioMeta.createOutputAudioMeta(fileName, null, null, concatProject,
+                ProjectType.CONCAT, audioUrl);
 
         // 생성한 OutputAudioMeta를 DB에 저장
         return outputAudioMetaRepository.save(outputAudioMeta);
     }
 
+//    // 다운로드 받을 오디오의 버킷 URL을 제공하는 메서드
+//    public String generatePresignedUrl(Long userId, Long projectId, Long detailId, String fileName) throws Exception {
+//        try {
+//
+//            // Project의 실제 타입에 따라 ProjectType 설정
+//            Project project = projectRepository.findById(projectId).orElse(null);
+//            ProjectType projectType = null;
+//            String filePath = null;
+//            if (project instanceof TTSProject) {
+//                projectType = ProjectType.TTS;
+//                filePath =
+//                        "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + fileName;
+//            } else if (project instanceof VCProject) {
+//                projectType = ProjectType.VC;
+//                filePath =
+//                        "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + fileName;
+//            } else if (project instanceof ConcatProject) {
+//                projectType = ProjectType.CONCAT;
+//                filePath = "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + fileName;
+//            } else {
+//                throw new IllegalArgumentException("지정된 타입의 프로젝트가 들어와야 합니다.");
+//            }
+//
+//            // presigned url 생성
+//            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, filePath);
+//            request.withMethod(com.amazonaws.HttpMethod.GET)
+//                    .withExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5));
+//            URL presignedUrl = amazonS3Client.generatePresignedUrl(request);
+//
+//            return presignedUrl.toString();
+//
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            throw new Exception();
+//        }
+//    }
 
-
-    public String generatePresignedUrl(Long userId,Long projectId, Long detailId, String fileName) throws Exception{
-        try{
-
-            // Project의 실제 타입에 따라 ProjectType 설정
-            Project project = projectRepository.findById(projectId).orElse(null);
-            ProjectType projectType = null;
-            String filePath = null;
-            if (project instanceof TTSProject) {
-                projectType = ProjectType.TTS;
-                filePath = "Generated/" + userId + "/" + projectType + "/"  + projectId + "/" + detailId + "/" + fileName;
-            } else if (project instanceof VCProject) {
-                projectType = ProjectType.VC;
-                filePath = "Generated/" + userId + "/" + projectType + "/"  + projectId + "/" + detailId + "/" + fileName;
-            } else if (project instanceof ConcatProject) {
-                projectType = ProjectType.CONCAT;
-                filePath = "Generated/" + userId + "/" + projectType + "/"  + projectId +  "/" + fileName;
-            } else {
-                throw new IllegalArgumentException("지정된 타입의 프로젝트가 들어와야 합니다.");
-            }
-
+    // 다운로드 받을 오디오의 버킷 URL을 제공하는 메서드
+    public String generatePresignedUrl(String bucketRoute) throws Exception {
+        try {
             // presigned url 생성
-            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, filePath);
+            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, bucketRoute);
             request.withMethod(com.amazonaws.HttpMethod.GET)
                     .withExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5));
             URL presignedUrl = amazonS3Client.generatePresignedUrl(request);
 
             return presignedUrl.toString();
-
-
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             throw new Exception();
         }
@@ -208,7 +236,8 @@ public class S3Service {
     // 2. 반환값에 대한 컨트롤러의 처리
     // saveMemberAudiometa에서의 null처리필요.
 
-    public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId, AudioType audioType) throws Exception {
+    public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId,
+                                                AudioType audioType) throws Exception {
 
         try {
             List<String> uploadedUrls = new ArrayList<>(); // 빈 어레이리스트 생성
@@ -220,14 +249,17 @@ public class S3Service {
                 uploadedUrls.add(fileUrl); // URL 리스트에 추가
             }
 
+            String fileName = "null";
+
             if (project instanceof VCProject) {
                 if (audioType == AudioType.VC_SRC) { // 얘는 리스트형식으로 저장
-                    saveMemberAudioMeta(memberId, null, uploadedUrls, null, AudioType.VC_SRC, projectId);
+                    saveMemberAudioMeta(memberId, fileName, null, uploadedUrls, null, AudioType.VC_SRC, projectId);
                 } else if (audioType == AudioType.VC_TRG) { // 얘는 파일 하나 꺼내서 경로를 하나의 변수에 저장
-                    saveMemberAudioMeta(memberId, uploadedUrls.get(0), null, null, AudioType.VC_TRG, projectId);
+                    saveMemberAudioMeta(memberId, fileName, uploadedUrls.get(0), null, null, AudioType.VC_TRG,
+                            projectId);
                 }
             } else if (project instanceof ConcatProject) { // 얘도 리스트형식으로 저장처리
-                saveMemberAudioMeta(memberId, null, null, uploadedUrls, AudioType.CONCAT, projectId);
+                saveMemberAudioMeta(memberId, fileName, null, null, uploadedUrls, AudioType.CONCAT, projectId);
             }
 
             return uploadedUrls; // 모든 파일의 URL 리스트 반환.
@@ -239,7 +271,8 @@ public class S3Service {
     }
 
     // 공통적으로 들어가는 코드를 뺴냄
-    private String uploadFileToS3(MultipartFile file, Long memberId, Long projectId, AudioType audioType) throws Exception {
+    private String uploadFileToS3(MultipartFile file, Long memberId, Long projectId, AudioType audioType)
+            throws Exception {
         String originFilename = Normalizer.normalize(file.getOriginalFilename(), Normalizer.Form.NFC);
         String filename = "member/" + memberId + "/" + audioType + "/" + projectId + "/" + originFilename;
 
@@ -251,8 +284,9 @@ public class S3Service {
         return amazonS3Client.getUrl(bucket, filename).toString();
     }
 
-    // 임시    DB저장
-    public void saveMemberAudioMeta(Long memberId, String targetAudioUrl, List<String> srcAudioUrls, List<String> concatAudioUrls, AudioType audioType, Long projectId) {
+    // DB에 유저 오디오 메타 저장
+    public void saveMemberAudioMeta(Long memberId, String fileName, String targetAudioUrl, List<String> srcAudioUrls,
+                                    List<String> concatAudioUrls, AudioType audioType, Long projectId) {
 
         Project project = projectRepository.findById(projectId).orElse(null);
         ProjectType projectType = null;
@@ -261,25 +295,27 @@ public class S3Service {
         if (project instanceof VCProject) {
             projectType = ProjectType.VC;
 
-            MemberAudioMeta targetAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, targetAudioUrl, AudioType.VC_TRG);
+            MemberAudioMeta targetAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, fileName, targetAudioUrl,
+                    AudioType.VC_TRG);
             memberAudioMetaRepository.save(targetAudioMeta);
 
             // 텍스트는 어떻게하지?
             for (String srcAudioUrl : srcAudioUrls) {
-                MemberAudioMeta sourceAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, srcAudioUrl, AudioType.VC_SRC);
+                MemberAudioMeta sourceAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, fileName, srcAudioUrl,
+                        AudioType.VC_SRC);
                 memberAudioMetaRepository.save(sourceAudioMeta);
             }
         } else if (project instanceof ConcatProject) {
             projectType = ProjectType.CONCAT;
             for (String concatAudioUrl : concatAudioUrls) {
-                MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, concatAudioUrl, AudioType.CONCAT);
+                MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, fileName,
+                        concatAudioUrl, AudioType.CONCAT);
                 memberAudioMetaRepository.save(memberAudioMeta);
             }
         } else {
             throw new UnsupportedOperationException("지원되지 않는 프로젝트 유형입니다.");
         }
     }
-
 
     //myEntityRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Entity not found with id " + id));
 }
