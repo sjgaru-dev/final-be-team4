@@ -47,19 +47,19 @@ public class TTSService_team_api {
         }
     }
 
-//    /**
-//     * 개별 텍스트 변환 메서드
-//     * Google TTS API를 사용하여 입력된 텍스트를 WAV 형식으로 변환하고, 파일로 저장합니다.
-//     *
-//     * @param text         변환할 텍스트
-//     * @param languageCode 언어 코드 (예: "ko-KR", "en-US")
-//     * @param gender       성별 ("male", "female", "neutral")
-//     * @param speed        말하는 속도
-//     * @param volume       볼륨 조정 (데시벨)
-//     * @param pitch        음의 높낮이
-//     * @return 저장된 WAV 파일의 경로
-//     * @throws Exception 변환 또는 파일 저장 중 오류 발생 시
-//     */
+    /**
+     * 개별 텍스트 변환 메서드
+     * Google TTS API를 사용하여 입력된 텍스트를 WAV 형식으로 변환하고, 파일로 저장합니다.
+     *
+     * @param text         변환할 텍스트
+     * @param languageCode 언어 코드 (예: "ko-KR", "en-US")
+     * @param gender       성별 ("male", "female", "neutral")
+     * @param speed        말하는 속도
+     * @param volume       볼륨 조정 (데시벨)
+     * @param pitch        음의 높낮이
+     * @return 저장된 WAV 파일의 경로
+     * @throws Exception 변환 또는 파일 저장 중 오류 발생 시
+     */
     public String convertSingleText(Long id) throws Exception {
         LOGGER.info("convertSingleText(Long id) 메서드 시작: id=" + id);
 
@@ -96,18 +96,18 @@ public class TTSService_team_api {
         return filePath;
     }
 
-//    /**
-//     * Google TTS API 호출 메서드
-//     * Google TTS API를 사용하여 텍스트를 WAV 형식으로 변환합니다.
-//     *
-//     * @param text         변환할 텍스트
-//     * @param languageCode 언어 코드
-//     * @param gender       성별
-//     * @param speed        말하는 속도
-//     * @param volume       볼륨 조정 (데시벨)
-//     * @param pitch        음의 높낮이
-//     * @return 변환된 오디오 콘텐츠 (ByteString)
-//     */
+    /**
+     * Google TTS API 호출 메서드
+     * Google TTS API를 사용하여 텍스트를 WAV 형식으로 변환합니다.
+     *
+     * @param text         변환할 텍스트
+     * @param languageCode 언어 코드
+     * @param gender       성별
+     * @param speed        말하는 속도
+     * @param volume       볼륨 조정 (데시벨)
+     * @param pitch        음의 높낮이
+     * @return 변환된 오디오 콘텐츠 (ByteString)
+     */
     private ByteString callTTSApi(TTSDetail ttsDetail) {
         if (ttsDetail == null) {
             throw new IllegalArgumentException("TTSDetail 객체가 null입니다.");

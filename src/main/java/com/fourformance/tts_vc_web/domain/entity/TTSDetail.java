@@ -25,7 +25,7 @@ public class TTSDetail extends BaseEntity {
     private TTSProject ttsProject;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "voice_style_id")
+    @JoinColumn(name = "voice_style_id", unique = false)
     private VoiceStyle voiceStyle;
 
     private String unitScript;
