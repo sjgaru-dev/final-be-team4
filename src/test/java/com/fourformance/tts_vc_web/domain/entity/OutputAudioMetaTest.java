@@ -56,7 +56,7 @@ class OutputAudioMetaTest {
         ttsDetailRepository.saveAndFlush(ttsDetail);
 
         // when - OutputAudioMeta 생성 및 저장
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(ttsDetail, null, null, ProjectType.TTS, "/audio/tts.wav");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, ttsDetail, null, null, ProjectType.TTS, "/audio/tts.wav");
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
         em.clear();
@@ -80,7 +80,7 @@ class OutputAudioMetaTest {
         vcDetailRepository.saveAndFlush(vcDetail);
 
         // when - OutputAudioMeta 생성 및 저장
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, vcDetail, null, ProjectType.VC, "/audio/vc.wav");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, vcDetail, null, ProjectType.VC, "/audio/vc.wav");
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
         em.clear();
@@ -104,7 +104,7 @@ class OutputAudioMetaTest {
         concatProjectRepository.saveAndFlush(concatProject);
 
         // when - OutputAudioMeta 생성 및 저장
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, concatProject, ProjectType.CONCAT, "/audio/concat.wav");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, null, concatProject, ProjectType.CONCAT, "/audio/concat.wav");
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
         em.clear();
@@ -128,7 +128,7 @@ class OutputAudioMetaTest {
         ttsDetailRepository.saveAndFlush(ttsDetail);
 
         // OutputAudioMeta 생성 및 저장
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(ttsDetail, null, null, ProjectType.TTS, "/audio/tts.wav");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, ttsDetail, null, null, ProjectType.TTS, "/audio/tts.wav");
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
         em.clear();
@@ -154,7 +154,7 @@ class OutputAudioMetaTest {
         vcDetailRepository.saveAndFlush(vcDetail);
 
         // OutputAudioMeta 생성 및 저장
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, vcDetail, null, ProjectType.VC, "/audio/vc.wav");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, vcDetail, null, ProjectType.VC, "/audio/vc.wav");
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
         em.clear();
@@ -180,7 +180,7 @@ class OutputAudioMetaTest {
         concatProjectRepository.saveAndFlush(concatProject);
 
         // OutputAudioMeta 생성 및 저장
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, concatProject, ProjectType.CONCAT, "/audio/concat.wav");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, null, concatProject, ProjectType.CONCAT, "/audio/concat.wav");
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
         em.clear();
@@ -206,7 +206,7 @@ class OutputAudioMetaTest {
         ttsDetailRepository.saveAndFlush(ttsDetail);
 
         // OutputAudioMeta 생성 및 저장
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(ttsDetail, null, null, ProjectType.TTS, "/audio/tts.wav");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, ttsDetail, null, null, ProjectType.TTS, "/audio/tts.wav");
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
         em.clear();
@@ -234,7 +234,7 @@ class OutputAudioMetaTest {
         vcDetailRepository.saveAndFlush(vcDetail);
 
         // OutputAudioMeta 생성 및 저장
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, vcDetail, null, ProjectType.VC, "/audio/vc.mp3");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, vcDetail, null, ProjectType.VC, "/audio/vc.mp3");
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
         em.clear();
@@ -262,7 +262,7 @@ class OutputAudioMetaTest {
         concatProjectRepository.saveAndFlush(concatProject);
 
         // OutputAudioMeta 생성 및 저장
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, concatProject, ProjectType.CONCAT, "/audio/concat.aac");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, null, concatProject, ProjectType.CONCAT, "/audio/concat.aac");
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
         em.clear();
@@ -290,7 +290,7 @@ class OutputAudioMetaTest {
         ttsDetailRepository.saveAndFlush(ttsDetail);
 
         // OutputAudioMeta 생성 및 소프트 삭제
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(ttsDetail, null, null, ProjectType.TTS, "/audio/tts.wav");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, ttsDetail, null, null, ProjectType.TTS, "/audio/tts.wav");
         audioMeta.deleteOutputAudioMeta();
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
@@ -319,7 +319,7 @@ class OutputAudioMetaTest {
         vcDetailRepository.saveAndFlush(vcDetail);
 
         // OutputAudioMeta 생성 및 소프트 삭제
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, vcDetail, null, ProjectType.VC, "/audio/vc.mp3");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, vcDetail, null, ProjectType.VC, "/audio/vc.mp3");
         audioMeta.deleteOutputAudioMeta();
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();
@@ -348,7 +348,7 @@ class OutputAudioMetaTest {
         concatProjectRepository.saveAndFlush(concatProject);
 
         // OutputAudioMeta 생성 및 소프트 삭제
-        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, concatProject, ProjectType.CONCAT, "/audio/concat.aac");
+        OutputAudioMeta audioMeta = OutputAudioMeta.createOutputAudioMeta(null, null, null, concatProject, ProjectType.CONCAT, "/audio/concat.aac");
         audioMeta.deleteOutputAudioMeta();
         outputAudioMetaRepository.saveAndFlush(audioMeta);
         em.flush();

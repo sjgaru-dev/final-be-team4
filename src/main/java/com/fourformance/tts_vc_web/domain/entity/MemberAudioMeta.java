@@ -25,6 +25,9 @@ public class MemberAudioMeta extends BaseEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    private String bucketRoute;
+
+    @Lob
     private String audioUrl;
     private String script;
     @Enumerated(EnumType.STRING)
@@ -36,8 +39,9 @@ public class MemberAudioMeta extends BaseEntity {
     private LocalDateTime deletedAt;
 
     // 생성 메서드
-    public static MemberAudioMeta createMemberAudioMeta(Member member, String audioUrl, AudioType audioType) {
+    public static MemberAudioMeta createMemberAudioMeta(Member member, String bucketRoute, String audioUrl, AudioType audioType) {
         MemberAudioMeta memberAudioMeta = new MemberAudioMeta();
+        memberAudioMeta.bucketRoute = bucketRoute;
         memberAudioMeta.member = member;
         memberAudioMeta.audioUrl = audioUrl;
         memberAudioMeta.audioType = audioType;
