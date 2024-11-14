@@ -57,7 +57,7 @@ public class TTSService_team_multi {
         if (ss != null) {
             // TTSDetail 리스트를 처리
             for (TTSDetailDto detailDto : ss) {
-                VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyle().getId())
+                VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyleId())
                         .orElseThrow(() -> new IllegalArgumentException("Invalid detail VoiceStyle ID"));
 
                 TTSDetail ttsDetail;
