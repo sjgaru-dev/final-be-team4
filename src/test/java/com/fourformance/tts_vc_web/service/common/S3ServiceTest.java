@@ -4,6 +4,7 @@ import static java.time.LocalDateTime.now;
 
 import com.fourformance.tts_vc_web.domain.entity.ConcatProject;
 import com.fourformance.tts_vc_web.domain.entity.Member;
+import com.fourformance.tts_vc_web.domain.entity.Project;
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
 import com.fourformance.tts_vc_web.domain.entity.VCDetail;
@@ -58,7 +59,11 @@ class S3ServiceTest {
 
     @Test
     public void 테스트용_VC_디테일_생성() {
+<<<<<<< HEAD
         Member member = Member.createMember("abc@abc.com", "abc123", "철수", 0, now(), "010123123");
+=======
+        Member member = Member.createMember("abc@abc.com", "abc123", "철수",0,now(), "010123123");
+>>>>>>> 13131863857b5ae06694353ae534ff4ce0176b9f
         VCProject vcProject = VCProject.createVCProject(member, "테스트 vc 프로젝트");
         VCDetail vcDetail = VCDetail.createVCDetail(vcProject, null);
 
@@ -100,6 +105,16 @@ class S3ServiceTest {
 //        ttsProjectRepository.save(ttsProject); // projectId = 1;
 //        ttsDetailRepository.save(ttsDetail); // ttsDetailId = 1;
 //    }
+<<<<<<< HEAD
+=======
+
+    @Test
+    public void 프리사인드_더미_날리기() {
+        ttsDetailRepository.deleteAll();
+        ttsProjectRepository.deleteAll();
+        memberRepository.deleteAll();
+    }
+>>>>>>> 13131863857b5ae06694353ae534ff4ce0176b9f
 
     @Test
     public void 프리사인드_더미_날리기() {
