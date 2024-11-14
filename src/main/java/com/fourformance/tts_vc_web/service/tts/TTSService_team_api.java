@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -132,6 +133,14 @@ public class TTSService_team_api {
                 text, languageCode, gender, speed, volume, pitch
         );
 
+        // APIStatus 생성 및 저장
+        APIStatus apiStatus = APIStatus.createAPIStatus(
+                null, // VCDetail이 필요 없을 경우 null 전달
+                ttsDetail,
+                requestPayload
+        );
+        apiStatusRepository.save(apiStatus);
+
         try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
             // TTS API 입력 구성
             SynthesisInput input = SynthesisInput.newBuilder().setText(text).build();
@@ -160,7 +169,16 @@ public class TTSService_team_api {
             SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
 
             if (response.getAudioContent().isEmpty()) {
+
+                // APIStatus 업데이트
+                apiStatus.updateResponseInfo(
+                        "TTS 변환 실패: 응답의 오디오 콘텐츠가 비어 있습니다.",
+                        500,
+                        APIUnitStatusConst.FAILURE
+                );
+
                 throw new RuntimeException("TTS 변환 실패: 응답의 오디오 콘텐츠가 비어 있습니다.");
+
             }
 
             // 응답 페이로드 생성
@@ -174,16 +192,12 @@ public class TTSService_team_api {
                     pitch
             );
 
-            // APIStatus 생성 및 저장
-            APIStatus apiStatus = APIStatus.createAPIStatus(
-                    null, // VCDetail이 필요 없을 경우 null 전달
-                    ttsDetail,
-                    requestPayload,
+            // APIStatus 업데이트
+            apiStatus.updateResponseInfo(
                     responsePayload,
                     200,
                     APIUnitStatusConst.SUCCESS
             );
-            apiStatusRepository.save(apiStatus);
 
             LOGGER.info("Google TTS API 호출 및 변환 성공");
 
@@ -192,20 +206,11 @@ public class TTSService_team_api {
         } catch (Exception e) {
             // 예외 발생 시 APIStatus 생성 및 저장
             String errorPayload = "Error: " + e.getMessage();
-            APIStatus apiStatus = APIStatus.createAPIStatus(
-                    null, // VCDetail이 필요 없을 경우 null 전달
-                    ttsDetail,
-                    requestPayload,
+             apiStatus.updateResponseInfo(
                     errorPayload,
                     500,
                     APIUnitStatusConst.FAILURE
             );
-
-            try {
-                apiStatusRepository.save(apiStatus);
-            } catch (Exception saveException) {
-                LOGGER.severe("APIStatus 저장 실패: " + saveException.getMessage());
-            }
 
             LOGGER.severe("TTS API 호출 중 오류 발생: " + e.getMessage());
             throw new RuntimeException("TTS 변환 실패", e);
