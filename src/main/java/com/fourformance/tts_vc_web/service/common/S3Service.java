@@ -206,19 +206,6 @@ public class S3Service {
                 uploadedUrls.add(fileUrl); // URL 리스트에 추가
             }
 
-            String fileName = "null";
-
-            if (project instanceof VCProject) {
-                if (audioType == AudioType.VC_SRC) { // 얘는 리스트형식으로 저장
-                    saveMemberAudioMeta(memberId, fileName, null, uploadedUrls, null, AudioType.VC_SRC, projectId);
-                } else if (audioType == AudioType.VC_TRG) { // 얘는 파일 하나 꺼내서 경로를 하나의 변수에 저장
-                    saveMemberAudioMeta(memberId, fileName, uploadedUrls.get(0), null, null, AudioType.VC_TRG,
-                            projectId);
-                }
-            } else if (project instanceof ConcatProject) { // 얘도 리스트형식으로 저장처리
-                saveMemberAudioMeta(memberId, fileName, null, null, uploadedUrls, AudioType.CONCAT, projectId);
-            }
-
             return uploadedUrls; // 모든 파일의 URL 리스트 반환.
 
         } catch (Exception e) {
