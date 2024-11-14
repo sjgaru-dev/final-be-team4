@@ -3,6 +3,7 @@ package com.fourformance.tts_vc_web.controller.tts;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
+import com.fourformance.tts_vc_web.dto.response.ErrorResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.dto.tts.*;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
@@ -53,13 +54,22 @@ public class TTSViewController_team_multi {
             summary = "TTS 상태 저장",
             description = "TTS 프로젝트 상태를 저장합니다." )
     @PostMapping("/{projectId}/save")
-    public ResponseEntity<TtsStatusSaveResponseDto> save(@RequestBody TTSProjectWithDetailsDto ttsProjectDetailDto) {
-        // service 호출 및 저장된 project ID 반환, 새 프로젝트(projectId=null) 저장 시 project ID를 생성함
-        Long projectId = ttsService.saveTTSProjectAndDetail(ttsProjectDetailDto);
-
-        // 성공 메시지와 projectId를 응답으로 반환
-        TtsStatusSaveResponseDto response = new TtsStatusSaveResponseDto("Project saved successfully", projectId);
-        return ResponseEntity.ok(response);
+    public ResponseDto ttsSave(@RequestBody TTSSaveDto ttsSaveDto) {
+        try {
+            Long projectId;
+            if (ttsSaveDto.getProjectId() == null) {
+                // projectId가 null인 경우, 새 프로젝트 생성
+                projectId = ttsService.createNewProject(ttsSaveDto);
+            } else {
+                // projectId가 존재하면, 기존 프로젝트 업데이트
+                projectId = ttsService.updateProject(ttsSaveDto);
+            }
+            return DataResponseDto.of(projectId, "상태가 성공적으로 저장되었습니다.");
+        } catch (BusinessException e) {
+            return ErrorResponseDto.of(e.getErrorCode());
+        } catch (Exception e) {
+            return ErrorResponseDto.of(ErrorCode.UNKNOWN_ERROR);
+        }
     }
 
 }
