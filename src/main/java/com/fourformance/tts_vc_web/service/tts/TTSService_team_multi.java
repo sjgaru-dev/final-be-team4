@@ -1,7 +1,5 @@
 package com.fourformance.tts_vc_web.service.tts;
 
-import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
-import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
@@ -18,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,37 +27,37 @@ public class TTSService_team_multi {
     private final TTSDetailRepository ttsDetailRepository;
     private final VoiceStyleRepository voiceStyleRepository;
 
-    //기존 프로젝트가 없으면 생성하고, 이미 있으면 update 처리 => 관심사 분리 해야할 것 같음
+    //해당 프로젝트가 없으면 생성하고, 이미 있으면 update쳐야함 => 관심사 분리 해야할 것 같음
     //unitSequence도 순서대로 잘 들어왔는지, 중복된 값은 없는지 체크 필요
     //projectId는 존재하고 detailId를 모두 null로 한 테스트 통과함
     public Long saveTTSProjectAndDetail(TTSProjectWithDetailsDto dto) {
         TTSProject ttsProject;
-        TTSProjectDto dd = (TTSProjectDto) dto.getTtsProject();
-        List<TTSDetailDto> ss = (List<TTSDetailDto>) dto.getTtsDetails();
+        TTSProjectDto prjDto = (TTSProjectDto) dto.getTtsProject();
+        List<TTSDetailDto> detailDtoList = (List<TTSDetailDto>) dto.getTtsDetails();
 
 
         //dto에서는 voiceStyleId를 Long타입으로 받고 있지만, ttsProject 생성 메서드에서는 VoiceStyle객체를 매개변수로 넘겨야함
-        VoiceStyle voiceStyle = voiceStyleRepository.findById(dd.getVoiceStyleId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid VoiceStyle ID: " + dd.getVoiceStyleId()));
+        VoiceStyle voiceStyle = voiceStyleRepository.findById(prjDto.getVoiceStyle().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid VoiceStyle ID: " + prjDto.getVoiceStyle().getId()));
 
         // projectId가 null이면 새 프로젝트 생성
-        if (dd.getId() == null) {
-            ttsProject = TTSProject.createTTSProject(null, dd.getProjectName(), voiceStyle, dd.getFullScript(), dd.getGlobalSpeed(),dd.getGlobalPitch(),dd.getGlobalVolume());
+        if (prjDto.getId() == null) {
+            ttsProject = TTSProject.createTTSProject(null, prjDto.getProjectName(), voiceStyle, prjDto.getFullScript(), prjDto.getGlobalSpeed(),prjDto.getGlobalPitch(),prjDto.getGlobalVolume());
         } else {
             // projectId가 있으면 기존 프로젝트 조회 및 업데이트
-            ttsProject = ttsProjectRepository.findById(dd.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Project with ID " + dd.getId() + " not found"));
-            ttsProject.updateTTSProject(dd.getProjectName(), voiceStyle,dd.getFullScript(), dd.getGlobalSpeed(),dd.getGlobalPitch(),dd.getGlobalVolume());
+            ttsProject = ttsProjectRepository.findById(prjDto.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Project with ID " + prjDto.getId() + " not found"));
+            ttsProject.updateTTSProject(prjDto.getProjectName(), voiceStyle,prjDto.getFullScript(), prjDto.getGlobalSpeed(),prjDto.getGlobalPitch(),prjDto.getGlobalVolume());
         }
 
         // 프로젝트 저장
         ttsProject = ttsProjectRepository.save(ttsProject);
 
         // TTSDetail 리스트가 null인지 확인
-        if (ss != null) {
+        if (detailDtoList != null) {
             // TTSDetail 리스트를 처리
-            for (TTSDetailDto detailDto : ss) {
-                VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyleId())
+            for (TTSDetailDto detailDto : detailDtoList) {
+                VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyle().getId())
                         .orElseThrow(() -> new IllegalArgumentException("Invalid detail VoiceStyle ID"));
 
                 TTSDetail ttsDetail;
@@ -87,7 +84,7 @@ public class TTSService_team_multi {
     public TTSProjectDto getTTSProjectDto(Long projectId) {
         // 프로젝트 조회
         TTSProject ttsProject = ttsProjectRepository.findById(projectId)
-                .orElseThrow(() -> { throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT); });
+                .orElseThrow(() -> new RuntimeException("Project not found"));
 
         // TTSProjectDTO로 변환
         return TTSProjectDto.createTTSProjectDto(ttsProject);
@@ -100,10 +97,9 @@ public class TTSService_team_multi {
 
         // isDeleted가 false인 경우에만 TTSDetailDTO 목록으로 변환
         return ttsDetails.stream()
-                .filter(detail -> Objects.nonNull(detail.getIsDeleted()) && !detail.getIsDeleted()) // isDeleted가 null이 아니고 false인 경우만 필터링
+                .filter(detail -> !detail.getIsDeleted()) // isDeleted가 false인 경우만 필터링
                 .map(TTSDetailDto::createTTSDetailDto) // ModelMapper를 통해 TTSDetailDto로 변환
                 .collect(Collectors.toList());
     }
-
 
 }
