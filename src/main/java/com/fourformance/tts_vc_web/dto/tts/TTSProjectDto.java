@@ -6,6 +6,7 @@ import com.fourformance.tts_vc_web.domain.entity.TTSProject;
 import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.config.Configuration;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class TTSProjectDto {
 
     private Long id; // 엔티티 ID
@@ -24,7 +26,7 @@ public class TTSProjectDto {
     private Float globalPitch; // 글로벌 피치
     private Float globalVolume; // 글로벌 볼륨
     private APIStatusConst apiStatus; // API 상태
-    private VoiceStyle voiceStyle; // 스타일 이름 (optional, lazy load 대신 포함할 수 있는 필드)
+    private Long voiceStyleId; // 스타일 이름 (optional, lazy load 대신 포함할 수 있는 필드)
 
     private static ModelMapper modelMapper = new ModelMapper();
 
