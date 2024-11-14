@@ -12,30 +12,30 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 @Service
 @RequiredArgsConstructor
 public class VCService_team_api {
 
+    private static final Logger LOGGER = Logger.getLogger(VCService_team_api.class.getName());
     private final ElevenLabsClient_team_api elevenLabsClient;
 
     @Value("${user.home}/uploads")
     private String uploadDir;
 
-    // 타겟 파일 업로드 및 Voice ID 생성
     public String createVoiceId(MultipartFile targetAudio) throws IOException {
         Files.createDirectories(Paths.get(uploadDir));
         String targetFilePath = uploadDir + File.separator + targetAudio.getOriginalFilename();
         File targetFile = new File(targetFilePath);
 
-        // 파일 저장
+        LOGGER.info("Saving target audio file to: " + targetFilePath);
         targetAudio.transferTo(targetFile);
 
-        // Voice ID 생성
+        LOGGER.info("Uploading target audio to generate Voice ID");
         return elevenLabsClient.uploadVoice(targetFilePath);
     }
 
-    // 여러 소스 파일 변환
     public List<String> convertMultipleVoices(MultipartFile[] sourceAudios, String voiceId) throws IOException {
         Files.createDirectories(Paths.get(uploadDir));
         List<String> convertedFiles = new ArrayList<>();
@@ -44,10 +44,10 @@ public class VCService_team_api {
             String sourceFilePath = uploadDir + File.separator + sourceAudio.getOriginalFilename();
             File sourceFile = new File(sourceFilePath);
 
-            // 소스 파일 저장
+            LOGGER.info("Saving source audio file to: " + sourceFilePath);
             sourceAudio.transferTo(sourceFile);
 
-            // 변환 작업 수행
+            LOGGER.info("Converting source audio file using Voice ID: " + voiceId);
             String convertedFile = elevenLabsClient.convertSpeechToSpeech(voiceId, sourceFilePath);
             convertedFiles.add("/uploads/" + convertedFile);
         }
