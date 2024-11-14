@@ -105,12 +105,18 @@ public class TTSController_team_api {
             @ApiResponse(responseCode = "500", description = "서버 오류 발생")
     })
     @PostMapping("/convert/batch")
-    public ResponseEntity<?> convertBatchTexts(@RequestBody List<Long> ids) {
-        try {
-            List<Map<String, String>> fileUrls = ttsService.convertAllTexts(ids);
+    public ResponseDto convertBatchTexts(@RequestBody List<Long> ids) throws Exception {
 
-            // 전체 URL 리스트 생성
-            List<Map<String, String>> fullFileUrls = fileUrls.stream().map(fileUrlMap -> {
+        List<Map<String, String>> fileUrls = ttsService.convertAllTexts(ids);
+
+        if(fileUrls.isEmpty()){
+            throw new BusinessException(ErrorCode.NOT_EXISTS_AUDIO);
+        }
+
+        LOGGER.info("전체 TTS 변환 완료: filePath=" + fileUrls);
+
+        // 전체 URL 리스트 생성
+        List<Map<String, String>> fullFileUrls = fileUrls.stream().map(fileUrlMap -> {
                 String filePath = fileUrlMap.get("fileUrl");
                 String fullFileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                         .path("/converted/download")
@@ -119,36 +125,10 @@ public class TTSController_team_api {
                 return Map.of("fileUrl", fullFileUrl);
             }).toList();
 
-            return ResponseEntity.ok(Map.of("status", "success", "files", fullFileUrls));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
-        }
-    }
+        // 성공적인 응답 반환
+        return DataResponseDto.of(fullFileUrls);
 
-//    @PostMapping("/convert/batch2")
-//    public ResponseEntity<?> convertBatchTexts2(@RequestBody List<Integer> ttsDetailIds) {
-//        try {
-//            List<Map<String, String>> fileUrls = ttsService.convertAllTexts(ttsDetailIds);
-//
-//            // 전체 URL 리스트 생성
-//            List<Map<String, String>> fullFileUrls = fileUrls.stream().map(fileUrlMap -> {
-//                String filePath = fileUrlMap.get("fileUrl");
-//                String fullFileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-//                        .path("/converted/download")
-//                        .queryParam("path", filePath)
-//                        .toUriString();
-//                return Map.of("fileUrl", fullFileUrl);
-//            }).toList();
-//
-//            return ResponseEntity.ok(Map.of("status", "success", "files", fullFileUrls));
-//        } catch (IllegalArgumentException e) {
-//            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-//        } catch (Exception e) {
-//            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
-//        }
-//    }
+    }
 
     /**
      * 변환된 WAV 파일 다운로드 API
