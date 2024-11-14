@@ -66,9 +66,9 @@ public class TTSViewController_team_multi {
             }
             return DataResponseDto.of(projectId, "상태가 성공적으로 저장되었습니다.");
         } catch (BusinessException e) {
-            return ErrorResponseDto.of(e.getErrorCode());
+            throw e;  // 기존의 BusinessException 그대로 던짐
         } catch (Exception e) {
-            return ErrorResponseDto.of(ErrorCode.UNKNOWN_ERROR);
+            throw new BusinessException(ErrorCode.SERVER_ERROR);  // 일반 예외를 서버 에러로 처리
         }
     }
 

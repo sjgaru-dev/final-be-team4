@@ -19,7 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -31,8 +33,6 @@ public class TTSService_team_multi {
     private final TTSProjectRepository ttsProjectRepository;
     private final TTSDetailRepository ttsDetailRepository;
     private final VoiceStyleRepository voiceStyleRepository;
-
-
 
     // TTS 프로젝트 값 조회하기
     @Transactional(readOnly = true)
@@ -65,7 +65,12 @@ public class TTSService_team_multi {
     @Transactional
     public Long createNewProject(TTSSaveDto dto) {
         VoiceStyle voiceStyle = voiceStyleRepository.findById(dto.getVoiceStyleId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_VOICESTYLE));
+
+        // TTSDetailDto 리스트에 대한 unitSequence 검증
+        if (dto.getTtsDetails() != null) {
+            validateUnitSequence(dto.getTtsDetails());
+        }
 
         // TTSProject 생성
         TTSProject ttsProject = TTSProject.createTTSProject(
@@ -94,7 +99,12 @@ public class TTSService_team_multi {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
 
         VoiceStyle voiceStyle = voiceStyleRepository.findById(dto.getVoiceStyleId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT)); //
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_VOICESTYLE));
+
+        // TTSDetailDto 리스트에 대한 unitSequence 검증
+        if (dto.getTtsDetails() != null) {
+            validateUnitSequence(dto.getTtsDetails());
+        }
 
         ttsProject.updateTTSProject(
                 dto.getProjectName(),
@@ -116,7 +126,7 @@ public class TTSService_team_multi {
     // ttsDetail 생성 메서드
     private void createTTSDetail(TTSDetailDto detailDto, TTSProject ttsProject) {
         VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyleId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_VOICESTYLE));
 
         TTSDetail ttsDetail = TTSDetail.createTTSDetail(
                 ttsProject,
@@ -144,7 +154,7 @@ public class TTSService_team_multi {
         if (detailDto.getId() != null) {
             // 기존 TTSDetail 업데이트
             TTSDetail ttsDetail = ttsDetailRepository.findById(detailDto.getId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL));
             ttsDetail.updateTTSDetail(
                     detailStyle,
                     detailDto.getUnitScript(),
@@ -161,5 +171,39 @@ public class TTSService_team_multi {
         }
     }
 
+    /**
+     * TTSDetailDto 리스트에서 unitSequence 값을 검증하는 메서드.
+     * 중복된 unitSequence 값이 없는지, unitSequence가 순차적인지(1, 2, 3, ...) 확인합니다.
+     *
+     * @param detailDtos TTSDetailDto 리스트
+     * @throws BusinessException DUPLICATE_UNIT_SEQUENCE 예외는 unitSequence에 중복이 있을 때 발생
+     *                           INVALID_UNIT_SEQUENCE_ORDER 예외는 unitSequence가 순차적이지 않을 때 발생
+     */
+    private void validateUnitSequence(List<TTSDetailDto> detailDtos) {
+        // 중복 체크를 위한 Set 생성
+        Set<Integer> unitSequenceSet = new HashSet<>();
+
+        // unitSequence 값 중복 여부 확인
+        for (TTSDetailDto detailDto : detailDtos) {
+            if (!unitSequenceSet.add(detailDto.getUnitSequence())) {
+                // 중복된 unitSequence가 발견되면 예외 발생
+                throw new BusinessException(ErrorCode.DUPLICATE_UNIT_SEQUENCE);
+            }
+        }
+
+        // unitSequence 값을 정렬된 리스트로 변환하여 순차 여부 확인
+        List<Integer> sequences = detailDtos.stream()
+                .map(TTSDetailDto::getUnitSequence)
+                .sorted()
+                .collect(Collectors.toList());
+
+        // 정렬된 unitSequence 리스트가 [1, 2, 3, ...] 순서인지 확인
+        for (int i = 0; i < sequences.size(); i++) {
+            if (sequences.get(i) != i + 1) {
+                // 순서가 맞지 않는 경우 예외 발생
+                throw new BusinessException(ErrorCode.INVALID_UNIT_SEQUENCE_ORDER);
+            }
+        }
+    }
 
 }
