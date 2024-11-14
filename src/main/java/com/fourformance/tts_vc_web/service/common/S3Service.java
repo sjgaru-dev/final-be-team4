@@ -176,44 +176,6 @@ public class S3Service {
         return outputAudioMetaRepository.save(outputAudioMeta);
     }
 
-//    // 다운로드 받을 오디오의 버킷 URL을 제공하는 메서드
-//    public String generatePresignedUrl(Long userId, Long projectId, Long detailId, String fileName) throws Exception {
-//        try {
-//
-//            // Project의 실제 타입에 따라 ProjectType 설정
-//            Project project = projectRepository.findById(projectId).orElse(null);
-//            ProjectType projectType = null;
-//            String filePath = null;
-//            if (project instanceof TTSProject) {
-//                projectType = ProjectType.TTS;
-//                filePath =
-//                        "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + fileName;
-//            } else if (project instanceof VCProject) {
-//                projectType = ProjectType.VC;
-//                filePath =
-//                        "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + fileName;
-//            } else if (project instanceof ConcatProject) {
-//                projectType = ProjectType.CONCAT;
-//                filePath = "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + fileName;
-//            } else {
-//                throw new IllegalArgumentException("지정된 타입의 프로젝트가 들어와야 합니다.");
-//            }
-//
-//            // presigned url 생성
-//            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucket, filePath);
-//            request.withMethod(com.amazonaws.HttpMethod.GET)
-//                    .withExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5));
-//            URL presignedUrl = amazonS3Client.generatePresignedUrl(request);
-//
-//            return presignedUrl.toString();
-//
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            throw new Exception();
-//        }
-//    }
-
     // 다운로드 받을 오디오의 버킷 URL을 제공하는 메서드
     public String generatePresignedUrl(String bucketRoute) throws Exception {
         try {
@@ -230,12 +192,7 @@ public class S3Service {
         }
     }
 
-    // new things================================================== sojeong
-    // 모든 파일 URL을 리스트로 반환하는 메서드
-    // 수정할 사항 : 1 . 파일업로드시 파일 리스트가 비어있는지 확인 필요.
-    // 2. 반환값에 대한 컨트롤러의 처리
-    // saveMemberAudiometa에서의 null처리필요.
-
+    //  S3에 업로드하고 DB에 저장하는 메서드
     public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId,
                                                 AudioType audioType) throws Exception {
 
@@ -270,7 +227,7 @@ public class S3Service {
         }
     }
 
-    // 공통적으로 들어가는 코드를 뺴냄
+    // S3 버킷에 업로드하는 메서드
     private String uploadFileToS3(MultipartFile file, Long memberId, Long projectId, AudioType audioType)
             throws Exception {
         String originFilename = Normalizer.normalize(file.getOriginalFilename(), Normalizer.Form.NFC);
@@ -316,6 +273,4 @@ public class S3Service {
             throw new UnsupportedOperationException("지원되지 않는 프로젝트 유형입니다.");
         }
     }
-
-    //myEntityRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Entity not found with id " + id));
 }

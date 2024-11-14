@@ -90,11 +90,12 @@ public class S3Controller {
 //    }
 
     // 생성된 오디오를 다운받을 수 있는 presigned url을 제공하는 api
-    @Operation(summary = "생성된 오디오 다운로드", description =
-            "TTS, VC, CONCAT으로 변환된 오디오를 S3 버킷으로부터 다운로드 받을수 있는 URL을 제공하는 API 입니다."
+    @Operation(summary = "버킷에 있는 오디오 다운로드", description =
+            "오디오를 S3 버킷으로부터 다운로드 받을수 있는 URL을 제공하는 API 입니다."
                     + "<br><br>매개변수:<br>- 버킷 경로")
     @GetMapping(value = {"/tts/download-generated-audio-from-bucket", "/vc/download-generated-audio-from-bucket",
-            "/concat/download-generated-audio-from-bucket"})
+            "/concat/download-generated-audio-from-bucket","/vc/download-to-generate-audio-from-bucket",
+            "/concat/download-to-generate-audio-from-bucket"})
     public ResponseDto downloadGeneratedAudio(@RequestParam("bucketRoute") String bucketRoute) {
         try {
             Long userId = 0L;  // 개발 단계 임시 하드코딩
@@ -110,8 +111,12 @@ public class S3Controller {
     }
 
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<String>> uploadFiles(
+    @Operation(summary = "유저가 가지고 있는 오디오를 버킷에 저장", description =
+            "VC, CONCAT으로 변환할 오디오를 클라이언트 로컬컴퓨터로부터 버킷에 저장하는 api입니다."
+                    + "<br><br>매개변수:<br>- 파일, <br>- 멤버Id, <br>- projectId, <br>- audioType")
+    @PostMapping(value = {"/vc/upload-local-to-bucket",
+            "/concat/upload-local-to-bucket"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseDto uploadFiles(
             // 정상적인 처리에서는 List<String>을 반환하고, 예외가 발생할 경우 String으로 에러 메시지를 반환할 때 유용합니다.
             @RequestParam("files") List<MultipartFile> files, @RequestParam("memberId") Long memberId,
             @RequestParam("projectId") Long projectId, @RequestParam("audioType") String audioType) {
@@ -120,13 +125,30 @@ public class S3Controller {
 
             List<String> uploadedUrls = S3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType);
 
-            return ResponseEntity.ok(uploadedUrls);
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException(ErrorCode.NOT_EXISTS_AUDIO);
+            return DataResponseDto.of(uploadedUrls);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.UNKNOWN_ERROR);
         }
     }
+
+//    @Operation(summary = "버킷에 저장된 클라이언트의 오디오를 다운로드", description =
+//            "VC, CONCAT으로 변환할 오디오를 버킷으로부터 다운로드 받을수 있는 URL을 제공하는 API 입니다."
+//                    + "<br><br>매개변수:<br>- 버킷 경로")
+//    @GetMapping(value = { "/vc/download-to-generate-audio-from-bucket",
+//            "/concat/download-to-generate-audio-from-bucket"})
+//    public ResponseDto downloadToGenerateAudio(@RequestParam("bucketRoute") String bucketRoute) {
+//        try {
+//            Long userId = 0L;  // 개발 단계 임시 하드코딩
+////            Long userId = (Long) session.getAttribute("userId");
+//
+//            // presigned url을 반환하는 서비스 호출
+//            String presignedUrl = S3Service.generatePresignedUrl(bucketRoute);
+//            return DataResponseDto.of(presignedUrl, "파일 다운로드 URL 생성 성공");
+//        } catch (Exception e) {
+//            // 예외는 추후에 정리할 예정s
+//            throw new BusinessException(ErrorCode.UNKNOWN_ERROR);
+//        }
+//    }
 }
 
 
