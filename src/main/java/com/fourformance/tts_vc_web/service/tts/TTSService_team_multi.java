@@ -32,32 +32,32 @@ public class TTSService_team_multi {
     //projectId는 존재하고 detailId를 모두 null로 한 테스트 통과함
     public Long saveTTSProjectAndDetail(TTSProjectWithDetailsDto dto) {
         TTSProject ttsProject;
-        TTSProjectDto dd = (TTSProjectDto) dto.getTtsProject();
-        List<TTSDetailDto> ss = (List<TTSDetailDto>) dto.getTtsDetails();
+        TTSProjectDto prjDto = (TTSProjectDto) dto.getTtsProject();
+        List<TTSDetailDto> detailDtoList = (List<TTSDetailDto>) dto.getTtsDetails();
 
 
         //dto에서는 voiceStyleId를 Long타입으로 받고 있지만, ttsProject 생성 메서드에서는 VoiceStyle객체를 매개변수로 넘겨야함
-        VoiceStyle voiceStyle = voiceStyleRepository.findById(dd.getVoiceStyle().getId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid VoiceStyle ID: " + dd.getVoiceStyle().getId()));
+        VoiceStyle voiceStyle = voiceStyleRepository.findById(prjDto.getVoiceStyle().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid VoiceStyle ID: " + prjDto.getVoiceStyle().getId()));
 
         // projectId가 null이면 새 프로젝트 생성
-        if (dd.getId() == null) {
-            ttsProject = TTSProject.createTTSProject(null, dd.getProjectName(), voiceStyle, dd.getFullScript(), dd.getGlobalSpeed(),dd.getGlobalPitch(),dd.getGlobalVolume());
+        if (prjDto.getId() == null) {
+            ttsProject = TTSProject.createTTSProject(null, prjDto.getProjectName(), voiceStyle, prjDto.getFullScript(), prjDto.getGlobalSpeed(),prjDto.getGlobalPitch(),prjDto.getGlobalVolume());
         } else {
             // projectId가 있으면 기존 프로젝트 조회 및 업데이트
-            ttsProject = ttsProjectRepository.findById(dd.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Project with ID " + dd.getId() + " not found"));
-            ttsProject.updateTTSProject(dd.getProjectName(), voiceStyle,dd.getFullScript(), dd.getGlobalSpeed(),dd.getGlobalPitch(),dd.getGlobalVolume());
+            ttsProject = ttsProjectRepository.findById(prjDto.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Project with ID " + prjDto.getId() + " not found"));
+            ttsProject.updateTTSProject(prjDto.getProjectName(), voiceStyle,prjDto.getFullScript(), prjDto.getGlobalSpeed(),prjDto.getGlobalPitch(),prjDto.getGlobalVolume());
         }
 
         // 프로젝트 저장
         ttsProject = ttsProjectRepository.save(ttsProject);
 
         // TTSDetail 리스트가 null인지 확인
-        if (ss != null) {
+        if (detailDtoList != null) {
             // TTSDetail 리스트를 처리
-            for (TTSDetailDto detailDto : ss) {
-                VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyleId())
+            for (TTSDetailDto detailDto : detailDtoList) {
+                VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyle().getId())
                         .orElseThrow(() -> new IllegalArgumentException("Invalid detail VoiceStyle ID"));
 
                 TTSDetail ttsDetail;
