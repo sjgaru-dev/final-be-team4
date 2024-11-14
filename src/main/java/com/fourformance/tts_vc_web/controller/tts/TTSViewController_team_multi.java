@@ -1,5 +1,9 @@
 package com.fourformance.tts_vc_web.controller.tts;
 
+import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
+import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.dto.tts.*;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
 import com.fourformance.tts_vc_web.repository.TTSProjectRepository;
@@ -18,12 +22,6 @@ import java.util.List;
 public class TTSViewController_team_multi {
 
     @Autowired
-    TTSProjectRepository ttsProjectRepository;
-
-    @Autowired
-    TTSDetailRepository ttsDetailRepository;
-
-    @Autowired
     TTSService_team_multi ttsService;
 
 
@@ -32,15 +30,22 @@ public class TTSViewController_team_multi {
             summary = "TTS 상태 로드",
             description = "TTS 프로젝트 상태를 가져옵니다." )
     @GetMapping("/{projectId}")
-    public ResponseEntity<TTSProjectWithDetailsDto> getTTSProjectWithDetails(@PathVariable Long projectId) {
-        // TTSProjectDTO와 TTSDetailDTO 리스트 가져오기
-        TTSProjectDto ttsProjectDTO = ttsService.getTTSProjectDto(projectId);
-        List<TTSDetailDto> ttsDetailsDTO = ttsService.getTTSDetailsDto(projectId);
+    public ResponseDto ttsLoad(@PathVariable Long projectId) {
+        try {
+            // TTSProjectDTO와 TTSDetailDTO 리스트 가져오기
+            TTSProjectDto ttsProjectDTO = ttsService.getTTSProjectDto(projectId);
+            List<TTSDetailDto> ttsDetailsDTO = ttsService.getTTSDetailsDto(projectId);
 
-        // DTO를 포함한 응답 객체 생성
-        TTSProjectWithDetailsDto response = new TTSProjectWithDetailsDto(ttsProjectDTO, ttsDetailsDTO);
+            if (ttsProjectDTO == null) {
+                throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT);
+            }
 
-        return ResponseEntity.ok(response);
+            // DTO를 포함한 응답 객체 생성
+            TTSProjectWithDetailsDto response = new TTSProjectWithDetailsDto(ttsProjectDTO, ttsDetailsDTO);
+            return DataResponseDto.of(response);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
     }
 
     // TTS 상태 저장 메서드

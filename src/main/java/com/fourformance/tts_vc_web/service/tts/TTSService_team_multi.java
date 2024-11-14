@@ -1,5 +1,7 @@
 package com.fourformance.tts_vc_web.service.tts;
 
+import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,8 +40,8 @@ public class TTSService_team_multi {
 
 
         //dto에서는 voiceStyleId를 Long타입으로 받고 있지만, ttsProject 생성 메서드에서는 VoiceStyle객체를 매개변수로 넘겨야함
-        VoiceStyle voiceStyle = voiceStyleRepository.findById(dd.getVoiceStyle().getId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid VoiceStyle ID: " + dd.getVoiceStyle().getId()));
+        VoiceStyle voiceStyle = voiceStyleRepository.findById(dd.getVoiceStyleId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid VoiceStyle ID: " + dd.getVoiceStyleId()));
 
         // projectId가 null이면 새 프로젝트 생성
         if (dd.getId() == null) {
@@ -84,7 +87,7 @@ public class TTSService_team_multi {
     public TTSProjectDto getTTSProjectDto(Long projectId) {
         // 프로젝트 조회
         TTSProject ttsProject = ttsProjectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> { throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT); });
 
         // TTSProjectDTO로 변환
         return TTSProjectDto.createTTSProjectDto(ttsProject);
@@ -97,9 +100,10 @@ public class TTSService_team_multi {
 
         // isDeleted가 false인 경우에만 TTSDetailDTO 목록으로 변환
         return ttsDetails.stream()
-                .filter(detail -> !detail.getIsDeleted()) // isDeleted가 false인 경우만 필터링
+                .filter(detail -> Objects.nonNull(detail.getIsDeleted()) && !detail.getIsDeleted()) // isDeleted가 null이 아니고 false인 경우만 필터링
                 .map(TTSDetailDto::createTTSDetailDto) // ModelMapper를 통해 TTSDetailDto로 변환
                 .collect(Collectors.toList());
     }
+
 
 }

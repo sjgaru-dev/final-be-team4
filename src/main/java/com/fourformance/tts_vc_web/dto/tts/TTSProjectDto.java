@@ -23,7 +23,7 @@ public class TTSProjectDto {
     private Float globalPitch; // 글로벌 피치
     private Float globalVolume; // 글로벌 볼륨
     private APIStatusConst apiStatus; // API 상태
-    private VoiceStyle voiceStyle; // 스타일 이름 (optional, lazy load 대신 포함할 수 있는 필드)
+    private Long voiceStyleId; // 스타일 이름 (optional, lazy load 대신 포함할 수 있는 필드)
 
     private static ModelMapper modelMapper = new ModelMapper();
 
