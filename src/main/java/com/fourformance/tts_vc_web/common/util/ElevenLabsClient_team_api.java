@@ -2,6 +2,7 @@ package com.fourformance.tts_vc_web.common.util;
 
 
 import okhttp3.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -13,8 +14,11 @@ import java.time.Instant;
 @Component
 public class ElevenLabsClient_team_api {
 
-    private static final String BASE_URL = "https://api.elevenlabs.io/v1";
-    private final String apiKey = "sk_78202a4f864201aa887f566876996df4db4f43b8885801b3";
+    @Value("${elevenlabs.api.base-url}")
+    private String BASE_URL;
+
+    @Value("${elevenlabs.api.key}")
+    private String apiKey;
     private final OkHttpClient client = new OkHttpClient();
 
     public String uploadVoice(String targetAudioPath) throws IOException {
