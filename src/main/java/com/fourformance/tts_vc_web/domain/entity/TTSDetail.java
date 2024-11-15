@@ -26,6 +26,7 @@ public class TTSDetail extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "voice_style_id")
+
     private VoiceStyle voiceStyle;
 
     private String unitScript;
