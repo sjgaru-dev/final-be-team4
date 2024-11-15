@@ -2,6 +2,7 @@ package com.fourformance.tts_vc_web.controller.vc;
 
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
+import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
 import com.fourformance.tts_vc_web.service.vc.VCService_team_multi;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ public class VCViewController_team_multi {
             description = "VC 프로젝트 상태를 가져옵니다." )
     @PostMapping("/{projectId}/save")
     public ResponseDto vcSave(@RequestBody VCSaveDto vcSaveDto){
-
+        return DataResponseDto.of("");
     }
 
 }
