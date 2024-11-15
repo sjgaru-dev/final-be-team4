@@ -4,20 +4,25 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
-
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
 
-    // HttpStatus는 애매하면 일단 BAD_REQUEST로 통일합시다.
+    // HttpStatus는 애매하면 일단 BAD_REQUEST로 통일
 
     // 0번대 코드 : ok
     OK(0, HttpStatus.OK, "Ok"),
 
     // 1000번대 코드 : 오디오 파일 s3 버킷 업/다운로드 관련
     NOT_EXISTS_AUDIO(1001, HttpStatus.BAD_REQUEST, "존재하지 않는 파일에 대한 접근 시도입니다."),
-
-    // ... 개발 중 추가
+    EMPTY_FILE(1002, HttpStatus.BAD_REQUEST, "파일이 비어 있습니다."), // *
+    PROJECT_NOT_FOUND(1003, HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."), // *
+    MEMBER_NOT_FOUND(1004, HttpStatus.NOT_FOUND, "회원 정보를 찾을 수 없습니다."), // *
+    DETAIL_NOT_FOUND(1005, HttpStatus.NOT_FOUND, "유닛 정보를 찾을 수 없습니다."),
+    UNSUPPORTED_PROJECT_TYPE(1006, HttpStatus.BAD_REQUEST, "지원되지 않는 프로젝트 유형입니다."), // *
+    S3_UPLOAD_FAILED(1007, HttpStatus.INTERNAL_SERVER_ERROR, "S3 업로드에 실패했습니다."), // *
+    FILE_PROCESSING_ERROR(1008, HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."), // *
+    S3_PRESIGNED_URL_FAILED(1009, HttpStatus.INTERNAL_SERVER_ERROR, "S3 presigned URL 생성에 실패했습니다."), // *
 
     // 9999 : 테스트용 커스텀 예외
     TEST_ERROR(9999, HttpStatus.BAD_REQUEST, "테스트용 커스텀 예외입니다."),
@@ -28,5 +33,4 @@ public enum ErrorCode {
     private final Integer code;
     private final HttpStatus httpStatus;
     private final String message;
-
 }

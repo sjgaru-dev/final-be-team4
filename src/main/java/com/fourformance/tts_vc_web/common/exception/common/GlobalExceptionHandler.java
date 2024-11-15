@@ -11,6 +11,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponseDto> handleBusinessException(BusinessException e) {
+        e.printStackTrace();
         ErrorResponseDto errorResponse = ErrorResponseDto.of(e.getErrorCode());
         return new ResponseEntity<>(errorResponse, e.getErrorCode().getHttpStatus());
     }
