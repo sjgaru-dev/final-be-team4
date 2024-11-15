@@ -1,6 +1,5 @@
 package com.fourformance.tts_vc_web.common.util;
 
-
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -14,11 +13,12 @@ import java.time.Instant;
 @Component
 public class ElevenLabsClient_team_api {
 
-    @Value("${elevenlabs.api.base-url}")
-    private String BASE_URL;
+    @Value("${elevenlabs.api.url}")
+    private String baseUrl;
 
     @Value("${elevenlabs.api.key}")
     private String apiKey;
+
     private final OkHttpClient client = new OkHttpClient();
 
     public String uploadVoice(String targetAudioPath) throws IOException {
@@ -32,7 +32,7 @@ public class ElevenLabsClient_team_api {
                 RequestBody.create(audioFile, MediaType.parse("audio/mpeg")));
 
         Request request = new Request.Builder()
-                .url(BASE_URL + "/voices/add")
+                .url(baseUrl + "/voices/add")
                 .addHeader("xi-api-key", apiKey)
                 .post(builder.build())
                 .build();
@@ -58,7 +58,7 @@ public class ElevenLabsClient_team_api {
                 RequestBody.create(audioFile, MediaType.parse("audio/mpeg")));
 
         Request request = new Request.Builder()
-                .url(BASE_URL + "/speech-to-speech/" + voiceId)
+                .url(baseUrl + "/speech-to-speech/" + voiceId)
                 .addHeader("xi-api-key", apiKey)
                 .post(builder.build())
                 .build();
