@@ -6,7 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
+//@Rollback(value = false)
 class MemberTest {
 
     @PersistenceContext
@@ -114,7 +115,7 @@ class MemberTest {
         // given
             // 멤버 객체 생성
         Member beforeMember = Member.createMember("email@email.com","pwd123","name123",0, LocalDateTime.now(),"01010101100");
-            // 멤버 객체 DB에 저장
+         // 멤버 객체 DB에 저장
         memberRepository.save(beforeMember);
         em.flush();
         em.clear();

@@ -1,115 +1,326 @@
 package com.fourformance.tts_vc_web.service.tts;
 
-import com.google.auth.oauth2.GoogleCredentials;
+
+import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
+import com.fourformance.tts_vc_web.domain.entity.APIStatus;
+import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
+import com.fourformance.tts_vc_web.domain.entity.TTSProject;
+import com.fourformance.tts_vc_web.repository.APIStatusRepository;
+import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
+import com.fourformance.tts_vc_web.repository.TTSProjectRepository;
 import com.google.cloud.texttospeech.v1.*;
 import com.google.protobuf.ByteString;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Logger;
 
 @Service
 public class TTSService_team_api {
 
-    private TextToSpeechClient textToSpeechClient;
-    private List<String> segments = new ArrayList<>(); // 세그먼트를 저장하는 리스트
+    @Autowired
+    TTSDetailRepository ttsDetailRepository;
+
+    @Autowired
+    APIStatusRepository apiStatusRepository;
 
 
-    // 초기화 블록에서 Google Cloud TTS 클라이언트를 설정
-    @PostConstruct
-    public void init() throws IOException {
-        // 리소스 폴더에서 서비스 계정 키 파일을 읽어옴
-        InputStream credentialsStream = getClass().getClassLoader().getResourceAsStream("sound-potion-440705-j8-cc85748343a6.json");
-        if (credentialsStream == null) {
-            throw new IOException("Service account JSON file not found in resources.");
+    private static final String OUTPUT_DIR = "output/"; // WAV 파일 저장 디렉토리
+    private static final Logger LOGGER = Logger.getLogger(TTSService_team_api.class.getName());
+
+    // 생성자: 출력 디렉토리가 존재하지 않으면 생성합니다.
+    public TTSService_team_api() {
+        File outputDir = new File(OUTPUT_DIR);
+        if (!outputDir.exists()) {
+            outputDir.mkdirs();
+        }
+    }
+
+    /**
+     * 개별 텍스트 변환 메서드
+     * Google TTS API를 사용하여 입력된 텍스트를 WAV 형식으로 변환하고, 파일로 저장합니다.
+     *
+     * @param text         변환할 텍스트
+     * @param languageCode 언어 코드 (예: "ko-KR", "en-US")
+     * @param gender       성별 ("male", "female", "neutral")
+     * @param speed        말하는 속도
+     * @param volume       볼륨 조정 (데시벨)
+     * @param pitch        음의 높낮이
+     * @return 저장된 WAV 파일의 경로
+     * @throws Exception 변환 또는 파일 저장 중 오류 발생 시
+     */
+    public String convertSingleText(Long id) throws Exception {
+        LOGGER.info("convertSingleText(Long id) 메서드 시작: id=" + id);
+
+        // ttsDetailRepository에서 TTSDetail 객체를 Optional로 가져옴.
+        Optional<TTSDetail> ttsDetailOpt = ttsDetailRepository.findById(id);
+        if (ttsDetailOpt.isEmpty()) {
+            throw new IllegalArgumentException("Invalid TTS Detail ID: " + id);
+        }
+        TTSDetail ttsDetail = ttsDetailOpt.get();
+
+        LOGGER.info("TTSDetail 가져오기 성공: " + ttsDetail);
+
+        // Google TTS API 호출 전에 언어 검증 수행
+        checkTextLanguage(ttsDetail.getUnitScript(), ttsDetail.getVoiceStyle().getLanguageCode());
+
+        LOGGER.info("언어 검증 완료");
+
+        // 파일 이름과 경로 생성
+        String fileName = "tts_output_" + System.currentTimeMillis() + ".wav";
+        String filePath = OUTPUT_DIR + fileName;
+
+        LOGGER.info("파일 경로 생성: " + filePath);
+
+        // Google TTS API 호출
+        ByteString audioContent = callTTSApi(ttsDetail);
+
+        LOGGER.info("Google TTS API 호출 완료, 오디오 변환 성공");
+
+        // 오디오 데이터를 WAV 파일로 저장
+        saveAudioContent(audioContent, filePath);
+
+        LOGGER.info("WAV 파일 저장 성공: " + filePath);
+
+        return filePath;
+    }
+
+    /**
+     * Google TTS API 호출 메서드
+     * Google TTS API를 사용하여 텍스트를 WAV 형식으로 변환합니다.
+     *
+     * @param text         변환할 텍스트
+     * @param languageCode 언어 코드
+     * @param gender       성별
+     * @param speed        말하는 속도
+     * @param volume       볼륨 조정 (데시벨)
+     * @param pitch        음의 높낮이
+     * @return 변환된 오디오 콘텐츠 (ByteString)
+     */
+    private ByteString callTTSApi(TTSDetail ttsDetail) {
+        if (ttsDetail == null) {
+            throw new IllegalArgumentException("TTSDetail 객체가 null입니다.");
+        }
+        if (ttsDetail.getUnitScript() == null || ttsDetail.getVoiceStyle() == null) {
+            throw new IllegalArgumentException("TTSDetail의 필드 값이 비어 있습니다.");
         }
 
-        // GoogleCredentials 객체를 생성하여 인증 설정
-        GoogleCredentials credentials = GoogleCredentials.fromStream(credentialsStream);
+        // TTSDetail 필드 값 가져오기
+        String text = ttsDetail.getUnitScript();
+        String languageCode = ttsDetail.getVoiceStyle().getLanguageCode();
+        String gender = ttsDetail.getVoiceStyle().getGender();
+        Float speed = ttsDetail.getUnitSpeed();
+        Float volume = ttsDetail.getUnitVolume();
+        Float pitch = ttsDetail.getUnitPitch();
 
-        // TTS 클라이언트 설정을 위한 TextToSpeechSettings 생성
-        TextToSpeechSettings settings = TextToSpeechSettings.newBuilder()
-                .setCredentialsProvider(() -> credentials)
-                .build();
+        LOGGER.info(String.format("TTS API 요청 생성: Text=%s, Language=%s, Gender=%s, Speed=%.2f, Volume=%.2f, Pitch=%.2f",
+                text, languageCode, gender, speed, volume, pitch));
 
-        // TextToSpeechClient 생성
-        textToSpeechClient = TextToSpeechClient.create(settings);
-    }
+        // 요청 페이로드 생성
+        String requestPayload = String.format(
+                "Text: %s, Language: %s, Gender: %s, Speed: %.2f, Volume: %.2f, Pitch: %.2f",
+                text, languageCode, gender, speed, volume, pitch
+        );
 
-    // TTS 변환 메서드
-    public ByteString convertTextToSpeech(String text) throws Exception {
-        // TTS 요청 구성
-        SynthesisInput input = SynthesisInput.newBuilder()
-                .setText(text)
-                .build();
+        // APIStatus 생성 및 저장
+        APIStatus apiStatus = APIStatus.createAPIStatus(
+                null, // VCDetail이 필요 없을 경우 null 전달
+                ttsDetail,
+                requestPayload
+        );
+        apiStatusRepository.save(apiStatus);
 
-        // 음성 설정
-        VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
-                .setLanguageCode("ko-KR")
-                .setSsmlGender(SsmlVoiceGender.NEUTRAL)
-                .build();
+        try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
+            // TTS API 입력 구성
+            SynthesisInput input = SynthesisInput.newBuilder().setText(text).build();
 
-        // 오디오 설정 (MP3 포맷)
-        AudioConfig audioConfig = AudioConfig.newBuilder()
-                .setAudioEncoding(AudioEncoding.MP3)
-                .build();
+            // 성별 파라미터 설정
+            SsmlVoiceGender ssmlGender = switch (gender.toLowerCase()) {
+                case "male" -> SsmlVoiceGender.MALE;
+                case "female" -> SsmlVoiceGender.FEMALE;
+                default -> SsmlVoiceGender.NEUTRAL;
+            };
 
-        // TTS 요청 및 응답 처리
-        SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
-        return response.getAudioContent();
-    }
+            // 음성 및 오디오 설정
+            VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
+                    .setLanguageCode(languageCode)
+                    .setSsmlGender(ssmlGender)
+                    .build();
 
-    public ByteString convertTextToSpeechWithOptions(String text, double speed, double volume, double pitch) throws Exception {
-        // 1. 입력 텍스트를 TTS API의 입력 형식으로 설정합니다.
-        SynthesisInput input = SynthesisInput.newBuilder()
-                .setText(text) // 변환할 텍스트 설정
-                .build();
+            AudioConfig audioConfig = AudioConfig.newBuilder()
+                    .setAudioEncoding(AudioEncoding.LINEAR16) // WAV 형식
+                    .setSpeakingRate(speed)
+                    .setVolumeGainDb(volume)
+                    .setPitch(pitch)
+                    .build();
 
-        // 2. 음성 설정을 구성합니다.
-        VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
-                .setLanguageCode("ko-KR") // 사용할 언어를 한국어로 설정
-                .setSsmlGender(SsmlVoiceGender.NEUTRAL) // 음성의 성별을 중성으로 설정
-                .build();
+            // Google TTS API 호출
+            SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
 
-        // 3. 오디오 설정을 구성하여 음성의 속도, 볼륨, 피치를 사용자 지정 옵션으로 설정합니다.
-        AudioConfig audioConfig = AudioConfig.newBuilder()
-                .setAudioEncoding(AudioEncoding.MP3) // 출력 오디오 형식을 MP3로 설정
-                .setSpeakingRate(speed) // 말하는 속도를 사용자 입력 값으로 설정
-                .setVolumeGainDb(volume) // 볼륨을 사용자 입력 값으로 설정 (단위: 데시벨)
-                .setPitch(pitch) // 음의 높낮이를 사용자 입력 값으로 설정
-                .build();
+            if (response.getAudioContent().isEmpty()) {
 
-        // 4. TTS API를 호출하여 텍스트를 음성으로 변환하고, 응답을 받습니다.
-        SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
+                // APIStatus 업데이트
+                apiStatus.updateResponseInfo(
+                        "TTS 변환 실패: 응답의 오디오 콘텐츠가 비어 있습니다.",
+                        500,
+                        APIUnitStatusConst.FAILURE
+                );
 
-        // 5. 변환된 오디오 데이터를 반환합니다.
-        return response.getAudioContent();
-    }
+                throw new RuntimeException("TTS 변환 실패: 응답의 오디오 콘텐츠가 비어 있습니다.");
 
-    // 텍스트 세그먼트를 추가하는 메서드 (필요시 사용)
-    public void addSegment(String text) {
-        segments.add(text);
-    }
-
-    // 세그먼트 삭제 메서드
-    public boolean deleteSegment(int index) {
-        if (index >= 0 && index < segments.size()) {
-            segments.remove(index);
-            return true;
-        }
-        return false;
-    }
-
-    // 선택한 여러 세그먼트를 삭제하는 메서드
-    public void deleteSegments(List<Integer> indexes) {
-        indexes.sort((a, b) -> b - a); // 인덱스를 내림차순으로 정렬
-        for (int index : indexes) {
-            if (index >= 0 && index < segments.size()) {
-                segments.remove(index);
             }
+
+            // 응답 페이로드 생성
+            String responsePayload = String.format(
+                    "AudioContentSize: %d bytes, Language: %s, Gender: %s, Speed: %.2f, Volume: %.2f, Pitch: %.2f",
+                    response.getAudioContent().size(),
+                    languageCode,
+                    gender,
+                    speed,
+                    volume,
+                    pitch
+            );
+
+            // APIStatus 업데이트
+            apiStatus.updateResponseInfo(
+                    responsePayload,
+                    200,
+                    APIUnitStatusConst.SUCCESS
+            );
+            apiStatusRepository.save(apiStatus); // 변경 사항 저장
+
+            LOGGER.info("Google TTS API 호출 및 변환 성공");
+
+            return response.getAudioContent();
+
+        } catch (Exception e) {
+            // 예외 발생 시 APIStatus 생성 및 저장
+            String errorPayload = "Error: " + e.getMessage();
+            apiStatus.updateResponseInfo(
+                    errorPayload,
+                    500,
+                    APIUnitStatusConst.FAILURE
+            );
+            apiStatusRepository.save(apiStatus); // 변경 사항 저장
+
+            LOGGER.severe("TTS API 호출 중 오류 발생: " + e.getMessage());
+            throw new RuntimeException("TTS 변환 실패", e);
         }
+    }
+
+    /**
+     * 언어 검증 메서드
+     * 텍스트의 언어가 선택된 언어 코드와 일치하는지 확인합니다.
+     *
+     * @param text         변환할 텍스트
+     * @param languageCode 사용자가 선택한 언어 코드
+     * @throws IllegalArgumentException 언어 불일치 시 예외 발생
+     */
+    private void checkTextLanguage(String text, String languageCode) {
+
+        boolean isKorean = text.matches(".*[가-힣].*");
+        boolean isChinese = text.matches(".*[\\u4E00-\\u9FFF].*");
+        boolean isJapanese = text.matches(".*[\\u3040-\\u30FF\\u31F0-\\u31FF].*");
+        boolean isEnglish = text.matches(".*[A-Za-z].*");
+
+        switch (languageCode) {
+            case "ko-KR":
+                if (!isKorean) {
+                    throw new IllegalArgumentException("언어 코드가 'ko-KR'로 설정되었지만, 텍스트는 한국어가 아닙니다.");
+                }
+                break;
+            case "zh-CN":
+                if (!isChinese) {
+                    throw new IllegalArgumentException("언어 코드가 'zh-CN'로 설정되었지만, 텍스트는 중국어가 아닙니다.");
+                }
+                break;
+            case "ja-JP":
+                if (!isJapanese) {
+                    throw new IllegalArgumentException("언어 코드가 'ja-JP'로 설정되었지만, 텍스트는 일본어가 아닙니다.");
+                }
+                break;
+            case "en-US":
+            case "en-GB":
+                if (!isEnglish) {
+                    throw new IllegalArgumentException(String.format("언어 코드가 '%s'로 설정되었지만, 텍스트는 영어가 아닙니다.", languageCode));
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("지원되지 않는 언어 코드입니다: " + languageCode);
+        }
+    }
+
+    /**
+     * 전체 텍스트 변환 메서드
+     * 여러 텍스트 세그먼트를 한꺼번에 변환하고, 각 WAV 파일의 경로를 반환합니다.
+     *
+     * @param ids 변환할 텍스트 세그먼트 리스트
+     * @return 변환된 WAV 파일의 URL 리스트
+     * @throws Exception 변환 또는 파일 저장 중 오류 발생 시
+     */
+    public List<Map<String, String>> convertAllTexts(List<Long> ids) throws Exception {
+        List<Map<String, String>> fileUrls = new ArrayList<>();
+
+        // 입력된 텍스트 세그먼트를 순차적으로 변환합니다.
+        for(Long id : ids){
+            Optional<TTSDetail> ttsDetailOpt = ttsDetailRepository.findById(id);
+
+            if (ttsDetailOpt.isEmpty()) {
+                throw new IllegalArgumentException("Invalid TTS Detail ID: " + id);
+            }
+
+            TTSDetail ttsDetail = ttsDetailOpt.get();
+            LOGGER.info("TTSDetail 가져오기 성공: " + ttsDetail);
+
+            //개별 텍스트 변환  호출
+            String filePath = convertSingleText(id);
+            fileUrls.add(Map.of("fileUrl", "/api/tts/download?path=" + filePath));
+
+
+        }
+        return fileUrls;
+    }
+
+    /**
+     * 오디오 콘텐츠를 WAV 파일로 저장하는 메서드
+     *
+     * @param audioContent 변환된 오디오 콘텐츠
+     * @param filePath     저장할 파일 경로
+     * @throws IOException 파일 저장 중 오류 발생 시
+     */
+    private void saveAudioContent(ByteString audioContent, String filePath) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(filePath)) {
+            fos.write(audioContent.toByteArray());
+        }
+    }
+
+    /**
+     * 파일 로드 메서드
+     * 저장된 WAV 파일을 로드하여 다운로드 가능하도록 반환합니다.
+     *
+     * @param filePath 로드할 파일 경로
+     * @return 로드된 파일의 리소스 객체
+     * @throws IOException 파일이 존재하지 않거나 접근 불가능할 때 예외 발생
+     */
+    public Resource loadFileAsResource(String filePath) throws IOException {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            LOGGER.severe("파일을 찾을 수 없습니다: " + filePath);
+            throw new IOException("파일이 존재하지 않습니다: " + filePath);
+        }
+
+        return new FileSystemResource(file);
     }
 }

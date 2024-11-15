@@ -1,15 +1,7 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
 import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,7 +16,7 @@ import java.time.LocalDateTime;
 @Table(name = "tts_project")
 public class TTSProject extends Project {
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "voice_style_id")
     private VoiceStyle voiceStyle;
 
@@ -40,7 +32,7 @@ public class TTSProject extends Project {
 
 
     // 생성 메서드
-    public static TTSProject createTTSProject(Member member, String projectName, VoiceStyle voiceStyle,String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
+    public static TTSProject createTTSProject(Member member, String projectName, VoiceStyle voiceStyle, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
         TTSProject ttsProject = new TTSProject();
         ttsProject.member = member;
         ttsProject.projectName = projectName;
