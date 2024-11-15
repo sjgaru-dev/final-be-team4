@@ -33,7 +33,7 @@ public class VCViewController_team_multi {
             description = "VC 프로젝트 상태를 가져옵니다." )
     @PostMapping("/{projectId}/save")
     public ResponseDto vcSave(@RequestBody VCSaveDto vcSaveDto){
-        return DataResponseDto.of(vcSaveDto);
+        return DataResponseDto.of("");
     }
 
 }

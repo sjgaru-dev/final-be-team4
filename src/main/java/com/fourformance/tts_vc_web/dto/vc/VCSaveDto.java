@@ -17,5 +17,5 @@ public class VCSaveDto {
      *  member_audio_meta : vc_trg 일대일 관계 -> bucket router
      *
      */
-    private Long projectId;
+    private Long id;
 }
