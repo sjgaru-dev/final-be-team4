@@ -1,7 +1,6 @@
 package com.fourformance.tts_vc_web.dto.tts;
 
 import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
-import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
 import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
 import lombok.AllArgsConstructor;
@@ -10,8 +9,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.config.Configuration;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter

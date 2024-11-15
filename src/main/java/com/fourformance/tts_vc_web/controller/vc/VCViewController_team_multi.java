@@ -2,20 +2,12 @@ package com.fourformance.tts_vc_web.controller.vc;
 
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
-import com.fourformance.tts_vc_web.dto.tts.TTSDetailDto;
-import com.fourformance.tts_vc_web.dto.tts.TTSProjectDto;
-import com.fourformance.tts_vc_web.dto.vc.VCDetailDto;
-import com.fourformance.tts_vc_web.dto.vc.VCProjectDto;
+import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
 import com.fourformance.tts_vc_web.service.vc.VCService_team_multi;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/vc")
@@ -31,11 +23,17 @@ public class VCViewController_team_multi {
             description = "VC 프로젝트 상태를 가져옵니다." )
     @GetMapping("/{projectId}")
     public ResponseDto ttsLoad(@PathVariable Long projectId) {
-//        VCProjectDto vcProjectDto = vcService.getVCProjectDto(projectId);
-//        List<VCDetailDto> vcDetailDto = vcService.getVCDetailsDto(projectId);
 
         return DataResponseDto.of("");
     }
 
     // VC 상태 저장 메서드
+    @Operation(
+            summary = "VC 상태 로드",
+            description = "VC 프로젝트 상태를 가져옵니다." )
+    @PostMapping("/{projectId}/save")
+    public ResponseDto vcSave(@RequestBody VCSaveDto vcSaveDto){
+        return DataResponseDto.of("");
+    }
+
 }

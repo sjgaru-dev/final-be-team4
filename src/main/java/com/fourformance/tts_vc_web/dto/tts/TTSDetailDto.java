@@ -40,6 +40,4 @@ public class TTSDetailDto {
     public static TTSDetailDto createTTSDetailDto(TTSDetail ttsDetail) {
         return modelMapper.map(ttsDetail, TTSDetailDto.class);
     }
-
-
 }

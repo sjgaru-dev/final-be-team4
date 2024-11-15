@@ -8,13 +8,9 @@ import lombok.ToString;
 @Getter
 @ToString
 @RequiredArgsConstructor
-public class ResponseDto {
+public abstract class ResponseDto {
 
     private final Boolean success;
     private final Integer code;
     private final String message;
-
-    public static ResponseDto of(Boolean success, ErrorCode errorCode) {
-        return new ResponseDto(success, errorCode.getCode(), errorCode.getMessage());
-    }
 }
