@@ -6,10 +6,7 @@ import com.fourformance.tts_vc_web.service.vc.VCService_team_multi;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/vc")
@@ -30,4 +27,12 @@ public class VCViewController_team_multi {
     }
 
     // VC 상태 저장 메서드
+    @Operation(
+            summary = "VC 상태 로드",
+            description = "VC 프로젝트 상태를 가져옵니다." )
+    @PostMapping("/{projectId}/save")
+    public ResponseDto vcSave(@RequestBody VCSaveDto vcSaveDto){
+
+    }
+
 }
