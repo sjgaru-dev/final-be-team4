@@ -1,6 +1,5 @@
 package com.fourformance.tts_vc_web.dto.response;
 
-import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
