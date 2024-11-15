@@ -21,6 +21,8 @@
         @Column(name = "generated_audio_meta_id")
         private Long id;
 
+        private String bucketRoute;
+
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "tts_detail_id")
         private TTSDetail ttsDetail;
@@ -43,9 +45,10 @@
         private LocalDateTime deletedAt;
 
         // 생성 메서드
-        public static OutputAudioMeta createOutputAudioMeta(TTSDetail ttsDetail, VCDetail vcDetail, ConcatProject concatProject,
+        public static OutputAudioMeta createOutputAudioMeta(String bucketRoute, TTSDetail ttsDetail, VCDetail vcDetail, ConcatProject concatProject,
                                                             ProjectType projectType, String audioUrl) {
             OutputAudioMeta outputAudioMeta = new OutputAudioMeta();
+            outputAudioMeta.bucketRoute = bucketRoute;
             outputAudioMeta.ttsDetail = ttsDetail;
             outputAudioMeta.vcDetail = vcDetail;
             outputAudioMeta.concatProject = concatProject;

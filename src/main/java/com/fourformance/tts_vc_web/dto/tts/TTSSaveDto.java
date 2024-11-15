@@ -1,24 +1,26 @@
 package com.fourformance.tts_vc_web.dto.tts;
 
 import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
-import com.fourformance.tts_vc_web.domain.entity.TTSProject;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
-@ToString
-public class TtsProjectDto {
-
-    private Long id;
+@NoArgsConstructor
+@AllArgsConstructor
+public class TTSSaveDto {
+    private Long projectId;
     private String projectName;
+    private Long voiceStyleId;
     private String fullScript;
     private Float globalSpeed;
     private Float globalPitch;
     private Float globalVolume;
     private APIStatusConst apiStatus;
-    private LocalDateTime apiStatusModifiedAt;
-    private Long styleId;
 
+    private List<TTSDetailDto> ttsDetails;
 }
