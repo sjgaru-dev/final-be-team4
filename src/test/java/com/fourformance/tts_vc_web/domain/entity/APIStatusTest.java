@@ -92,7 +92,6 @@ class APIStatusTest {
         assertEquals(foundApiStatus1.getId(), apiStatus.getId());
         assertEquals(foundApiStatus2.getId(), apiStatus.getId());
 
-
     }
 
 
@@ -189,27 +188,5 @@ class APIStatusTest {
         APIStatus apiStatus = apiStatusRepository.findById(beforeApiStatus.getId()).orElse(null);
         assertNull(apiStatus);
 
-
-
-
-
-
-
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
