@@ -31,11 +31,15 @@ public class VCProject extends Project{
 
     private LocalDateTime APIStatusModifiedAt;
 
+    @Column(name = "trd_voice_id", length = 50)
+    private String trgVoiceId; // 새로 추가된 필드 -> 타겟 보이스 Id
+
     // 생성 메서드
     public static VCProject createVCProject(Member member, String projectName) {
         VCProject vcProject = new VCProject();
         vcProject.member = member;
         vcProject.projectName = projectName;
+        vcProject.trgVoiceId = null; // 초기 값 설정
         vcProject.createdAt();
         vcProject.updatedAt();
         return vcProject;
@@ -46,6 +50,12 @@ public class VCProject extends Project{
         this.memberTargetAudioMeta = memberTargetAudioMeta;
         super.projectName = projectName;
         super.updatedAt();
+    }
+
+    // Voice ID 업데이트 메서드 (새롭게 분리)
+    // 타겟 Voice ID 업데이트 메서드
+    public void updateTrgVoiceId(String trgVoiceId) {
+        this.trgVoiceId = trgVoiceId;
     }
 
     // API 상태 변경 메서드

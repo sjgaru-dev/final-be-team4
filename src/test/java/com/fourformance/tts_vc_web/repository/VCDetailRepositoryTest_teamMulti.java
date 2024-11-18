@@ -52,7 +52,7 @@ class VCDetailRepositoryTest_teamMulti {
 
     // MemberAudioMeta 생성
     public MemberAudioMeta createMemberAudioMeta(Member member) {
-        return MemberAudioMeta.createMemberAudioMeta(member,null,"url_test", AudioType.VC_SRC);
+        return MemberAudioMeta.createMemberAudioMeta(member,null,"url_test", AudioType.VC_SRC,null);
     }
 
     // MemberAudioMeta 20개 생성
@@ -66,7 +66,7 @@ class VCDetailRepositoryTest_teamMulti {
             AudioType randomAudioType = audioTypes[random.nextInt(audioTypes.length)];
 
             MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(
-                    member, null,"url_test_" + i, randomAudioType); // 랜덤 AudioType 사용
+                    member, null,"url_test_" + i, randomAudioType,null); // 랜덤 AudioType 사용
             audioMetaList.add(memberAudioMetaRepository.save(memberAudioMeta)); // 저장 후 리스트에 추가
         }
         return audioMetaList;
