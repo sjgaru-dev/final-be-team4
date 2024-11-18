@@ -30,8 +30,9 @@ public enum ErrorCode {
     // 4000번대 코드 : 서버 내부 오류, 코드 오류
     SERVER_ERROR(4000, HttpStatus.BAD_REQUEST,"서버 내부 오류가 발생했습니다."),
 
-    // 500번대 코드 : 서버 내부 오류 관련
+    // 5000번대 코드 : 서버 내부 오류 관련
     INTERNAL_SERVER_ERROR(5001, HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
+    INVALID_VOICE_ID(5002, HttpStatus.BAD_REQUEST, "유효하지 않은 Voice ID입니다."),
 
     // 9999 : 테스트용 커스텀 예외
     TEST_ERROR(9999, HttpStatus.BAD_REQUEST, "테스트용 커스텀 예외입니다."),
