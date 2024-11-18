@@ -111,7 +111,7 @@ class VCProjectTest {
         VCProject vcProject = VCProject.createVCProject(member,"업데이트할 프로젝트");
         vcProjectRepository.save(vcProject);
         //타켓 오디오 메타 생성하고 저장하고
-        MemberAudioMeta targetAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, null, "/경로1", AudioType.VC_TRG);
+        MemberAudioMeta targetAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, null, "/경로1", AudioType.VC_TRG,null);
         memberAudioMetaRepository.save(targetAudioMeta);
 
 //        em.flush();
