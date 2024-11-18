@@ -240,7 +240,7 @@ public class S3Service {
 
                 // 오디오 메타 객체 생성 및 DB 저장
                 MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
-                        audioType);
+                        audioType,null);  // 수정필요합니다
                 memberAudioMetaRepository.save(memberAudioMeta);
             }
 

@@ -43,7 +43,7 @@ class MemberAudioMetaTest {
         //given
         Member member = createTestMember();
 
-        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member,null, "/경로2", AudioType.VC_SRC);
+        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member,null, "/경로2", AudioType.VC_SRC,null);
 
 
         //when
@@ -61,7 +61,7 @@ class MemberAudioMetaTest {
     public void 멤버오디오메타_찾기테스트() {
         //given
         Member member = createTestMember();
-        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member,null, "/경로2", AudioType.VC_SRC);
+        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member,null, "/경로2", AudioType.VC_SRC,null);
         memberAudioMetaRepository.save(memberAudioMeta);
         em.flush();
         em.clear();
@@ -80,7 +80,7 @@ class MemberAudioMetaTest {
     public void 멤버오디오메타_업뎃테스트() {
         // given
         Member member = createTestMember();
-        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member,null,"/경로2", AudioType.VC_SRC);
+        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member,null,"/경로2", AudioType.VC_SRC,null);
         memberAudioMetaRepository.save(memberAudioMeta);
         em.flush();
         em.clear();
@@ -104,7 +104,7 @@ class MemberAudioMetaTest {
     public void 멤버오디오메타_삭제테스트(){
         // given
         Member member = createTestMember();
-        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member,null, "/경로2", AudioType.VC_SRC);
+        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member,null, "/경로2", AudioType.VC_SRC,null);
         memberAudioMetaRepository.save(memberAudioMeta);
         em.flush();
         em.clear();
