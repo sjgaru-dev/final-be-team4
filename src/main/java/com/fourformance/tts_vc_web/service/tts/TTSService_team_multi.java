@@ -82,8 +82,11 @@ public class TTSService_team_multi {
                 dto.getGlobalPitch(),
                 dto.getGlobalVolume()
         );
+
+        //tts 프로젝트 db에 저장
         ttsProject = ttsProjectRepository.save(ttsProject);
 
+        // tts detail 저장
         if (dto.getTtsDetails() != null) {
             for (TTSDetailDto detailDto : dto.getTtsDetails()) {
                 createTTSDetail(detailDto, ttsProject);
@@ -117,6 +120,7 @@ public class TTSService_team_multi {
 
         if (dto.getTtsDetails() != null) {
             for (TTSDetailDto detailDto : dto.getTtsDetails()) {
+                // ttsDetail 업데이트 메서드 호출
                 processTTSDetail(detailDto, ttsProject);
             }
         }
