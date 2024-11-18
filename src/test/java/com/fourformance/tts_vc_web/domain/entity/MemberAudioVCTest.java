@@ -49,11 +49,11 @@ class MemberAudioVCTest {
     }
 
     public MemberAudioMeta createTestMemberAudioMeta_SRC(Member member) {
-        MemberAudioMeta memberAudioMeta_SRC = MemberAudioMeta.createMemberAudioMeta(member, null, "/경로1", AudioType.VC_SRC);
+        MemberAudioMeta memberAudioMeta_SRC = MemberAudioMeta.createMemberAudioMeta(member, null, "/경로1", AudioType.VC_SRC,null);
         return memberAudioMeta_SRC;
     }
     public MemberAudioMeta createTestMemberAudioMeta_TRG(Member member) {
-        MemberAudioMeta memberAudioMeta_TRG = MemberAudioMeta.createMemberAudioMeta(member, null, "/경로1", AudioType.VC_TRG);
+        MemberAudioMeta memberAudioMeta_TRG = MemberAudioMeta.createMemberAudioMeta(member, null, "/경로1", AudioType.VC_TRG,null);
         return memberAudioMeta_TRG;
     }
 
@@ -104,7 +104,7 @@ class MemberAudioVCTest {
         vcProjectRepository.save(vcProject);
 
         // 3. MemberAudioMeta 생성
-        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, null, "/경로1", AudioType.VC_TRG);
+        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, null, "/경로1", AudioType.VC_TRG,null);
         memberAudioMetaRepository.save(memberAudioMeta);
 
         // 4. MemberAudioVC 생성하고 저장
