@@ -2,7 +2,6 @@ package com.fourformance.tts_vc_web;
 
 import com.fourformance.tts_vc_web.domain.entity.ConcatProject;
 import com.fourformance.tts_vc_web.domain.entity.Member;
-import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.Project;
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
@@ -98,10 +97,9 @@ public class DummyDataInitializer {
     private void createDummyVCDetails() {
         if (vcDetailRepository.count() == 0) {
             List<VCProject> vcProjects = vcProjectRepository.findAll();
-            List<MemberAudioMeta> memberAudioMetas = memberAudioMetaRepository.findAll();
             List<VCDetail> vcDetails = List.of(
-                    VCDetail.createVCDetail(vcProjects.get(0), memberAudioMetas.get(0)),
-                    VCDetail.createVCDetail(vcProjects.get(1), memberAudioMetas.get(1))
+                    VCDetail.createVCDetail(vcProjects.get(0), null),
+                    VCDetail.createVCDetail(vcProjects.get(1), null)
             );
             vcDetailRepository.saveAll(vcDetails);
         }
