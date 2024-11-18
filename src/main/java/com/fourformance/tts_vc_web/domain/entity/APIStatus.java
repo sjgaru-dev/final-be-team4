@@ -39,8 +39,7 @@ public class APIStatus extends BaseEntity {
     private Integer responseCode;
 
     // 생성 메서드
-    public static APIStatus createAPIStatus(VCDetail vcDetail, TTSDetail ttsDetail,
-                                            String requestPayload) {
+    public static APIStatus createAPIStatus(VCDetail vcDetail, TTSDetail ttsDetail, String requestPayload) {
         APIStatus apiStatus = new APIStatus();
         apiStatus.vcDetail = vcDetail;
         apiStatus.ttsDetail = ttsDetail;

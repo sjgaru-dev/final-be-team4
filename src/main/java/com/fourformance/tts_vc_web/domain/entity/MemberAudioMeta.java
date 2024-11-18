@@ -32,6 +32,10 @@ public class MemberAudioMeta extends BaseEntity {
     private String script;
     @Enumerated(EnumType.STRING)
     private AudioType audioType;
+
+    @Column(name = "trg_voice_id", length = 50)
+    private String trgVoiceId;
+
     private Boolean isDeleted=false;
     @Enumerated(EnumType.STRING)
     private AudioFormat audioFormat = AudioFormat.WAV;
@@ -39,12 +43,13 @@ public class MemberAudioMeta extends BaseEntity {
     private LocalDateTime deletedAt;
 
     // 생성 메서드
-    public static MemberAudioMeta createMemberAudioMeta(Member member, String bucketRoute, String audioUrl, AudioType audioType) {
+    public static MemberAudioMeta createMemberAudioMeta(Member member, String bucketRoute, String audioUrl, AudioType audioType, String trgVoiceId) {
         MemberAudioMeta memberAudioMeta = new MemberAudioMeta();
         memberAudioMeta.bucketRoute = bucketRoute;
         memberAudioMeta.member = member;
         memberAudioMeta.audioUrl = audioUrl;
         memberAudioMeta.audioType = audioType;
+        memberAudioMeta.trgVoiceId = trgVoiceId;
         memberAudioMeta.createdAt = LocalDateTime.now();
         return memberAudioMeta;
     }
