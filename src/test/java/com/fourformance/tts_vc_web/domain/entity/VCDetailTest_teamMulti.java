@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 //@InjectMocks: vcDetail 객체를 테스트할 대상 객체로 생성하고, @Mock으로 생성된 vcProject와 memberAudioMeta를 자동으로 주입
 @SpringBootTest
 @Transactional
-//@Rollback(value = false)
+@Rollback(value = false)
 @ExtendWith(MockitoExtension.class)
 class VCDetailTest_teamMulti {
     @Autowired
@@ -51,16 +51,19 @@ class VCDetailTest_teamMulti {
     @Test
     @DisplayName("vcDetail 생성 테스트")
     public void testVCDetailCreation() {
-        // Given: VCDetail을 특정 상태로 초기화
-        vcDetail = VCDetail.createVCDetail(vcProject, memberAudioMeta);
+        for (int i = 1; i < 11; i++) {
+            // Given: VCDetail을 특정 상태로 초기화
+            vcDetail = VCDetail.createVCDetail(vcProject, memberAudioMeta);
 
-        // When: VCDetail이 생성되었을 때
+            // When: VCDetail이 생성되었을 때
 
-        // Then: 생성된 VCDetail의 필드 값이 올바르게 설정되었는지 검증
-        assertNotNull(vcDetail);
-        assertEquals(vcProject, vcDetail.getVcProject());
-        assertEquals(memberAudioMeta, vcDetail.getMemberAudioMeta());
-        assertFalse(vcDetail.getIsChecked());
+            // Then: 생성된 VCDetail의 필드 값이 올바르게 설정되었는지 검증
+            assertNotNull(vcDetail);
+            assertEquals(vcProject, vcDetail.getVcProject());
+            assertEquals(memberAudioMeta, vcDetail.getMemberAudioMeta());
+            assertFalse(vcDetail.getIsChecked());
+        }
+
     }
 
     @Test

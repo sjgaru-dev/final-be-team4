@@ -30,8 +30,8 @@ public class TTSViewController_team_multi {
     @Operation(
             summary = "TTS 상태 로드",
             description = "TTS 프로젝트 상태를 가져옵니다." )
-    @GetMapping("/{projectId}")
-    public ResponseDto ttsLoad(@PathVariable Long projectId) {
+    @GetMapping("/load")
+    public ResponseDto ttsLoad(@RequestParam("projectId") Long projectId) {
         try {
             // TTSProjectDTO와 TTSDetailDTO 리스트 가져오기
             TTSProjectDto ttsProjectDTO = ttsService.getTTSProjectDto(projectId);

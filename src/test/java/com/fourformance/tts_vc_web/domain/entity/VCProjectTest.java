@@ -18,7 +18,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Transactional
-//@Rollback(value= false)
+@Rollback(value= false)
 class VCProjectTest {
 
     @Autowired
