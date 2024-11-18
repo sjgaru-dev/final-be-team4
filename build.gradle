@@ -58,5 +58,6 @@ sonar {
   properties {
     property "sonar.projectKey", "team4_be"
     property "sonar.projectName", "team4_be"
+    property "sonar.exclusions", "**/resources/**"
   }
 }
