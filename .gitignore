@@ -317,3 +317,4 @@ gradle-app.setting
 
 # 추가할 비밀 파일
 *.json
+secret.properties
