@@ -59,14 +59,17 @@ public class S3Controller {
 
     @Operation(summary = "유저가 가지고 있는 오디오를 버킷에 저장", description =
             "VC, CONCAT으로 변환할 오디오를 클라이언트 로컬컴퓨터로부터 버킷에 저장하는 api입니다."
-                    + "<br><br>매개변수:<br>- 파일, <br>- 멤버Id, <br>- projectId, <br>- audioType")
+                    + "<br><br>매개변수:<br>- 파일, <br>- 멤버Id, <br>- projectId, <br>- audioType"
+                    + "<br>오디오 타입이 VC_TRG일 경우 마지막 매개변수로 voiceId를 입력합니다.")
     @PostMapping(value = {"/vc/upload-local-to-bucket",
             "/concat/upload-local-to-bucket"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseDto uploadFiles(
             @RequestParam("files") List<MultipartFile> files, @RequestParam("memberId") Long memberId,
-            @RequestParam("projectId") Long projectId, @RequestParam("audioType") String audioType) {
+            @RequestParam("projectId") Long projectId, @RequestParam("audioType") String audioType,
+            @RequestParam("voiceId") String voiceId) {
         AudioType enumAudioType = AudioType.valueOf(audioType);
-        List<String> uploadedUrls = S3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType);
+        List<String> uploadedUrls = S3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType,
+                voiceId);
         return DataResponseDto.of(uploadedUrls);
     }
 }

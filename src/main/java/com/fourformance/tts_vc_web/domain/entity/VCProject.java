@@ -6,36 +6,38 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
-import java.time.LocalDateTime;
 
 @Entity
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "vc_project")
-public class VCProject extends Project{
+public class VCProject extends Project {
 
     @Enumerated(EnumType.STRING)
-    private APIStatusConst apiStatus=APIStatusConst.NOT_STARTED; // enum 생성 필요
+    private APIStatusConst apiStatus = APIStatusConst.NOT_STARTED; // enum 생성 필요
 
     @OneToOne(fetch = FetchType.LAZY)
     private MemberAudioMeta memberTargetAudioMeta;
 
     private LocalDateTime APIStatusModifiedAt;
 
+    @Column(name = "trg_voice_id", length = 50)
+    private String trgVoiceId; // 새로 추가된 필드 -> 타겟 보이스 Id
+
     // 생성 메서드
     public static VCProject createVCProject(Member member, String projectName) {
         VCProject vcProject = new VCProject();
         vcProject.member = member;
         vcProject.projectName = projectName;
+        vcProject.trgVoiceId = null; // 초기 값 설정
         vcProject.createdAt();
         vcProject.updatedAt();
         return vcProject;
@@ -46,6 +48,12 @@ public class VCProject extends Project{
         this.memberTargetAudioMeta = memberTargetAudioMeta;
         super.projectName = projectName;
         super.updatedAt();
+    }
+
+    // Voice ID 업데이트 메서드 (새롭게 분리)
+    // 타겟 Voice ID 업데이트 메서드
+    public void updateTrgVoiceId(String trgVoiceId) {
+        this.trgVoiceId = trgVoiceId;
     }
 
     // API 상태 변경 메서드

@@ -1,13 +1,19 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
 import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
-import java.time.LocalDateTime;
 
 @Entity
 @ToString
@@ -28,11 +34,14 @@ public class TTSProject extends Project {
 
     @Enumerated(EnumType.STRING)
     private APIStatusConst apiStatus = APIStatusConst.NOT_STARTED;
+    @Column(name = "api_status_modified_at")
     private LocalDateTime APIStatusModifiedAt;
 
 
     // 생성 메서드
-    public static TTSProject createTTSProject(Member member, String projectName, VoiceStyle voiceStyle, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
+    public static TTSProject createTTSProject(Member member, String projectName, VoiceStyle voiceStyle,
+                                              String fullScript, Float globalSpeed, Float globalPitch,
+                                              Float globalVolume) {
         TTSProject ttsProject = new TTSProject();
         ttsProject.member = member;
         ttsProject.projectName = projectName;
@@ -47,7 +56,8 @@ public class TTSProject extends Project {
     }
 
     // 업데이트 메서드
-    public void updateTTSProject(String projectName, VoiceStyle voiceStyle, String fullScript, Float globalSpeed, Float globalPitch, Float globalVolume) {
+    public void updateTTSProject(String projectName, VoiceStyle voiceStyle, String fullScript, Float globalSpeed,
+                                 Float globalPitch, Float globalVolume) {
         super.projectName = projectName;
         this.voiceStyle = voiceStyle;
         this.fullScript = fullScript;
