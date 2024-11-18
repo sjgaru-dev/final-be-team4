@@ -33,8 +33,8 @@ jobs:
       - name: Create properties files
         run: |
           mkdir -p src/main/resources
-          echo "${{ secrets.AWS_PROPERTIES }}" > src/main/resources/aws.properties
-          echo "${{ secrets.DB_PROPERTIES }}" >  src/main/resources/database.properties
+          echo "${{ secrets.SECRET_PROPERTIES }}" > src/main/resources/secret.properties
+          echo "${{ secrets.SOUND_JSON }}" >  src/main/resources/sound-potion-440705-j8-cc85748343a6.json
 
       - name: Build with Gradle
         run: ./gradlew build -x test --no-daemon --build-cache
@@ -72,7 +72,7 @@ jobs:
         if: success()
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{
-            "text": ":white_check_mark: 백엔드 배포가 성공적으로 완료되었습니다!\n*Repository:*"
+            "text": ":white_check_mark: 백엔드 배포가 성공적으로 완료되었습니다."
           }' ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Notify Slack - Failure
