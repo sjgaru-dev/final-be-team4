@@ -317,4 +317,12 @@ gradle-app.setting
 
 # 추가할 비밀 파일
 *.json
+<<<<<<< HEAD
 secret.properties
+=======
+
+# 보안상의 이유로 깃에 저장 안함
+application.properties
+application.yml
+.env
+>>>>>>> d73d9788c8ac69e6940329b68bd9cf051f9cee77
