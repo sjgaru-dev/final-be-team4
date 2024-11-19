@@ -1,19 +1,13 @@
 package com.fourformance.tts_vc_web.repository;
 
 import com.fourformance.tts_vc_web.domain.entity.Project;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
-    // sojeong-작성,
-    // 사용처 workspace의 최근작업내역 탑10만들기
-    // ProjectService에서 메서드 사용
-    @Query()
-
-    List<Project> findTop10ByMemberIdOrderByCreatedAtDesc(Long memberId);
+    // (워크스페이스 - 홈 화면) 멤버 id에 해당하는 최근 프로젝트 5개 조회하는 메서드 - 이의준, 조소정
+    List<Project> findTop5ByMemberIdOrderByCreatedAtDesc(Long memberId);
 }
