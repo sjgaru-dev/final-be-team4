@@ -5,7 +5,6 @@ import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.dto.vc.*;
-import com.fourformance.tts_vc_web.service.vc.VCService_team_multi;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +17,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VCViewController_team_multi {
 
-    @Autowired
-    VCService_team_multi vcService;
+//    @Autowired
+//    VCService_team_multi vcService;
 
     // VC 상태 로드 메서드
     @Operation(
@@ -28,21 +27,22 @@ public class VCViewController_team_multi {
     @GetMapping("/load")
     public ResponseDto ttsLoad(@RequestParam("projectId") Long projectId) {
 
-        try {
-            // VCProjectDTO와 VCDetailDTO 리스트 가져오기
-            VCProjectResDto vcProjectDTO = vcService.getVCProjectDto(projectId);
-            List<VCDetailResDto> vcDetailsDTO = vcService.getVCDetailsDto(projectId);
-
-            if (vcProjectDTO == null) {
-                throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT);
-            }
-
-            // DTO를 포함한 응답 객체 생성
-            VCProjectWithDetailResDto response = new VCProjectWithDetailResDto(vcProjectDTO, vcDetailsDTO);
-            return DataResponseDto.of(response);
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCode.SERVER_ERROR);
-        }
+//        try {
+//            // VCProjectDTO와 VCDetailDTO 리스트 가져오기
+//            VCProjectResDto vcProjectDTO = vcService.getVCProjectDto(projectId);
+//            List<VCDetailResDto> vcDetailsDTO = vcService.getVCDetailsDto(projectId);
+//
+//            if (vcProjectDTO == null) {
+//                throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT);
+//            }
+//
+//            // DTO를 포함한 응답 객체 생성
+//            VCProjectWithDetailResDto response = new VCProjectWithDetailResDto(vcProjectDTO, vcDetailsDTO);
+//            return DataResponseDto.of(response);
+//        } catch (Exception e) {
+//            throw new BusinessException(ErrorCode.SERVER_ERROR);
+//        }
+        return DataResponseDto.of("");
     }
 
     // VC 상태 저장 메서드
