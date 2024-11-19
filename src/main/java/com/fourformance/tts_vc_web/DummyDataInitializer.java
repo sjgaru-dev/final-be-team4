@@ -58,7 +58,9 @@ public class DummyDataInitializer {
                     TTSProject.createTTSProject(members.get(0), "TTS Project 1", voiceStyles.get(0), "Hello world.",
                             1.0f, 0.0f, 0.0f),
                     TTSProject.createTTSProject(members.get(1), "TTS Project 2", voiceStyles.get(1), "This is a test.",
-                            1.2f, 0.2f, -0.1f)
+                            1.2f, 0.2f, -0.1f),
+                    TTSProject.createTTSProject(members.get(0), "TTS Project 3", voiceStyles.get(0), "Hello Java.",
+                            1.0f, 0.0f, 0.0f)
             );
             projectRepository.saveAll(projects);
         }
