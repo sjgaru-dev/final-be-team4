@@ -33,6 +33,19 @@ public enum ErrorCode {
     // 5000번대 코드 : 서버 내부 오류 관련
     INTERNAL_SERVER_ERROR(5001, HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
     INVALID_VOICE_ID(5002, HttpStatus.BAD_REQUEST, "유효하지 않은 Voice ID입니다."),
+    TTS_CREATE_FAILED(5003, HttpStatus.INTERNAL_SERVER_ERROR, "TTS 생성에 실패했습니다."),
+    ID_REQUIRED_FOR_EXISTING_DATA(5004, HttpStatus.BAD_REQUEST, "기존 데이터에 대한 ID가 필요합니다."),
+    NEW_DATA_PROCESSING_FAILED(5005, HttpStatus.INTERNAL_SERVER_ERROR, "New Data 처리에 실패했습니다."),
+    TTS_DETAIL_NOT_FOUND(5006, HttpStatus.NOT_FOUND, "ID에 해당하는 TTSDetail을 찾을 수 없습니다."),
+    EXISTING_DATA_PROCESSING_FAILED(5007, HttpStatus.INTERNAL_SERVER_ERROR, "Existing Data 처리에 실패했습니다."),
+    TTS_CONVERSION_FAILED_EMPTY_CONTENT(5008, HttpStatus.INTERNAL_SERVER_ERROR, "TTS 변환 실패: 응답의 오디오 콘텐츠가 비어 있습니다."),
+    TTS_CONVERSION_FAILED(5009, HttpStatus.INTERNAL_SERVER_ERROR, "TTS 변환 실패"),
+    AUDIO_FILE_SAVE_ERROR(5010, HttpStatus.INTERNAL_SERVER_ERROR, "오디오 파일 저장 중 오류가 발생했습니다."),
+    INVALID_TEXT_FOR_KO_KR(5011, HttpStatus.BAD_REQUEST, "언어 코드가 'ko-KR'로 설정되었지만, 텍스트는 한국어가 아닙니다."),
+    INVALID_TEXT_FOR_ZH_CN(5012, HttpStatus.BAD_REQUEST, "언어 코드가 'zh-CN'로 설정되었지만, 텍스트는 중국어가 아닙니다."),
+    INVALID_TEXT_FOR_JA_JP(5013, HttpStatus.BAD_REQUEST, "언어 코드가 'ja-JP'로 설정되었지만, 텍스트는 일본어가 아닙니다."),
+    INVALID_TEXT_FOR_EN(5014, HttpStatus.BAD_REQUEST, "언어 코드가 설정되었지만, 텍스트는 영어가 아닙니다."),
+    UNSUPPORTED_LANGUAGE_CODE(5015, HttpStatus.BAD_REQUEST, "지원되지 않는 언어 코드입니다."),
 
     // 9999 : 테스트용 커스텀 예외
     TEST_ERROR(9999, HttpStatus.BAD_REQUEST, "테스트용 커스텀 예외입니다."),

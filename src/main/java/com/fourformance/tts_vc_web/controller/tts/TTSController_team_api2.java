@@ -1,5 +1,7 @@
 package com.fourformance.tts_vc_web.controller.tts;
 
+import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSRequestDto;
 import com.fourformance.tts_vc_web.service.tts.TTSService_team_api2;
@@ -31,7 +33,7 @@ public class TTSController_team_api2 {
         List<Map<String, String>> newFileUrls = ttsService.convertAllTtsDetails(ttsRequestDto);
 
         if (newFileUrls.isEmpty()) {
-            throw new IllegalArgumentException("No valid TTS Details provided for conversion.");
+            throw new BusinessException(ErrorCode.TTS_CREATE_FAILED);
         }
 
         // 성공적인 응답 반환

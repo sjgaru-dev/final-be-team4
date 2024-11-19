@@ -2,6 +2,8 @@ package com.fourformance.tts_vc_web.service.tts;
 
 
 import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
+import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.APIStatus;
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.dto.tts.TTSDetailRequestDto;
@@ -66,7 +68,7 @@ public class TTSService_team_api2 {
                     LOGGER.info("기존 데이터로 처리 중: " + detail);
                     if (detail.getId() == null) {
                         LOGGER.severe("기존 데이터 처리 중 ID가 누락됨");
-                        throw new IllegalArgumentException("ID is required for existing data.");
+                        throw new BusinessException(ErrorCode.ID_REQUIRED_FOR_EXISTING_DATA);
                     }
                     Map<String, String> existingFileUrl = processExistingData(detail, projectName);
                     LOGGER.info("기존 데이터 처리 완료: " + existingFileUrl);
@@ -117,7 +119,7 @@ public class TTSService_team_api2 {
             return Map.of("unitSequence", String.valueOf(detail.getUnitSequence()), "fileUrl", filePath);
         } catch (Exception e) {
             LOGGER.severe("processNewData 처리 중 오류 발생: " + e.getMessage());
-            throw new RuntimeException("New Data 처리 실패", e);
+            throw new BusinessException(ErrorCode.NEW_DATA_PROCESSING_FAILED);
         }
     }
 
@@ -129,7 +131,8 @@ public class TTSService_team_api2 {
             TTSDetail ttsDetail = ttsDetailRepository.findById(detail.getId())
                     .orElseThrow(() -> {
                         LOGGER.severe("TTSDetail ID 조회 실패: " + detail.getId());
-                        return new IllegalArgumentException("ID에 해당하는 TTSDetail을 찾을 수 없습니다: " + detail.getId());
+                        throw new BusinessException(ErrorCode.TTS_DETAIL_NOT_FOUND);
+
                     });
             LOGGER.info("TTSDetail 조회 성공: " + ttsDetail);
 
@@ -166,7 +169,7 @@ public class TTSService_team_api2 {
             return Map.of("unitSequence", String.valueOf(detail.getUnitSequence()), "fileUrl", filePath);
         } catch (Exception e) {
             LOGGER.severe("processExistingData 처리 중 오류 발생: " + e.getMessage());
-            throw new RuntimeException("Existing Data 처리 실패", e);
+            throw new BusinessException(ErrorCode.EXISTING_DATA_PROCESSING_FAILED);
         }
     }
 
@@ -207,14 +210,14 @@ public class TTSService_team_api2 {
 
             if (response.getAudioContent().isEmpty()) {
                 LOGGER.severe("TTS 변환 실패: 응답의 오디오 콘텐츠가 비어 있습니다.");
-                throw new RuntimeException("TTS 변환 실패: 응답의 오디오 콘텐츠가 비어 있습니다.");
+                throw new BusinessException(ErrorCode.TTS_CONVERSION_FAILED_EMPTY_CONTENT);
             }
             LOGGER.info("TTS 변환 성공: 응답 크기 = " + response.getAudioContent().size() + " bytes");
 
             return response.getAudioContent();
         } catch (Exception e) {
             LOGGER.severe("Google TTS API 호출 중 오류 발생: " + e.getMessage());
-            throw new RuntimeException("TTS 변환 실패", e);
+            throw new BusinessException(ErrorCode.TTS_CONVERSION_FAILED);
         }
     }
 
@@ -225,7 +228,7 @@ public class TTSService_team_api2 {
             LOGGER.info("오디오 콘텐츠 저장 완료: " + filePath);
         } catch (IOException e) {
             LOGGER.severe("오디오 파일 저장 중 오류 발생: " + e.getMessage());
-            throw e;
+            throw new BusinessException(ErrorCode.AUDIO_FILE_SAVE_ERROR);
         }
     }
 
@@ -240,31 +243,31 @@ public class TTSService_team_api2 {
             case "ko-KR":
                 if (!isKorean) {
                     LOGGER.severe("언어 불일치: 텍스트가 한국어가 아님");
-                    throw new IllegalArgumentException("언어 코드가 'ko-KR'로 설정되었지만, 텍스트는 한국어가 아닙니다.");
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_KO_KR);
                 }
                 break;
             case "zh-CN":
                 if (!isChinese) {
                     LOGGER.severe("언어 불일치: 텍스트가 중국어가 아님");
-                    throw new IllegalArgumentException("언어 코드가 'zh-CN'로 설정되었지만, 텍스트는 중국어가 아닙니다.");
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_ZH_CN);
                 }
                 break;
             case "ja-JP":
                 if (!isJapanese) {
                     LOGGER.severe("언어 불일치: 텍스트가 일본어가 아님");
-                    throw new IllegalArgumentException("언어 코드가 'ja-JP'로 설정되었지만, 텍스트는 일본어가 아닙니다.");
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_JA_JP);
                 }
                 break;
             case "en-US":
             case "en-GB":
                 if (!isEnglish) {
                     LOGGER.severe("언어 불일치: 텍스트가 영어가 아님");
-                    throw new IllegalArgumentException("언어 코드가 '" + languageCode + "'로 설정되었지만, 텍스트는 영어가 아닙니다.");
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_EN);
                 }
                 break;
             default:
                 LOGGER.severe("지원되지 않는 언어 코드: " + languageCode);
-                throw new IllegalArgumentException("지원되지 않는 언어 코드입니다: " + languageCode);
+                throw new BusinessException(ErrorCode.UNSUPPORTED_LANGUAGE_CODE);
         }
     }
 
