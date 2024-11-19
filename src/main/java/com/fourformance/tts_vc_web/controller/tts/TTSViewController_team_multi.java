@@ -53,7 +53,7 @@ public class TTSViewController_team_multi {
     @Operation(
             summary = "TTS 상태 저장",
             description = "TTS 프로젝트 상태를 저장합니다." )
-    @PostMapping("/{projectId}/save")
+    @PostMapping("/save")
     public ResponseDto ttsSave(@RequestBody TTSSaveDto ttsSaveDto) {
         try {
             Long projectId;
