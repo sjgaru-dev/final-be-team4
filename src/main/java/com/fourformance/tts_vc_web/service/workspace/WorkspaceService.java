@@ -26,7 +26,7 @@ public class WorkspaceService {
         }
 
         // DB에서 최신 5개의 프로젝트 조회
-        List<Project> projects = projectRepository.findTop5ByMemberIdOrderByCreatedAtDesc(memberId);
+        List<Project> projects = projectRepository.findTop5ByMemberIdOrderByUpdatedAtDesc(memberId);
 
         // 프로젝트 리스트를 DTO로 변환
         return projects.stream().map(project -> {

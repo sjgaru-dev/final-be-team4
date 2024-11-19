@@ -12,5 +12,5 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 //            "FROM Project p " +
 //            "WHERE p.member.id = :memberId " +
 //            "ORDER BY p.createdAt DESC")
-    List<Project> findTop5ByMemberIdOrderByCreatedAtDesc(@Param("memberId") Long memberId);
+    List<Project> findTop5ByMemberIdOrderByUpdatedAtDesc(@Param("memberId") Long memberId);
 }
