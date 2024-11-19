@@ -1,9 +1,9 @@
 package com.fourformance.tts_vc_web.service.workspace;
 
 import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
-import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.domain.entity.APIStatus;
 import com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.Project;
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
@@ -84,14 +84,14 @@ public class WorkspaceService {
         return recentAudios.stream().map(outputAudioMeta -> {
             String projectName = null;
             String script = null;
-            APIUnitStatusConst unitStatus = null;
+            APIStatus unitStatus = null;
 
             // TTSDetail 데이터 처리
             if (outputAudioMeta.getTtsDetail() != null) {
                 TTSDetail ttsDetail = outputAudioMeta.getTtsDetail();
                 projectName = ttsDetail.getTtsProject().getProjectName();
                 script = ttsDetail.getUnitScript();
-                unitStatus = ttsDetail.get(); // TTS 유닛별 상태 가져오기
+                unitStatus = ttsDetail.getApiStatuses().get(ttsDetail.getApiStatuses().size() - 1); // TTS 유닛별 상태 가져오기
             }
             // VCDetail 데이터 처리
             else if (outputAudioMeta.getVcDetail() != null) {
