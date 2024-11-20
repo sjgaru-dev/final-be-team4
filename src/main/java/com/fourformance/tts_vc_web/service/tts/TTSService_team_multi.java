@@ -124,7 +124,7 @@ public class TTSService_team_multi {
     }
 
     // ttsDetail 생성 메서드
-    private void createTTSDetail(TTSDetailDto detailDto, TTSProject ttsProject) {
+    public void createTTSDetail(TTSDetailDto detailDto, TTSProject ttsProject) {
         VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyleId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_VOICESTYLE));
 
@@ -147,7 +147,7 @@ public class TTSService_team_multi {
     }
 
     // ttsDetail 업데이트 메서드
-    private void processTTSDetail(TTSDetailDto detailDto, TTSProject ttsProject) {
+    public void processTTSDetail(TTSDetailDto detailDto, TTSProject ttsProject) {
         VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getVoiceStyleId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
 
