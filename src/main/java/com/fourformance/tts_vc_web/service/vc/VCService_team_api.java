@@ -127,26 +127,5 @@ public class VCService_team_api {
         return convertedFiles;
     }
 
-    /**
-     * 사용자의 Voice ID 리스트를 조회합니다.
-     *
-     * **주요 흐름**:
-     * 1. MemberAudioMeta 엔티티에서 사용자 ID와 VC_TRG 타입의 Voice ID 조회.
-     * 2. Voice ID 리스트를 중복 제거하여 반환.
-     *
-     * @param memberId Voice ID를 요청한 사용자 ID.
-     * @return 사용자와 연결된 Voice ID 리스트 (중복 제거됨).
-     */
-    public List<String> getVoiceIdList(Long memberId) {
-        LOGGER.info("Voice ID 리스트 조회 중: memberId = " + memberId);
 
-        // MemberAudioMeta 테이블에서 VC_TRG 타입의 Voice ID를 가져옴
-        List<MemberAudioMeta> audioMetaList = memberAudioMetaRepository.findByMemberIdAndAudioType(memberId, AudioType.VC_TRG);
-
-        // Voice ID 리스트 반환 (중복 제거)
-        return audioMetaList.stream()
-                .map(MemberAudioMeta::getTrgVoiceId)
-                .distinct()
-                .collect(Collectors.toList());
-    }
 }
