@@ -8,6 +8,7 @@ import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.dto.tts.*;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
 import com.fourformance.tts_vc_web.repository.TTSProjectRepository;
+import com.fourformance.tts_vc_web.service.common.ProjectService_team_multi;
 import com.fourformance.tts_vc_web.service.tts.TTSService_team_multi;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -25,13 +26,16 @@ public class TTSViewController_team_multi {
     @Autowired
     TTSService_team_multi ttsService;
 
+    @Autowired
+    ProjectService_team_multi projectService;
+
 
     // TTS 상태 로드 메서드
     @Operation(
             summary = "TTS 상태 로드",
             description = "TTS 프로젝트 상태를 가져옵니다." )
     @GetMapping("/{projectId}")
-    public ResponseDto ttsLoad(@PathVariable Long projectId) {
+    public ResponseDto ttsLoad(@PathVariable("projectId") Long projectId) {
         try {
             // TTSProjectDTO와 TTSDetailDTO 리스트 가져오기
             TTSProjectDto ttsProjectDTO = ttsService.getTTSProjectDto(projectId);
@@ -53,7 +57,7 @@ public class TTSViewController_team_multi {
     @Operation(
             summary = "TTS 상태 저장",
             description = "TTS 프로젝트 상태를 저장합니다." )
-    @PostMapping("/{projectId}/save")
+    @PostMapping("/save")
     public ResponseDto ttsSave(@RequestBody TTSSaveDto ttsSaveDto) {
         try {
             Long projectId;
@@ -70,6 +74,36 @@ public class TTSViewController_team_multi {
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.SERVER_ERROR);  // 일반 예외를 서버 에러로 처리
         }
+    }
+
+    // TTS 프로젝트 삭제
+    @Operation(
+            summary = "TTS 프로젝트 삭제",
+            description = "TTS 프로젝트와 생성된 오디오를 전부 삭제합니다." )
+    @PostMapping("/delete/{projectId}")
+    public ResponseDto deleteTTSProject(@PathVariable("projectId") Long projectId) {
+
+        // 타입 검증
+        if(projectId == null) { throw new BusinessException(ErrorCode.INVALID_PROJECT_ID); }
+
+        // 프로젝트 삭제
+        projectService.deleteProject(projectId);
+
+        // 작업 상태 : Terminated(종료)
+        return DataResponseDto.of("","TTS 프로젝트가 정상적으로 삭제되었습니다.");
+    }
+
+    // TTS 선택된 모든 항목 삭제
+    @Operation(
+            summary = "TTS 선택된 항목 삭제",
+            description = "TTS 프로젝트에서 선택된 모든 항목을 삭제합니다." )
+    @PostMapping("/delete/details")
+    public ResponseDto deleteTTSDetail(@RequestBody List<Long> ttsDetailsId) {
+
+        // 선택 항목 삭제
+        projectService.deleteProject(ttsDetailsId);
+
+        return DataResponseDto.of("","선택된 모든 항목이 정상적으로 삭제되었습니다.");
     }
 
 }

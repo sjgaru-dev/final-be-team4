@@ -18,4 +18,9 @@ public interface TTSDetailRepository extends JpaRepository<TTSDetail, Long> {
     // VoiceStyle ID로 VoiceStyle을 조회 - 원우
     @Query("SELECT vs FROM VoiceStyle vs WHERE vs.id = :id")
     VoiceStyle findVoiceStyleById(@Param("id") Long id);
+
+    // TTS Detail Id가 담긴 List로 TTSDetail 객체 반환 받기 - 승민
+    @Query("SELECT t FROM TTSDetail t WHERE t.id IN :ttsDetailIdList")
+    List<TTSDetail> findByTtsDetailIds(@Param("ttsDetailIdList") List<Long> ttsDetailIdList);
+
 }
