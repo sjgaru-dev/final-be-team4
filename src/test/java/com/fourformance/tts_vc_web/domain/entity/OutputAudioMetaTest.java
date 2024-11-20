@@ -19,7 +19,12 @@
 //
 //@SpringBootTest
 //@Transactional
+<<<<<<< HEAD
 ////@Rollback(value = false)
+=======
+
+//@Rollback()
+>>>>>>> team_api
 //class OutputAudioMetaTest {
 //
 //    @Autowired
