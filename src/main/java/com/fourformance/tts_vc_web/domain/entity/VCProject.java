@@ -31,7 +31,7 @@ public class VCProject extends Project{
 
     private LocalDateTime APIStatusModifiedAt;
 
-    @Column(name = "trd_voice_id", length = 50)
+    @Column(name = "trg_voice_id", length = 50)
     private String trgVoiceId; // 새로 추가된 필드 -> 타겟 보이스 Id
 
     // 생성 메서드
