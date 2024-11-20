@@ -78,12 +78,12 @@ public class TTSService_team_api {
         Long projectId = Optional.ofNullable(ttsSaveDto.getProjectId())
                 .map(id -> {
                     // 기존 프로젝트 업데이트
-                    ttsServiceTeamMulti.updateProject(ttsSaveDto);
+                    ttsServiceTeamMulti.updateProjectCustom(ttsSaveDto);
                     return id;
                 })
                 .orElseGet(() -> {
                     // 새로운 프로젝트 생성
-                    return ttsServiceTeamMulti.createNewProject(ttsSaveDto);
+                    return ttsServiceTeamMulti.createNewProjectCustom(ttsSaveDto);
                 });
 
         // ID를 기반으로 프로젝트 조회 및 반환
@@ -98,15 +98,12 @@ public class TTSService_team_api {
      * @return 저장된 TTS 디테일 엔티티
      */
     private TTSDetail saveOrUpdateDetail(TTSDetailDto detailDto, TTSProject ttsProject) {
+
         if (detailDto.getId() == null) {
-            // 신규 디테일 생성
-            Long newDetailId = generateNewDetailId(ttsProject.getId());
-            detailDto.setId(newDetailId);
-            LOGGER.info("새로운 디테일 ID 생성: " + newDetailId);
-            ttsServiceTeamMulti.createTTSDetail(detailDto, ttsProject);
+            detailDto.setId(ttsServiceTeamMulti.createTTSDetailCustom(detailDto, ttsProject));
         } else {
             // 기존 디테일 업데이트
-            ttsServiceTeamMulti.processTTSDetail(detailDto, ttsProject);
+            detailDto.setId(ttsServiceTeamMulti.processTTSDetailCustom(detailDto, ttsProject));
         }
 
         // Repository를 통해 저장된 TTSDetail 조회
@@ -349,22 +346,6 @@ public class TTSService_team_api {
             default:
                 throw new BusinessException(ErrorCode.UNSUPPORTED_LANGUAGE_CODE);
         }
-    }
-
-    /**
-     * 해당 프로젝트의 디테일 ID 생성 로직: 기존 ID가 없으면 1부터 시작하고 있으면 +1
-     * @param projectId 프로젝트 ID
-     * @return 새로 생성된 디테일 ID
-     */
-    private Long generateNewDetailId(Long projectId) {
-        // 해당 프로젝트의 디테일 ID 목록 조회
-        List<Long> detailIds = ttsDetailRepository.findDetailIdsByProjectId(projectId);
-
-        // ID 목록 중 가장 큰 값 + 1 (없으면 1로 시작)
-        return detailIds.stream()
-                .max(Comparator.naturalOrder())
-                .map(maxId -> maxId + 1)
-                .orElse(1L); // ID가 없다면 1부터 시작
     }
 }
 
