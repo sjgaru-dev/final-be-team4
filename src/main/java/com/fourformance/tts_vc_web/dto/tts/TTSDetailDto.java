@@ -26,6 +26,7 @@ public class TTSDetailDto {
     private Integer unitSequence; // 단위 시퀀스
     private Long voiceStyleId; // 스타일 이름 (optional, lazy load 대신 포함할 수 있는 필드)
 
+
     private static ModelMapper modelMapper = new ModelMapper();
 
     public TTSDetail createTTSDetail(){

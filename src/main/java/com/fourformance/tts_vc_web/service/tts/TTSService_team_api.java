@@ -1,13 +1,13 @@
 package com.fourformance.tts_vc_web.service.tts;
 
-import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
-import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.common.util.CommonFileUtils;
 import com.fourformance.tts_vc_web.domain.entity.APIStatus;
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
 import com.fourformance.tts_vc_web.dto.tts.TTSDetailDto;
+import com.fourformance.tts_vc_web.dto.tts.TTSResponseDetailDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSSaveDto;
 import com.fourformance.tts_vc_web.repository.APIStatusRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
@@ -29,52 +29,79 @@ import java.util.logging.Logger;
 @RequiredArgsConstructor
 public class TTSService_team_api {
 
-    private final TTSProjectRepository ttsProjectRepository;
-    private final TTSDetailRepository ttsDetailRepository;
-    private final APIStatusRepository apiStatusRepository;
-    private final TTSService_team_multi ttsServiceTeamMulti; // 통합 서비스 호출
-    private final S3Service s3Service;
-    private static final Logger LOGGER = Logger.getLogger(TTSService_team_api.class.getName());
+    // 의존성 주입: Repository와 기타 서비스들
+    private final TTSProjectRepository ttsProjectRepository; // 프로젝트 데이터에 접근하기 위한 Repository
+    private final TTSDetailRepository ttsDetailRepository; // TTS 디테일 데이터에 접근하기 위한 Repository
+    private final APIStatusRepository apiStatusRepository; // API 상태를 저장하고 조회하기 위한 Repository
+    private final TTSService_team_multi ttsServiceTeamMulti; // 통합 서비스 호출을 위한 클래스
+    private final S3Service s3Service; // S3 파일 업로드를 처리하는 서비스
+
+    private static final Logger LOGGER = Logger.getLogger(TTSService_team_api.class.getName()); // 로그 기록을 위한 Logger
 
     /**
-     * 모든 TTS 디테일 처리: 신규 데이터 생성 또는 기존 데이터 업데이트
-     * @param ttsSaveDto TTS 프로젝트 및 디테일 데이터를 담은 DTO
+     * 모든 TTS 디테일 처리: 데이터를 생성 또는 업데이트하고 오디오 파일을 생성.
+     *
+     * @param ttsSaveDto 프로젝트와 디테일 데이터를 포함한 DTO
      * @return 생성된 오디오 파일 경로 리스트
      */
-    public List<Map<String, String>> convertAllTtsDetails(TTSSaveDto ttsSaveDto) {
+    public List<TTSResponseDetailDto> convertAllTtsDetails(TTSSaveDto ttsSaveDto) {
         LOGGER.info("convertAllTtsDetails 호출: " + ttsSaveDto);
 
-        // 프로젝트 저장 (새로 생성 또는 업데이트)
+        // 프로젝트 저장 또는 업데이트
         TTSProject ttsProject = saveOrUpdateProject(ttsSaveDto);
 
+        // 프로젝트의 TTS 디테일 데이터 처리
+        List<TTSResponseDetailDto> responseDetails = new ArrayList<>();
 
-        // 프로젝트의 모든 TTS 디테일 처리
-        List<Map<String, String>> fileUrls = new ArrayList<>();
         for (TTSDetailDto detailDto : ttsSaveDto.getTtsDetails()) {
-            // 디테일 처리 및 저장
+            // 디테일 데이터 저장 또는 업데이트
             TTSDetail ttsDetail = saveOrUpdateDetail(detailDto, ttsProject);
 
             try {
                 LOGGER.info("TTSDetail 처리 시작: " + detailDto);
-                fileUrls.add(processTtsDetail(detailDto, ttsProject));
+                // 디테일 처리 및 오디오 파일 경로 저장
+//                fileUrls.add(processTtsDetail(detailDto, ttsProject));
+//                LOGGER.info("TTSDetail 처리 완료: " + detailDto);
+
+                Map<String, String> fileUrlMap = processTtsDetail(detailDto, ttsProject);
+                String fileUrl = fileUrlMap.get("fileUrl");
+
+                // TTSResponseDetailDto 생성 및 추가
+                TTSResponseDetailDto responseDetail = TTSResponseDetailDto.builder()
+                        .id(ttsDetail.getId())
+                        .ProjectId(ttsProject.getId())
+                        .unitScript(detailDto.getUnitScript())
+                        .unitSpeed(detailDto.getUnitSpeed())
+                        .unitPitch(detailDto.getUnitPitch())
+                        .unitVolume(detailDto.getUnitVolume())
+                        .isDeleted(ttsDetail.getIsDeleted())
+                        .unitSequence(detailDto.getUnitSequence())
+                        .voiceStyleId(ttsDetail.getVoiceStyle().getId())
+                        .fileUrl(fileUrl) // 처리된 URL 삽입
+                        .build();
+
+                responseDetails.add(responseDetail);
                 LOGGER.info("TTSDetail 처리 완료: " + detailDto);
+
             } catch (Exception e) {
                 LOGGER.severe("TTSDetail 처리 중 오류 발생: " + detailDto + ", 메시지: " + e.getMessage());
+                // 디테일 처리 실패 시 예외 발생
                 throw new BusinessException(ErrorCode.TTS_DETAIL_PROCESSING_FAILED);
             }
         }
 
-        LOGGER.info("convertAllTtsDetails 완료: 생성된 파일 URLs = " + fileUrls);
-        return fileUrls;
+        LOGGER.info("convertAllTtsDetails 완료: 생성된 Response Details = " + responseDetails);
+        return responseDetails;
     }
 
     /**
      * 프로젝트 저장 또는 업데이트
-     * @param ttsSaveDto 프로젝트 저장 데이터를 담은 DTO
+     *
+     * @param ttsSaveDto 프로젝트 데이터를 포함한 DTO
      * @return 저장된 프로젝트 엔티티
      */
     private TTSProject saveOrUpdateProject(TTSSaveDto ttsSaveDto) {
-        // 프로젝트 ID 존재 여부 확인
+        // 프로젝트 ID가 존재하는 경우 업데이트, 없으면 새로 생성
         Long projectId = Optional.ofNullable(ttsSaveDto.getProjectId())
                 .map(id -> {
                     // 기존 프로젝트 업데이트
@@ -86,53 +113,58 @@ public class TTSService_team_api {
                     return ttsServiceTeamMulti.createNewProjectCustom(ttsSaveDto);
                 });
 
-        // ID를 기반으로 프로젝트 조회 및 반환
+        // ID를 통해 프로젝트를 조회하고 반환
         return ttsProjectRepository.findById(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TTS_PROJECT_NOT_FOUND));
     }
 
     /**
      * TTS 디테일 저장 또는 업데이트
-     * @param detailDto TTS 디테일 데이터
+     *
+     * @param detailDto TTS 디테일 데이터를 포함한 DTO
      * @param ttsProject 연결된 프로젝트
      * @return 저장된 TTS 디테일 엔티티
      */
     private TTSDetail saveOrUpdateDetail(TTSDetailDto detailDto, TTSProject ttsProject) {
-
+        // ID가 없으면 새로 생성, 있으면 업데이트
         if (detailDto.getId() == null) {
             detailDto.setId(ttsServiceTeamMulti.createTTSDetailCustom(detailDto, ttsProject));
         } else {
-            // 기존 디테일 업데이트
             detailDto.setId(ttsServiceTeamMulti.processTTSDetailCustom(detailDto, ttsProject));
         }
 
-        // Repository를 통해 저장된 TTSDetail 조회
+        // 저장된 디테일 데이터를 조회하고 반환
         return ttsDetailRepository.findById(detailDto.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TTS_DETAIL_NOT_FOUND));
     }
 
     /**
      * TTS 디테일 처리: Google TTS API를 통해 텍스트를 오디오로 변환하고 저장
-     * @param detailDto TTS 디테일 데이터
-     * @return 변환된 오디오 파일 경로
+     *
+     * @param detailDto TTS 디테일 데이터를 포함한 DTO
+     * @param ttsProject 연결된 프로젝트
+     * @return 변환된 오디오 파일 경로를 포함한 Map
      */
     private Map<String, String> processTtsDetail(TTSDetailDto detailDto, TTSProject ttsProject) {
+        // Google TTS API 호출로 오디오 데이터 생성
         ByteString audioContent = callTTSApi(detailDto, ttsProject);
-        String fileUrl = saveAudioFile(audioContent, detailDto.getUnitSequence(), ttsProject.getMember().getId(), ttsProject.getId(), detailDto.getId());
-        return Map.of("fileUrl", fileUrl); // filePath 대신 fileUrl로 변경
+        // 오디오 파일을 저장하고 URL 반환
+        String fileUrl = saveAudioFile(audioContent, detailDto.getUnitSequence(),
+                ttsProject.getMember().getId(), ttsProject.getId(), detailDto.getId());
+        return Map.of("fileUrl", fileUrl);
     }
 
     /**
      * Google TTS API 호출: 텍스트를 오디오로 변환
-     * @param detailDto TTS 디테일 데이터
-     * @return 변환된 오디오 콘텐츠 (ByteString)
+     *
+     * @param detailDto TTS 디테일 데이터를 포함한 DTO
+     * @return 변환된 오디오 데이터(ByteString)
      */
     private ByteString callTTSApi(TTSDetailDto detailDto, TTSProject ttsProject) {
+        LOGGER.info("callTTSApi 호출: " + detailDto);
 
-        System.out.println("detailDto = " + detailDto.toString());
-        System.out.println("ttsProject = " + ttsProject.toString());
-        TTSDetail ttsDetail = ttsDetailRepository.findById(detailDto.getId()).get();
-
+        // TTS 디테일과 음성 스타일 데이터 조회
+        TTSDetail ttsDetail = ttsDetailRepository.findById(detailDto.getId()).orElseThrow();
         String languageCode = ttsDetailRepository.findVoiceStyleById(detailDto.getVoiceStyleId()).getLanguageCode();
         String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getVoiceStyleId()).getGender();
 
@@ -147,19 +179,18 @@ public class TTSService_team_api {
                 detailDto.getUnitPitch()
         );
 
-
-        // APIStatus 생성 및 저장
+        // APIStatus 엔티티 생성 및 저장
         APIStatus apiStatus = APIStatus.createAPIStatus(null, ttsDetail, requestPayload);
         apiStatusRepository.save(apiStatus);
 
-        LOGGER.info("callTTSApi 호출: " + detailDto);
-
         try (TextToSpeechClient textToSpeechClient = TextToSpeechClient.create()) {
+            // Google TTS API 요청 생성
             SynthesisInput input = SynthesisInput.newBuilder()
                     .setText(Optional.ofNullable(detailDto.getUnitScript())
                             .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_UNIT_SCRIPT)))
                     .build();
 
+            // 음성 및 오디오 설정 생성
             SsmlVoiceGender ssmlGender = getSsmlVoiceGender(detailDto);
             VoiceSelectionParams voice = VoiceSelectionParams.newBuilder()
                     .setLanguageCode(languageCode)
@@ -173,67 +204,29 @@ public class TTSService_team_api {
                     .setPitch(Optional.ofNullable(detailDto.getUnitPitch()).orElse(0.0F))
                     .build();
 
-            // Google TTS API 호출 전에 언어 검증 수행
-            checkTextLanguage(ttsDetail.getUnitScript(), ttsDetail.getVoiceStyle().getLanguageCode());
-
             // Google TTS API 호출
             SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
 
+            // 응답 검증 및 처리
             if (response.getAudioContent().isEmpty()) {
-                apiStatus.updateResponseInfo(
-                        "TTS 변환 실패: 응답의 오디오 콘텐츠가 비어 있습니다.",
-                        500,
-                        APIUnitStatusConst.FAILURE
-                );
-                apiStatusRepository.save(apiStatus);
-
-                ttsProject.updateAPIStatus(APIStatusConst.FAILURE);
-                ttsProjectRepository.save(ttsProject);
-
                 throw new BusinessException(ErrorCode.TTS_CONVERSION_FAILED_EMPTY_CONTENT);
             }
-
-            // 응답 페이로드 생성
-            String responsePayload = String.format(
-                    "{ \"audioContentSize\": %d, \"language\": \"%s\", \"gender\": \"%s\", \"speed\": %.2f, \"volume\": %.2f, \"pitch\": %.2f }",
-                    response.getAudioContent().size(),
-                    ttsDetail.getVoiceStyle().getLanguageCode(),
-                    ttsDetail.getVoiceStyle().getGender(),
-                    ttsDetail.getUnitSpeed(),
-                    ttsDetail.getUnitVolume(),
-                    ttsDetail.getUnitPitch()
-            );
-
-            apiStatus.updateResponseInfo(responsePayload, 200, APIUnitStatusConst.SUCCESS);
-            apiStatusRepository.save(apiStatus);
-
-            ttsProject.updateAPIStatus(APIStatusConst.SUCCESS);
-            ttsProjectRepository.save(ttsProject);
-
-            LOGGER.info("Google TTS API 호출 및 변환 성공");
+            LOGGER.info("Google TTS API 호출 성공");
             return response.getAudioContent();
-
         } catch (IOException e) {
-            String errorPayload = "Error: " + e.getMessage();
-            apiStatus.updateResponseInfo(errorPayload, 500, APIUnitStatusConst.FAILURE);
-            apiStatusRepository.save(apiStatus);
-
-            ttsProject.updateAPIStatus(APIStatusConst.FAILURE);
-            ttsProjectRepository.save(ttsProject);
-
-
-
-            LOGGER.severe("callTTSApi 중 예외 발생: " + e.getMessage());
+            LOGGER.severe("Google TTS API 호출 중 오류: " + e.getMessage());
             throw new BusinessException(ErrorCode.TTS_CONVERSION_FAILED);
         }
     }
 
     /**
      * VoiceStyle의 Gender를 SsmlVoiceGender로 변환
-     * @param detailDto TTS 디테일 데이터
+     *
+     * @param detailDto TTS 디테일 데이터를 포함한 DTO
      * @return 변환된 SsmlVoiceGender
      */
     private SsmlVoiceGender getSsmlVoiceGender(TTSDetailDto detailDto) {
+        // 음성 스타일의 Gender 데이터를 가져와 변환
         String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getVoiceStyleId()).getGender();
         return switch (gender.toLowerCase()) {
             case "male" -> SsmlVoiceGender.MALE;
@@ -242,25 +235,32 @@ public class TTSService_team_api {
         };
     }
 
+    /**
+     * 변환된 오디오 파일을 저장
+     *
+     * @param audioContent 변환된 오디오 데이터
+     * @param sequence 유닛 시퀀스
+     * @param userId 사용자 ID
+     * @param projectId 프로젝트 ID
+     * @param detailId 디테일 ID
+     * @return 저장된 오디오 파일 URL
+     */
     private String saveAudioFile(ByteString audioContent, int sequence, Long userId, Long projectId, Long detailId) {
         String fileName = "tts_audio_" + sequence + ".wav";
-
         LOGGER.info("saveAudioFile 호출: fileName = " + fileName);
 
         try {
-            // 임시 파일 생성
+            // 임시 파일 생성 및 저장
             File tempFile = File.createTempFile("tts_audio_", ".wav");
             try (FileOutputStream fos = new FileOutputStream(tempFile)) {
                 fos.write(audioContent.toByteArray());
             }
 
-            LOGGER.info("임시 파일 생성 성공: " + tempFile.getAbsolutePath());
-
             // S3에 업로드
-            MultipartFile multipartFile = convertFileToMultipartFile(tempFile, fileName);
+            MultipartFile multipartFile = CommonFileUtils.convertFileToMultipartFile(tempFile, fileName);
             String s3FileUrl = s3Service.uploadUnitSaveFile(multipartFile, userId, projectId, detailId);
 
-            // 업로드 후 임시 파일 삭제
+            // 임시 파일 삭제
             if (!tempFile.delete()) {
                 LOGGER.warning("임시 파일 삭제 실패: " + tempFile.getAbsolutePath());
             }
@@ -273,55 +273,11 @@ public class TTSService_team_api {
         }
     }
 
-    // File을 MultipartFile로 변환하는 유틸리티 메서드
-    private MultipartFile convertFileToMultipartFile(File file, String fileName) throws IOException {
-        return new MultipartFile() {
-            @Override
-            public String getName() {
-                return fileName;
-            }
-
-            @Override
-            public String getOriginalFilename() {
-                return fileName;
-            }
-
-            @Override
-            public String getContentType() {
-                return "audio/wav";
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return file.length() == 0;
-            }
-
-            @Override
-            public long getSize() {
-                return file.length();
-            }
-
-            @Override
-            public byte[] getBytes() throws IOException {
-                return java.nio.file.Files.readAllBytes(file.toPath());
-            }
-
-            @Override
-            public InputStream getInputStream() throws IOException {
-                return new FileInputStream(file);
-            }
-
-            @Override
-            public void transferTo(File dest) throws IOException, IllegalStateException {
-                java.nio.file.Files.copy(file.toPath(), dest.toPath());
-            }
-        };
-    }
-
     /**
-     * 언어 검증 메서드: 텍스트와 선택된 언어 코드의 일치 여부 확인
-     * @param text 변환할 텍스트
-     * @param languageCode 선택된 언어 코드
+     * 텍스트와 언어 코드의 일치 여부를 검증
+     *
+     * @param text 텍스트 데이터
+     * @param languageCode 언어 코드
      */
     private void checkTextLanguage(String text, String languageCode) {
         boolean isKorean = text.matches(".*[가-힣].*");
@@ -329,6 +285,7 @@ public class TTSService_team_api {
         boolean isJapanese = text.matches(".*[\\u3040-\\u30FF\\u31F0-\\u31FF].*");
         boolean isEnglish = text.matches(".*[A-Za-z].*");
 
+        // 언어 코드와 텍스트의 일치 여부 확인
         switch (languageCode) {
             case "ko-KR":
                 if (!isKorean) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_KO_KR);
