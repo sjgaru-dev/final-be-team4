@@ -94,29 +94,5 @@ public class VCController_team_api {
         }
     }
 
-    /**
-     * 사용자의 Voice ID 리스트 조회 API
-     *
-     * @param memberId 사용자의 ID
-     * @return Voice ID 리스트
-     */
-    @Operation(
-            summary = "사용자 Voice ID 리스트 조회",
-            description = "사용자가 업로드한 타겟 오디오를 기반으로 생성된 Voice ID 리스트를 반환합니다."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-    })
-    @GetMapping("/voice-ids")
-    public ResponseDto getVoiceIdList(@RequestParam("memberId") Long memberId) {
-        try {
-            LOGGER.info("Fetching Voice ID list for member ID: " + memberId);
-            List<String> voiceIds = vcService.getVoiceIdList(memberId);
-            LOGGER.info("Voice ID list fetched successfully. Count: " + voiceIds.size());
-            return DataResponseDto.of(voiceIds);
-        } catch (Exception e) {
-            LOGGER.severe("Failed to fetch Voice ID list: " + e.getMessage());
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-    }
+
 }
