@@ -6,25 +6,23 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
-import java.time.LocalDateTime;
 
 @Entity
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "vc_project")
-public class VCProject extends Project{
+public class VCProject extends Project {
 
     @Enumerated(EnumType.STRING)
-    private APIStatusConst apiStatus=APIStatusConst.NOT_STARTED; // enum 생성 필요
+    private APIStatusConst apiStatus = APIStatusConst.NOT_STARTED; // enum 생성 필요
 
     @OneToOne(fetch = FetchType.LAZY)
     private MemberAudioMeta memberTargetAudioMeta;
