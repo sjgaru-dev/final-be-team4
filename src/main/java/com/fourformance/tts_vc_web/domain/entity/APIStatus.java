@@ -2,13 +2,22 @@ package com.fourformance.tts_vc_web.domain.entity;
 
 import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
 import com.fourformance.tts_vc_web.domain.baseEntity.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-
-import java.time.LocalDateTime;
 
 @Entity
 @ToString
@@ -45,15 +54,33 @@ public class APIStatus extends BaseEntity {
         apiStatus.ttsDetail = ttsDetail;
         apiStatus.requestAt = LocalDateTime.now();
         apiStatus.requestPayload = requestPayload;
+
+        // 연관관계 편의 메서드 호출
+        if (vcDetail != null) {
+            vcDetail.addAPIStatus(apiStatus);
+        }
+        if (ttsDetail != null) {
+            ttsDetail.addAPIStatus(apiStatus);
+        }
+
         return apiStatus;
     }
 
-    // 업데이트 메서드 (응답 받은 시점에 호출되고 응답에 대한 필드가 채워지는 메서드입니다!)
-    public void updateResponseInfo(String responsePayload, Integer responseCode, APIUnitStatusConst apiUnitStatusConst) {
+    // 업데이트 메서드
+    public void updateResponseInfo(String responsePayload, Integer responseCode,
+                                   APIUnitStatusConst apiUnitStatusConst) {
         this.apiUnitStatusConst = apiUnitStatusConst;
         this.responseAt = LocalDateTime.now();
         this.responsePayload = responsePayload;
         this.responseCode = responseCode;
     }
 
+    // TTSDetail와 VCDetail setter
+    public void setTtsDetail(TTSDetail ttsDetail) {
+        this.ttsDetail = ttsDetail;
+    }
+
+    public void setVcDetail(VCDetail vcDetail) {
+        this.vcDetail = vcDetail;
+    }
 }
