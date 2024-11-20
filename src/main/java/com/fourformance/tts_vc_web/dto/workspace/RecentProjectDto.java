@@ -21,6 +21,6 @@ public class RecentProjectDto {
     private String name;
     private APIStatusConst status;
     private LocalDateTime createdAt;
-    private LocalDateTime modifiedAt;
+    private LocalDateTime updatedAt;
 
 }
