@@ -3,16 +3,9 @@ package com.fourformance.tts_vc_web.service.vc;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
-import com.fourformance.tts_vc_web.domain.entity.Member;
-import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
-import com.fourformance.tts_vc_web.domain.entity.VCDetail;
-import com.fourformance.tts_vc_web.domain.entity.VCProject;
-import com.fourformance.tts_vc_web.dto.vc.AudioFileDto;
-import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
-import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
-import com.fourformance.tts_vc_web.repository.MemberRepository;
-import com.fourformance.tts_vc_web.repository.VCDetailRepository;
-import com.fourformance.tts_vc_web.repository.VCProjectRepository;
+import com.fourformance.tts_vc_web.domain.entity.*;
+import com.fourformance.tts_vc_web.dto.vc.*;
+import com.fourformance.tts_vc_web.repository.*;
 import com.fourformance.tts_vc_web.service.common.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -32,6 +26,65 @@ public class VCService_team_multi {
     private final MemberAudioMetaRepository memberAudioMetaRepository;
     private final S3Service s3Service;
 
+    private final OutputAudioMetaRepository outputAudioMetaRepository;
+    private final MemberAudioVCRepository memberAudioVCRepository;
+
+    // VC 프로젝트 상태 조회하기
+    @Transactional(readOnly = true)
+    public VCProjectResDto getVCProjectDto(Long projectId) {
+        // 프로젝트 조회
+        VCProject vcProject = vcProjectRepository.findById(projectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+
+        // VCProjectDto로 변환
+        VCProjectDto vcPrjDto = VCProjectDto.createVCProjectDto(vcProject);
+
+        List<String> trgAudioUrls = null;
+        if(vcPrjDto.getId() != null){
+
+            List<Long> dd = memberAudioVCRepository.findMemberAudioMetaByVcProjectId(vcPrjDto.getId());
+            trgAudioUrls = memberAudioMetaRepository.findAudioUrlsByAudioMetaIds(dd, AudioType.VC_TRG);
+
+        }
+
+        VCProjectResDto resDto = new VCProjectResDto();
+                        resDto.setId(vcPrjDto.getId());
+                        resDto.setProjectName(vcPrjDto.getProjectName());
+                        resDto.setTrgAudioUrls(trgAudioUrls);
+         return resDto;
+    }
+
+
+    // VC 프로젝트 상세 값 조회하기
+    @Transactional(readOnly = true)
+    public List<VCDetailResDto> getVCDetailsDto(Long projectId) {
+        List<VCDetail> vcDetails = vcDetailRepository.findByVcProjectId(projectId);
+
+        // isDeleted가 false인 경우에만 VCDetailResDto 목록으로 변환
+        return vcDetails.stream()
+                .filter(detail -> !detail.getIsDeleted()) // isDeleted가 false인 경우
+                .map(this::convertToVCDetailResDto) // VCDetailResDto로 변환
+                .collect(Collectors.toList());
+    }
+
+    // VCDetail 엔티티를 VCDetailResDto로 변환하는 메서드
+    private VCDetailResDto convertToVCDetailResDto(VCDetail vcDetail) {
+
+        // src 오디오 url 추가하기
+        List<String> audioUrls = outputAudioMetaRepository.findAudioUrlsByVcDetail(vcDetail.getId())
+                .stream() // List<OutputAudioMeta>를 Stream으로 변환
+                .filter(meta -> meta.getAudioUrl() != null) // audioUrl이 null이 아닌 경우만 필터링
+                .map(OutputAudioMeta::getAudioUrl) // OutputAudioMeta의 audioUrl만 추출
+                .collect(Collectors.toList()); // Stream 결과를 List<String>으로 변환
+
+        VCDetailResDto resDto = new VCDetailResDto();
+                       resDto.setId(vcDetail.getId());
+                       resDto.setProjectId(vcDetail.getVcProject().getId());
+                       resDto.setIsChecked(vcDetail.getIsChecked());
+                       resDto.setUnitScript(vcDetail.getUnitScript());
+                       resDto.setGenAudios(audioUrls);
+        return resDto;
+    }
     public Long saveVCProject(VCSaveDto vcSaveDto, List<MultipartFile> localFiles, Member member) {
         // 1. VCProject 생성/업데이트
         VCProject vcProject = vcSaveDto.getProjectId() == null
@@ -108,4 +161,5 @@ public class VCService_team_multi {
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.FILE_PROCESSING_ERROR));
     }
+
 }

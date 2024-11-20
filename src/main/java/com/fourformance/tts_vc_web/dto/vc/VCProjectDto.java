@@ -22,7 +22,7 @@ public class VCProjectDto {
     private APIStatusConst apiStatus; // API 상태
     private Long memberTargetAudioMetaId; // MemberAudioMeta ID
     private LocalDateTime apiStatusModifiedAt; // API 상태 수정일
-    private Boolean isDeleted; // 삭제 여부
+    private String trgVoiceId; // 최근 업로드한 타겟 목소리 Id
 
     private static ModelMapper modelMapper = new ModelMapper();
 
