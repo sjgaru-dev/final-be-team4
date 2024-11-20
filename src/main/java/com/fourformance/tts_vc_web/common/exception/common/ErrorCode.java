@@ -23,6 +23,10 @@ public enum ErrorCode {
     S3_UPLOAD_FAILED(1007, HttpStatus.INTERNAL_SERVER_ERROR, "S3 업로드에 실패했습니다."), // *
     FILE_PROCESSING_ERROR(1008, HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."), // *
     S3_PRESIGNED_URL_FAILED(1009, HttpStatus.INTERNAL_SERVER_ERROR, "S3 presigned URL 생성에 실패했습니다."), // *
+    MISSING_REQUIRED_FIELD(1010,HttpStatus.NOT_FOUND,"VC_TRG 파일이 누락되었습니다."),
+    INVALID_PROJECT_DATA(1011,HttpStatus.BAD_REQUEST,"AudioFileDto에 MemberAudioMetaId와 LocalAudioFile이 모두 누락되었습니다."),
+    INVALID_TRG_FILE_COMBINATION(1012, HttpStatus.BAD_REQUEST, "trgVoiceId가 설정된 경우, audioFiles에 VC_TRG 파일이 포함될 수 없습니다."),
+    MISSING_TRG_FILE(1013, HttpStatus.BAD_REQUEST, "VC_TRG 파일은 반드시 하나여야 합니다."),
 
     // 3000번대 코드 : DB 관련
     NOT_EXISTS_PROJECT(3000, HttpStatus.BAD_REQUEST, "해당 프로젝트를 찾을 수 없습니다."),
@@ -39,6 +43,7 @@ public enum ErrorCode {
 
     // 10000 : 알 수 없는 예외
     UNKNOWN_ERROR(10000, HttpStatus.BAD_REQUEST, "알 수 없는 에외입니다,"),
+    METADATA_FORM_FAULT(1234,HttpStatus.BAD_REQUEST, "메타데이터 형식이 잘못되었습니다."),
 
     NOT_EXISTS_VOICESTYLE(3001,HttpStatus.BAD_REQUEST, "해당 voice style의 id를 찾을 수 없습니다." ),
 

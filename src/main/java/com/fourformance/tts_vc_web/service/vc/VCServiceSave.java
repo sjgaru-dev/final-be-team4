@@ -10,7 +10,6 @@ import com.fourformance.tts_vc_web.domain.entity.VCProject;
 import com.fourformance.tts_vc_web.dto.vc.AudioFileDto;
 import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
 import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
-import com.fourformance.tts_vc_web.repository.MemberRepository;
 import com.fourformance.tts_vc_web.repository.VCDetailRepository;
 import com.fourformance.tts_vc_web.repository.VCProjectRepository;
 import com.fourformance.tts_vc_web.service.common.S3Service;
@@ -21,35 +20,32 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class VCService_team_multi {
-    private final MemberRepository memberRepository;
+public class VCServiceSave {
     private final VCProjectRepository vcProjectRepository;
     private final VCDetailRepository vcDetailRepository;
     private final MemberAudioMetaRepository memberAudioMetaRepository;
     private final S3Service s3Service;
 
-    public Long saveVCProject(VCSaveDto vcSaveDto, List<MultipartFile> localFiles, Member member) {
+    public Long saveVCProject(VCSaveDto vcSaveDto, List<MultipartFile> localFiles) {
         // 1. VCProject 생성/업데이트
         VCProject vcProject = vcSaveDto.getProjectId() == null
-                ? createNewVCProject(vcSaveDto, member)
-                : updateExistingVCProject(vcSaveDto); // member는 안넘겨도 될 것 같음
+                ? createNewVCProject(vcSaveDto)
+                : updateExistingVCProject(vcSaveDto);
 
         // 2. 타겟 파일 처리
         processFiles(vcSaveDto.getTrgFiles(), localFiles, vcProject, AudioType.VC_TRG);
 
         // 3. 소스 파일 처리
-        processFiles(vcSaveDto.getSrcFiles(), localFiles, vcProject, AudioType.VC_SRC);
+//        processFiles(vcSaveDto.getSrcFiles(), localFiles, vcProject, AudioType.VC_SRC);
 
         return vcProject.getId();
     }
 
-    private VCProject createNewVCProject(VCSaveDto vcSaveDto, Member member) {
-
-        VCProject vcProject = VCProject.createVCProject(member, vcSaveDto.getProjectName());
+    private VCProject createNewVCProject(VCSaveDto vcSaveDto) {
+        VCProject vcProject = VCProject.createVCProject(null, vcSaveDto.getProjectName());
         vcProjectRepository.save(vcProject);
         return vcProject;
     }
@@ -57,14 +53,11 @@ public class VCService_team_multi {
     private VCProject updateExistingVCProject(VCSaveDto vcSaveDto) {
         VCProject vcProject = vcProjectRepository.findById(vcSaveDto.getProjectId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
-
         vcProject.updateVCProject(vcSaveDto.getProjectName(), null);
-
         return vcProject;
     }
 
     private void processFiles(List<AudioFileDto> fileDtos, List<MultipartFile> files, VCProject vcProject, AudioType audioType) {
-
         if (fileDtos == null || fileDtos.isEmpty()) { // 업로드 된 파일이 없을 때
             return;
         }
@@ -80,7 +73,7 @@ public class VCService_team_multi {
                 // 로컬 파일 처리
                 MultipartFile localFile = findMultipartFileByName(files, fileDto.getLocalFileName());
                 List<String> uploadedUrls = s3Service.uploadAndSaveMemberFile(
-                        List.of(localFile), vcProject.getMember().getId(), vcProject.getId(), audioType, null); // voiceId를 받아오는 api 호출해서 null을 반환값으로 채우면 될 듯
+                        List.of(localFile), null, vcProject.getId(), audioType, null); // voiceId를 받아오는 api 호출해서 null을 반환값으로 채우면 될 듯
                 String fileUrl = uploadedUrls.get(0);
 
                 audioMeta = memberAudioMetaRepository.findFirstByAudioUrl(fileUrl)
@@ -102,6 +95,7 @@ public class VCService_team_multi {
             }
         }
     }
+
     private MultipartFile findMultipartFileByName(List<MultipartFile> files, String localFileName) {
         return files.stream()
                 .filter(file -> file.getOriginalFilename().equals(localFileName))
