@@ -39,7 +39,7 @@ public class TTSService_team_multi {
     public TTSProjectDto getTTSProjectDto(Long projectId) {
         // 프로젝트 조회
         TTSProject ttsProject = ttsProjectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
 
         // TTSProjectDTO로 변환
         return TTSProjectDto.createTTSProjectDto(ttsProject);
