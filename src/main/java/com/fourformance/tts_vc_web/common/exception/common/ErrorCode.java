@@ -28,7 +28,7 @@ public enum ErrorCode {
     NOT_EXISTS_PROJECT(3000, HttpStatus.BAD_REQUEST, "해당 프로젝트를 찾을 수 없습니다."),
 
     // 4000번대 코드 : 서버 내부 오류, 코드 오류
-    SERVER_ERROR(4000, HttpStatus.BAD_REQUEST,"서버 내부 오류가 발생했습니다."),
+    SERVER_ERROR(4000, HttpStatus.BAD_REQUEST, "서버 내부 오류가 발생했습니다."),
 
     // 5000번대 코드 : 서버 내부 오류 관련
     INTERNAL_SERVER_ERROR(5001, HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
@@ -40,13 +40,17 @@ public enum ErrorCode {
     // 10000 : 알 수 없는 예외
     UNKNOWN_ERROR(10000, HttpStatus.BAD_REQUEST, "알 수 없는 에외입니다,"),
 
-    NOT_EXISTS_VOICESTYLE(3001,HttpStatus.BAD_REQUEST, "해당 voice style의 id를 찾을 수 없습니다." ),
+    NOT_EXISTS_VOICESTYLE(3001, HttpStatus.BAD_REQUEST, "해당 voice style의 id를 찾을 수 없습니다."),
 
     NOT_EXISTS_PROJECT_DETAIL(3100, HttpStatus.BAD_REQUEST, "해당 프로젝트 디테일을 찾을 수 없습니다."),
 
     DUPLICATE_UNIT_SEQUENCE(3200, HttpStatus.BAD_REQUEST, "중복된 unitSequence를 가집니다."),
 
-    INVALID_UNIT_SEQUENCE_ORDER(3300, HttpStatus.BAD_REQUEST, "unitSequenc의 순서가 잘못됐습니다.");
+    INVALID_UNIT_SEQUENCE_ORDER(3300, HttpStatus.BAD_REQUEST, "unitSequenc의 순서가 잘못됐습니다."),
+
+    MEMBER_PROJECT_NOT_MATCH(9001, HttpStatus.BAD_REQUEST, "해당 유저의 프로젝트가 아닙니다!"),
+    TTS_PROJECT_DETAIL_NOT_MATCH(9002, HttpStatus.BAD_REQUEST, "해당 프로젝트의 유닛이 아닙니다."),
+    DTO_NOT_LOGICAL(9003, HttpStatus.BAD_REQUEST, "DTO가 논리적으로 어색합니다.(자세한건 다음에 쓸게요)");
 
     private final Integer code;
     private final HttpStatus httpStatus;
