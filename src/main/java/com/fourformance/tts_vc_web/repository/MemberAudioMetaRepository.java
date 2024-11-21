@@ -38,7 +38,9 @@ public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta
     Optional<MemberAudioMeta> findFirstByAudioUrl(String audioUrl);
 
     // Concat Detail Id로 업로드된 오디오들을 찾아 리스트로 반환 - 의준
-//    @Query("SELECT o FROM MemberAudioMeta o WHERE o..id IN :ttsDetailIds AND o.isDeleted = false")
-//    List<OutputAudioMeta> findByConcatDetailAndIsDeletedFalse(@Param("concatDetailIds") List<Long> concatDetailIds);
-
+    @Query("SELECT m " +
+            "FROM ConcatDetail c " +
+            "JOIN c.memberAudioMeta m " +
+            "WHERE c.id IN :concatDetailIds ")
+    List<MemberAudioMeta> findByConcatDetailIds(@Param("concatDetailIds") List<Long> concatDetailIds);
 }

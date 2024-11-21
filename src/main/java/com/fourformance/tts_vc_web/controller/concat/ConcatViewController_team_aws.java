@@ -53,8 +53,8 @@ public class ConcatViewController_team_aws {
 
     // Concat 프로젝트 삭제
     @Operation(
-            summary = "Concat 선택된 항목 삭제",
-            description = "Concat 프로젝트에서 선택된 모든 항목을 삭제합니다.")
+            summary = "Concat 프로젝트 삭제",
+            description = "해당 Concat 프로젝트를 삭제하고 관련된 소스, 아웃풋 오디오를 삭제합니다.")
     @PostMapping("/delete/{projectId}")
     public ResponseDto deleteConcatProject(@PathVariable("projectId") Long projectId) {
 

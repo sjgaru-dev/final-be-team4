@@ -92,7 +92,8 @@ public class ConcatService_team_aws {
                 detailDto.getAudioSeq(),
                 detailDto.isChecked(),
                 detailDto.getUnitScript(),
-                detailDto.getEndSilence()
+                detailDto.getEndSilence(),
+                null // 이거 나중에 멤버 오디오 메타 추가해야함 + 오디오 메타에 올려야 함
         );
         concatDetailRepository.save(concatDetail);
     }
