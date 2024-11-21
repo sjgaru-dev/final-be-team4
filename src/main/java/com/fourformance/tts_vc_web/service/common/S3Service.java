@@ -3,6 +3,7 @@ package com.fourformance.tts_vc_web.service.common;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
@@ -24,7 +25,10 @@ import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.ProjectRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
 import com.fourformance.tts_vc_web.repository.VCDetailRepository;
+
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
@@ -253,6 +257,32 @@ public class S3Service {
         } catch (IOException e) {
             // 파일 처리 중 발생하는 예외
             throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
+    }
+
+    /**
+     * S3에서 파일을 다운로드하여 로컬에 저장합니다.
+     *
+     * @param fileUrl   다운로드할 파일의 S3 URL
+     * @param localPath 로컬에 저장할 파일의 경로
+     * @return 로컬에 저장된 파일의 경로
+     */
+    public String downloadFileFromS3(String fileUrl, String localPath) {
+        try {
+            // S3 버킷 이름과 키를 추출
+            URI uri = URI.create(fileUrl);
+            String bucketName = uri.getHost().split("\\.")[0];
+            String key = uri.getPath().substring(1); // '/' 제거
+
+            // 로컬 파일 객체 생성
+            File localFile = new File(localPath);
+
+            // S3에서 파일 다운로드
+            amazonS3Client.getObject(new GetObjectRequest(bucketName, key), localFile);
+
+            return localFile.getAbsolutePath();
+        } catch (AmazonClientException e) {
+            throw new BusinessException(ErrorCode.S3_DOWNLOAD_FAILED);
         }
     }
 }
