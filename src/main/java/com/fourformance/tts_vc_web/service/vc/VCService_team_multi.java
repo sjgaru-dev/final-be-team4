@@ -68,7 +68,7 @@ public class VCService_team_multi {
     // VC 프로젝트 상세 값 조회하기
     @Transactional(readOnly = true)
     public List<VCDetailResDto> getVCDetailsDto(Long projectId) {
-        List<VCDetail> vcDetails = vcDetailRepository.findByVcProjectId(projectId);
+        List<VCDetail> vcDetails = vcDetailRepository.findByVcProject_Id(projectId);
 
         // isDeleted가 false인 경우에만 VCDetailResDto 목록으로 변환
         return vcDetails.stream()
