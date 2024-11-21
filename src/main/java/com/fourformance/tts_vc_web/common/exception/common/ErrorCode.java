@@ -27,6 +27,7 @@ public enum ErrorCode {
     INVALID_PROJECT_DATA(1011,HttpStatus.BAD_REQUEST,"AudioFileDto에 MemberAudioMetaId와 LocalAudioFile이 모두 누락되었습니다."),
     INVALID_TRG_FILE_COMBINATION(1012, HttpStatus.BAD_REQUEST, "trgVoiceId가 설정된 경우, audioFiles에 VC_TRG 파일이 포함될 수 없습니다."),
     MISSING_TRG_FILE(1013, HttpStatus.BAD_REQUEST, "VC_TRG 파일은 반드시 하나여야 합니다."),
+    S3_DOWNLOAD_FAILED(1014, HttpStatus.BAD_REQUEST, "VC_TRG 파일은 반드시 하나여야 합니다."),
 
     // 3000번대 코드 : DB 관련
     NOT_EXISTS_PROJECT(3000, HttpStatus.BAD_REQUEST, "해당 프로젝트를 찾을 수 없습니다."),
