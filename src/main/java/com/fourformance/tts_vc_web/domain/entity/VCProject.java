@@ -1,13 +1,8 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
 import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,7 +19,8 @@ public class VCProject extends Project {
     @Enumerated(EnumType.STRING)
     private APIStatusConst apiStatus = APIStatusConst.NOT_STARTED; // enum 생성 필요
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_audio_id")
     private MemberAudioMeta memberTargetAudioMeta;
 
     private LocalDateTime APIStatusModifiedAt;

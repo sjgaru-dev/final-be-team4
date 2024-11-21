@@ -11,6 +11,7 @@ import lombok.ToString;
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "member_audio_vc")
 public class MemberAudioVC extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

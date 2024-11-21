@@ -19,6 +19,7 @@ public class GlobalExceptionHandler {
     // 기타 예외에 대한 처리 예시
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleException(Exception e) {
+        e.printStackTrace();
         ErrorResponseDto errorResponse = ErrorResponseDto.of(ErrorCode.UNKNOWN_ERROR);
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }

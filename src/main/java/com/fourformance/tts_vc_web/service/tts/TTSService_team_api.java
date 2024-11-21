@@ -60,8 +60,6 @@ public class TTSService_team_api {
             try {
                 LOGGER.info("TTSDetail 처리 시작: " + detailDto);
                 // 디테일 처리 및 오디오 파일 경로 저장
-//                fileUrls.add(processTtsDetail(detailDto, ttsProject));
-//                LOGGER.info("TTSDetail 처리 완료: " + detailDto);
 
                 Map<String, String> fileUrlMap = processTtsDetail(detailDto, ttsProject);
                 String fileUrl = fileUrlMap.get("fileUrl");
@@ -165,8 +163,8 @@ public class TTSService_team_api {
 
         // TTS 디테일과 음성 스타일 데이터 조회
         TTSDetail ttsDetail = ttsDetailRepository.findById(detailDto.getId()).orElseThrow();
-        String languageCode = ttsDetailRepository.findVoiceStyleById(detailDto.getVoiceStyleId()).getLanguageCode();
-        String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getVoiceStyleId()).getGender();
+        String languageCode = ttsDetailRepository.findVoiceStyleById(detailDto.getUnitVoiceStyleId()).getLanguageCode();
+        String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getUnitVoiceStyleId()).getGender();
 
         // 요청 페이로드 생성
         String requestPayload = String.format(
@@ -227,7 +225,7 @@ public class TTSService_team_api {
      */
     private SsmlVoiceGender getSsmlVoiceGender(TTSDetailDto detailDto) {
         // 음성 스타일의 Gender 데이터를 가져와 변환
-        String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getVoiceStyleId()).getGender();
+        String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getUnitVoiceStyleId()).getGender();
         return switch (gender.toLowerCase()) {
             case "male" -> SsmlVoiceGender.MALE;
             case "female" -> SsmlVoiceGender.FEMALE;

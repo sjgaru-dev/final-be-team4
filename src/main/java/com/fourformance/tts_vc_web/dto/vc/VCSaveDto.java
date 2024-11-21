@@ -1,21 +1,32 @@
 package com.fourformance.tts_vc_web.dto.vc;
 
+import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
+import com.fourformance.tts_vc_web.common.constant.AudioType;
+import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
+import com.fourformance.tts_vc_web.domain.entity.MemberAudioVC;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class VCSaveDto {
-    /***
-     *  프로젝트 id
-     *  apiStatus
-     *  MemberAudioVC : vc_src 일대다 관계
-     *  member_audio_meta : vc_trg 일대일 관계 -> bucket router
-     *
-     */
-    private Long id;
+
+    // VCProject 관련 필드
+    private Long projectId;
+    private String projectName;
+
+    private List<AudioFileDto> srcFiles; // 소스 오디오 파일 리스트
+    private List<AudioFileDto> trgFiles; // 타겟 오디오 파일 리스트 => 생각해보니까 얘는 리스트로 둘 필요가 없는디...
+
+    //    private String trgVoiceId; // 타겟 음성 ID, 필요하면 주석 풀어야지...
+
+
 }
