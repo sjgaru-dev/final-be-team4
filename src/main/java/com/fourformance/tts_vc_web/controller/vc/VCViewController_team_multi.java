@@ -64,7 +64,7 @@ public class VCViewController_team_multi {
     @Operation(
             summary = "VC 프로젝트 삭제",
             description = "VC 프로젝트와 생성된 오디오 등 관련된 데이터를 전부 삭제합니다." )
-    @PostMapping("/delete/{projectId}")
+    @DeleteMapping("/delete/{projectId}")
     public ResponseDto deleteVCProject(@PathVariable("projectId") Long projectId) {
         // 타입 검증
         if(projectId == null) { throw new BusinessException(ErrorCode.INVALID_PROJECT_ID); }
@@ -82,7 +82,7 @@ public class VCViewController_team_multi {
     @Operation(
             summary = "VC 선택된 항목 삭제",
             description = "VC 프로젝트에서 선택된 모든 항목을 삭제합니다." )
-    @PostMapping("/delete/details")
+    @DeleteMapping("/delete/details")
     public ResponseDto deleteVCDetail(@RequestBody List<Long> vcDetailsId) {
 
         // 프로젝트 삭제
@@ -97,8 +97,12 @@ public class VCViewController_team_multi {
     @Operation(
             summary = "VC 프로젝트 target 오디오 선택 항목 삭제",
             description = "VC 프로젝트에서 target 오디오 선택된 모든 항목을 삭제합니다." )
-    @PostMapping("/delete/trg")
-    public ResponseDto deleteTRGAudio(@RequestBody List<Long> targetAudioId) {
-        return DataResponseDto.of("");
+    @DeleteMapping("/delete/target/{audioId}")
+    public ResponseDto deleteTRGAudio(@PathVariable("audioId") Long targetAudioId) {
+
+        // 타겟 오디오 삭제
+        vcService.deleteTRGAudio(targetAudioId);
+
+        return DataResponseDto.of("","Target 오디오가 정상적으로 삭제되었습니다.");
     }
 }

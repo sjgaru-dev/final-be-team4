@@ -81,7 +81,7 @@ public class TTSViewController_team_multi {
     @Operation(
             summary = "TTS 프로젝트 삭제",
             description = "TTS 프로젝트와 생성된 오디오를 전부 삭제합니다." )
-    @PostMapping("/delete/{projectId}")
+    @DeleteMapping("/delete/{projectId}")
     public ResponseDto deleteTTSProject(@PathVariable("projectId") Long projectId) {
 
         // 타입 검증
@@ -98,7 +98,7 @@ public class TTSViewController_team_multi {
     @Operation(
             summary = "TTS 선택된 항목 삭제",
             description = "TTS 프로젝트에서 선택된 모든 항목을 삭제합니다." )
-    @PostMapping("/delete/details")
+    @DeleteMapping("/delete/details")
     public ResponseDto deleteTTSDetail(@RequestBody List<Long> ttsDetailsId) {
 
         // 선택 항목 삭제

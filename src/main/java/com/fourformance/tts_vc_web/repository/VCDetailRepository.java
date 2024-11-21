@@ -27,4 +27,6 @@ public interface VCDetailRepository extends JpaRepository<VCDetail, Long> {
           AND v.isDeleted = true
     """)
     List<Long> findMemberAudioIdsByVcDetailIds(@Param("vcDetailIds") List<Long> vcDetailIds);
+
+
 }

@@ -96,4 +96,24 @@ public class VCService_team_multi {
         return resDto;
     }
 
+    // VC 프로젝트 TRG 오디오 삭제
+    public void deleteTRGAudio(Long trgAudioId){
+
+        // trgVoiceId로 MemberAudioMeta를 조회
+        MemberAudioMeta audioMeta = memberAudioMetaRepository.findByIdAndAudioType(trgAudioId, AudioType.VC_TRG);
+
+        // isDeleted = true로 변경
+        if (audioMeta == null) { throw new BusinessException(ErrorCode.AUDIO_NOT_FOUND_EXCEPTION); }
+
+        try{
+
+            audioMeta.delete();
+            memberAudioMetaRepository.save(audioMeta);
+
+        }catch (Exception e) {
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
+
+    }
+
 }
