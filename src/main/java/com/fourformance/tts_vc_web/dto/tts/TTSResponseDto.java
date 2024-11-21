@@ -12,14 +12,15 @@ import java.util.List;
 @Builder
 public class TTSResponseDto {
     private Long projectId;
+    private Long memberId;
     private String projectName;
-    private Long voiceStyleId;
+    private Long globalVoiceStyleId;
     private String fullScript;
     private Float globalSpeed;
     private Float globalPitch;
     private Float globalVolume;
     private APIStatusConst apiStatus;
-    private Long memberId; // 연관된 Member ID -- 원우 추가
+
 
     private List<TTSResponseDetailDto> ttsDetails;
 }
