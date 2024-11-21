@@ -6,8 +6,10 @@ import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.common.util.ElevenLabsClient_team_api;
 import com.fourformance.tts_vc_web.domain.entity.Member;
 import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
+import com.fourformance.tts_vc_web.domain.entity.VCDetail;
 import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
+import com.fourformance.tts_vc_web.repository.VCDetailRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,7 +32,7 @@ public class VCService_team_api {
     private final ElevenLabsClient_team_api elevenLabsClient;
     private final MemberRepository memberRepository;
     private final MemberAudioMetaRepository memberAudioMetaRepository;
-
+    private final VCDetailRepository vcDetailRepository;
     // 로컬 파일 저장 경로 설정 (테스트 환경에서 사용)
     @Value("${user.home}/uploads")
     private String uploadDir;
@@ -127,5 +129,21 @@ public class VCService_team_api {
         return convertedFiles;
     }
 
+    /**
+     * VCDetail의 isChecked 상태를 업데이트합니다.
+     *
+     * @param vcDetailId VCDetail ID
+     * @param isChecked 새로운 isChecked 상태
+     */
+    public void updateIsChecked(Long vcDetailId, Boolean isChecked) {
+        LOGGER.info("VCDetail isChecked 상태 업데이트 요청: vcDetailId=" + vcDetailId + ", isChecked=" + isChecked);
+        VCDetail vcDetail = vcDetailRepository.findById(vcDetailId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.DETAIL_NOT_FOUND));
 
+        // VCDetail의 isChecked 필드를 업데이트
+        vcDetail.updateDetails(isChecked, vcDetail.getUnitScript());
+        vcDetailRepository.save(vcDetail);
+
+        LOGGER.info("VCDetail isChecked 상태 업데이트 완료: vcDetailId=" + vcDetailId + ", isChecked=" + vcDetail.getIsChecked());
+    }
 }
