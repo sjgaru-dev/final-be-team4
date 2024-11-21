@@ -12,6 +12,7 @@ import com.fourformance.tts_vc_web.dto.tts.TTSSaveDto;
 import com.fourformance.tts_vc_web.repository.APIStatusRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
 import com.fourformance.tts_vc_web.repository.TTSProjectRepository;
+import com.fourformance.tts_vc_web.repository.VoiceStyleRepository;
 import com.fourformance.tts_vc_web.service.common.S3Service;
 import com.google.cloud.texttospeech.v1.*;
 import com.google.protobuf.ByteString;
@@ -33,6 +34,7 @@ public class TTSService_team_api {
     private final TTSProjectRepository ttsProjectRepository; // 프로젝트 데이터에 접근하기 위한 Repository
     private final TTSDetailRepository ttsDetailRepository; // TTS 디테일 데이터에 접근하기 위한 Repository
     private final APIStatusRepository apiStatusRepository; // API 상태를 저장하고 조회하기 위한 Repository
+    private final VoiceStyleRepository voiceStyleRepository;
     private final TTSService_team_multi ttsServiceTeamMulti; // 통합 서비스 호출을 위한 클래스
     private final S3Service s3Service; // S3 파일 업로드를 처리하는 서비스
 
@@ -68,13 +70,13 @@ public class TTSService_team_api {
                 TTSResponseDetailDto responseDetail = TTSResponseDetailDto.builder()
                         .id(ttsDetail.getId())
                         .ProjectId(ttsProject.getId())
-                        .unitScript(detailDto.getUnitScript())
-                        .unitSpeed(detailDto.getUnitSpeed())
-                        .unitPitch(detailDto.getUnitPitch())
-                        .unitVolume(detailDto.getUnitVolume())
+                        .unitScript(ttsDetail.getUnitScript())
+                        .unitSpeed(ttsDetail.getUnitSpeed())
+                        .unitPitch(ttsDetail.getUnitPitch())
+                        .unitVolume(ttsDetail.getUnitVolume())
                         .isDeleted(ttsDetail.getIsDeleted())
-                        .unitSequence(detailDto.getUnitSequence())
-                        .voiceStyleId(ttsDetail.getVoiceStyle().getId())
+                        .unitSequence(ttsDetail.getUnitSequence())
+                        .UnitVoiceStyleId(ttsDetail.getVoiceStyle().getId())
                         .fileUrl(fileUrl) // 처리된 URL 삽입
                         .build();
 
@@ -162,9 +164,9 @@ public class TTSService_team_api {
         LOGGER.info("callTTSApi 호출: " + detailDto);
 
         // TTS 디테일과 음성 스타일 데이터 조회
-        TTSDetail ttsDetail = ttsDetailRepository.findById(detailDto.getId()).orElseThrow();
-        String languageCode = ttsDetailRepository.findVoiceStyleById(detailDto.getUnitVoiceStyleId()).getLanguageCode();
-        String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getUnitVoiceStyleId()).getGender();
+        TTSDetail ttsDetail = ttsDetailRepository.findById(ttsProject.getMember().getId()).orElseThrow();
+        String languageCode = voiceStyleRepository.findById(detailDto.getUnitVoiceStyleId()).get().getLanguageCode();
+        String gender = voiceStyleRepository.findById(detailDto.getUnitVoiceStyleId()).get().getGender();
 
         // 요청 페이로드 생성
         String requestPayload = String.format(
@@ -225,7 +227,7 @@ public class TTSService_team_api {
      */
     private SsmlVoiceGender getSsmlVoiceGender(TTSDetailDto detailDto) {
         // 음성 스타일의 Gender 데이터를 가져와 변환
-        String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getUnitVoiceStyleId()).getGender();
+        String gender = voiceStyleRepository.findById(detailDto.getUnitVoiceStyleId()).get().getGender();
         return switch (gender.toLowerCase()) {
             case "male" -> SsmlVoiceGender.MALE;
             case "female" -> SsmlVoiceGender.FEMALE;
