@@ -2,17 +2,22 @@ package com.fourformance.tts_vc_web.service.tts;
 
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
-import com.fourformance.tts_vc_web.domain.entity.Member;
-import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
-import com.fourformance.tts_vc_web.domain.entity.TTSProject;
+import com.fourformance.tts_vc_web.domain.entity.*;
 import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
 import com.fourformance.tts_vc_web.dto.tts.TTSDetailDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSProjectDto;
+import com.fourformance.tts_vc_web.dto.tts.TTSProjectWithDetailsDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSSaveDto;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
 import com.fourformance.tts_vc_web.repository.TTSProjectRepository;
 import com.fourformance.tts_vc_web.repository.VoiceStyleRepository;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,9 +60,9 @@ public class TTSService_team_multi {
                 .collect(Collectors.toList());
     }
 
+
     //unitSequence도 순서대로 잘 들어왔는지, 중복된 값은 없는지 체크 필요
     //projectId는 존재하고 detailId를 모두 null로 테스트 시도
-
 
     // 프로젝트 생성
     @Transactional
@@ -104,7 +109,6 @@ public class TTSService_team_multi {
         }
         return ttsProject.getId();
     }
-
 
     // 프로젝트 업데이트
     @Transactional
@@ -259,6 +263,5 @@ public class TTSService_team_multi {
             }
         }
     }
-
 
 }
