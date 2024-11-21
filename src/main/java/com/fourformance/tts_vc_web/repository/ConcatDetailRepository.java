@@ -2,14 +2,19 @@ package com.fourformance.tts_vc_web.repository;
 
 import com.fourformance.tts_vc_web.domain.entity.ConcatDetail;
 import com.fourformance.tts_vc_web.domain.entity.VCDetail;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface ConcatDetailRepository extends JpaRepository<ConcatDetail, Long> {
 
-    // 프로젝트 ID로 Concat 상세 값들을 찾아 리스트로 반환 - 승민
+    // Concat 프로젝트의 id로 Concat 디테일 리스트 조회 - 의준
     List<ConcatDetail> findByConcatProject_Id(Long projectId);
+
+    // Concat Detail Id가 담긴 List로 ConcatDetail 객체 반환 받기 - 의준
+//    @Query("SELECT t FROM ConcatDetail c WHERE c.id IN :concatDetailIdList")
+    List<ConcatDetail> findByIdIn(List<Long> concatDetailIds);
+//    List<ConcatDetail> findByConcatDetailIds(@Param("concatDetailIdList") List<Long> concatDetailIdList);
+
 }

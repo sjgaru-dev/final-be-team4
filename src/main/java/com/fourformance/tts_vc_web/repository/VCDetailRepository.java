@@ -2,6 +2,7 @@ package com.fourformance.tts_vc_web.repository;
 
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.VCDetail;
+import com.fourformance.tts_vc_web.domain.entity.VCProject;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,5 +29,7 @@ public interface VCDetailRepository extends JpaRepository<VCDetail, Long> {
     """)
     List<Long> findMemberAudioIdsByVcDetailIds(@Param("vcDetailIds") List<Long> vcDetailIds);
 
+    // VCProject와 연관된 VCDetail 목록 조회
+    List<VCDetail> findByVcProject(VCProject vcProject);
 
 }
