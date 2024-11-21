@@ -36,15 +36,16 @@ public class TTSViewController_team_multi {
             description = "TTS 프로젝트 상태를 가져옵니다." )
     @GetMapping("/{projectId}")
     public ResponseDto ttsLoad(@PathVariable("projectId") Long projectId) {
+
+        // TTSProjectDTO와 TTSDetailDTO 리스트 가져오기
+        TTSProjectDto ttsProjectDTO = ttsService.getTTSProjectDto(projectId);
+        List<TTSDetailDto> ttsDetailsDTO = ttsService.getTTSDetailsDto(projectId);
+
+        if (ttsProjectDTO == null) {
+            throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT);
+        }
+
         try {
-            // TTSProjectDTO와 TTSDetailDTO 리스트 가져오기
-            TTSProjectDto ttsProjectDTO = ttsService.getTTSProjectDto(projectId);
-            List<TTSDetailDto> ttsDetailsDTO = ttsService.getTTSDetailsDto(projectId);
-
-            if (ttsProjectDTO == null) {
-                throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT);
-            }
-
             // DTO를 포함한 응답 객체 생성
             TTSProjectWithDetailsDto response = new TTSProjectWithDetailsDto(ttsProjectDTO, ttsDetailsDTO);
             return DataResponseDto.of(response);
@@ -87,7 +88,7 @@ public class TTSViewController_team_multi {
         if(projectId == null) { throw new BusinessException(ErrorCode.INVALID_PROJECT_ID); }
 
         // 프로젝트 삭제
-        projectService.deleteProject(projectId);
+        projectService.deleteTTSProject(projectId);
 
         // 작업 상태 : Terminated(종료)
         return DataResponseDto.of("","TTS 프로젝트가 정상적으로 삭제되었습니다.");
@@ -101,7 +102,7 @@ public class TTSViewController_team_multi {
     public ResponseDto deleteTTSDetail(@RequestBody List<Long> ttsDetailsId) {
 
         // 선택 항목 삭제
-        projectService.deleteProject(ttsDetailsId);
+        projectService.deleteTTSDetail(ttsDetailsId);
 
         return DataResponseDto.of("","선택된 모든 항목이 정상적으로 삭제되었습니다.");
     }

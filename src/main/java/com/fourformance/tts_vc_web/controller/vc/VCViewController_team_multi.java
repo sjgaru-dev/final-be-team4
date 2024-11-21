@@ -5,6 +5,7 @@ import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.dto.vc.*;
+import com.fourformance.tts_vc_web.service.common.ProjectService_team_multi;
 import com.fourformance.tts_vc_web.service.vc.VCService_team_multi;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,9 @@ import java.util.List;
 @RequestMapping("/vc")
 @RequiredArgsConstructor
 public class VCViewController_team_multi {
+
+    @Autowired
+    ProjectService_team_multi projectService;
 
     @Autowired
     VCService_team_multi vcService;
@@ -62,7 +66,14 @@ public class VCViewController_team_multi {
             description = "VC 프로젝트와 생성된 오디오 등 관련된 데이터를 전부 삭제합니다." )
     @PostMapping("/delete/{projectId}")
     public ResponseDto deleteVCProject(@PathVariable("projectId") Long projectId) {
-        return DataResponseDto.of("");
+        // 타입 검증
+        if(projectId == null) { throw new BusinessException(ErrorCode.INVALID_PROJECT_ID); }
+
+        // 프로젝트 삭제
+        projectService.deleteVCProject(projectId);
+
+        // 작업 상태 : Terminated(종료)
+        return DataResponseDto.of("","VC 프로젝트가 정상적으로 삭제되었습니다.");
     }
 
     // VC 선택된 모든 항목 삭제

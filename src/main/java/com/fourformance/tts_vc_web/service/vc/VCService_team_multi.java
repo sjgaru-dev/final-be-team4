@@ -8,10 +8,7 @@ import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.VCDetail;
 import com.fourformance.tts_vc_web.domain.entity.VCProject;
-import com.fourformance.tts_vc_web.dto.vc.VCDetailDto;
-import com.fourformance.tts_vc_web.dto.vc.VCDetailResDto;
-import com.fourformance.tts_vc_web.dto.vc.VCProjectDto;
-import com.fourformance.tts_vc_web.dto.vc.VCProjectResDto;
+import com.fourformance.tts_vc_web.dto.vc.*;
 import com.fourformance.tts_vc_web.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,20 +38,31 @@ public class VCService_team_multi {
         // VCProjectDto로 변환
         VCProjectDto vcPrjDto = VCProjectDto.createVCProjectDto(vcProject);
 
-        List<String> trgAudioUrls = null;
-        if(vcPrjDto.getId() != null){
+        List<TrgAudioDto> trgAudioDtos = null; // 변경된 구조에 맞는 변수 선언
+        if (vcPrjDto.getId() != null) {
+            // MemberAudioMeta ID 조회
+            List<Long> memberAudioIds = memberAudioVCRepository.findMemberAudioMetaByVcProjectId(vcPrjDto.getId());
 
-            List<Long> dd = memberAudioVCRepository.findMemberAudioMetaByVcProjectId(vcPrjDto.getId());
-            trgAudioUrls = memberAudioMetaRepository.findAudioUrlsByAudioMetaIds(dd, AudioType.VC_TRG);
+            // Audio URL과 ID 조회하여 TrgAudioDto 리스트 생성
+            List<MemberAudioMeta> memberAudioMetaList = memberAudioMetaRepository.findByMemberAudioIds(
+                    memberAudioIds, AudioType.VC_TRG
+            );
 
+            // MemberAudioMeta를 TrgAudioDto로 변환
+            trgAudioDtos = memberAudioMetaList.stream()
+                    .map(meta -> new TrgAudioDto(meta.getId(), meta.getAudioUrl()))
+                    .toList();
         }
 
+        // VCProjectResDto 생성 및 반환
         VCProjectResDto resDto = new VCProjectResDto();
                         resDto.setId(vcPrjDto.getId());
                         resDto.setProjectName(vcPrjDto.getProjectName());
-                        resDto.setTrgAudioUrls(trgAudioUrls);
-         return resDto;
+                        resDto.setTrgAudios(trgAudioDtos); // 새로운 구조 반영
+
+        return resDto;
     }
+
 
 
     // VC 프로젝트 상세 값 조회하기

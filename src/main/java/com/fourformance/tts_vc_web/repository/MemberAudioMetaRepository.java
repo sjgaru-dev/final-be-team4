@@ -12,17 +12,19 @@ import java.util.List;
 @Repository
 public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta, Long> {
 
-    // VC TRG 오디오 url 추출
+    // id 리스트로 특정 오디오 타입 반환 - 승민
     @Query("""
-        SELECT m.audioUrl 
+        SELECT m 
         FROM MemberAudioMeta m 
-        WHERE m.id IN :audioMetaIds 
+        WHERE m.id IN :memberAudioIds 
           AND m.isDeleted = false 
-          AND m.audioType = :audioType 
-          AND m.audioUrl IS NOT NULL
+          AND m.audioType = :audioType
     """)
-    List<String> findAudioUrlsByAudioMetaIds(
-            @Param("audioMetaIds") List<Long> audioMetaIds,
+    List<MemberAudioMeta> findByMemberAudioIds(
+            @Param("memberAudioIds") List<Long> memberAudioIds,
             @Param("audioType") AudioType audioType
     );
+
+
+
 }
