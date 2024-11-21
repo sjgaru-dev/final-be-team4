@@ -4,11 +4,12 @@ import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.ConcatDetail;
 import com.fourformance.tts_vc_web.domain.entity.ConcatProject;
+import com.fourformance.tts_vc_web.domain.entity.Member;
 import com.fourformance.tts_vc_web.dto.concat.ConcatDetailDto;
-import com.fourformance.tts_vc_web.dto.concat.ConcatProjectDto;
 import com.fourformance.tts_vc_web.dto.concat.ConcatSaveDto;
 import com.fourformance.tts_vc_web.repository.ConcatDetailRepository;
 import com.fourformance.tts_vc_web.repository.ConcatProjectRepository;
+import com.fourformance.tts_vc_web.repository.MemberRepository;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,43 +25,26 @@ public class ConcatService_team_aws {
 
     private final ConcatProjectRepository concatProjectRepository;
     private final ConcatDetailRepository concatDetailRepository;
-
-    // Concat 프로젝트 조회
-    @Transactional(readOnly = true)
-    public ConcatProjectDto getConcatProjectDto(Long projectId) {
-        ConcatProject concatProject = concatProjectRepository.findById(projectId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
-
-        return ConcatProjectDto.createFromEntity(concatProject);
-    }
-
-    // Concat 프로젝트 상세 값 조회
-    @Transactional(readOnly = true)
-    public List<ConcatDetailDto> getConcatDetailsDto(Long projectId) {
-        List<ConcatDetail> concatDetails = concatDetailRepository.findByConcatProjectId(projectId);
-
-        return concatDetails.stream()
-                .filter(detail -> !detail.getIsDeleted())
-                .map(ConcatDetailDto::createFromEntity)
-                .collect(Collectors.toList());
-    }
+    private final MemberRepository memberRepository;
 
     // Concat 프로젝트 생성
     @Transactional
-    public Long createNewProject(ConcatSaveDto dto) {
-        // ConcatDetailDto의 audioSeq 중복 및 순차 검증
-        if (dto.getConcatDetails() != null) {
-            validateAudioSequence(dto.getConcatDetails());
-        }
+    public Long createNewProject(ConcatSaveDto dto, Long memberId) {
 
-        // ConcatProject 생성
+        validateSaveDto(dto);
+
+        // 멤버 id로 멤버 객체 찾기
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 프로젝트 생성
         ConcatProject concatProject = ConcatProject.createConcatProject(
-                null,
+                member, // 멤버 ID를 주입
                 dto.getProjectName()
         );
         concatProject = concatProjectRepository.save(concatProject);
 
-        // ConcatDetails 생성
+        // 디테일 생성
         if (dto.getConcatDetails() != null) {
             for (ConcatDetailDto detailDto : dto.getConcatDetails()) {
                 createConcatDetail(detailDto, concatProject);
@@ -72,23 +56,26 @@ public class ConcatService_team_aws {
 
     // Concat 프로젝트 업데이트
     @Transactional
-    public Long updateProject(ConcatSaveDto dto) {
+    public Long updateProject(ConcatSaveDto dto, Long memberId) {
+
+        validateSaveDto(dto);
+
         ConcatProject concatProject = concatProjectRepository.findById(dto.getProjectId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
 
-        // ConcatDetailDto의 audioSeq 중복 및 순차 검증
-        if (dto.getConcatDetails() != null) {
-            validateAudioSequence(dto.getConcatDetails());
+        // 소유권 확인
+        if (!concatProject.getMember().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.MEMBER_PROJECT_NOT_MATCH);
         }
 
-        // 프로젝트 이름 업데이트
+        // 프로젝트 업데이트
         concatProject.updateConcatProject(
                 dto.getProjectName(),
                 dto.getGlobalFrontSilenceLength(),
                 dto.getGlobalTotalSilenceLength()
         );
 
-        // ConcatDetails 처리
+        // 디테일 업데이트
         if (dto.getConcatDetails() != null) {
             for (ConcatDetailDto detailDto : dto.getConcatDetails()) {
                 processConcatDetail(detailDto, concatProject);
@@ -98,30 +85,35 @@ public class ConcatService_team_aws {
         return concatProject.getId();
     }
 
-    // ConcatDetail 생성
+    // 디테일 생성
     private void createConcatDetail(ConcatDetailDto detailDto, ConcatProject concatProject) {
         ConcatDetail concatDetail = ConcatDetail.createConcatDetail(
                 concatProject,
                 detailDto.getAudioSeq(),
-                true,
+                detailDto.isChecked(),
                 detailDto.getUnitScript(),
                 detailDto.getEndSilence()
         );
-
         concatDetailRepository.save(concatDetail);
     }
 
-    // ConcatDetail 처리 (업데이트 or 생성)
+    // 디테일 업데이트
     private void processConcatDetail(ConcatDetailDto detailDto, ConcatProject concatProject) {
         if (detailDto.getId() != null) {
             ConcatDetail concatDetail = concatDetailRepository.findById(detailDto.getId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL));
+
+            // 디테일이 해당 프로젝트의 디테일인지 검증
+            if (!concatDetail.getConcatProject().getId().equals(concatProject.getId())) {
+                throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL);
+            }
+
             concatDetail.updateDetails(
                     detailDto.getAudioSeq(),
-                    true,
+                    detailDto.isChecked(),
                     detailDto.getUnitScript(),
                     detailDto.getEndSilence(),
-                    detailDto.getIsDeleted()
+                    false
             );
             concatDetailRepository.save(concatDetail);
         } else {
@@ -129,7 +121,23 @@ public class ConcatService_team_aws {
         }
     }
 
-    // ConcatDetail의 audioSeq 검증
+    // DTO 유효성 검증
+    private void validateSaveDto(ConcatSaveDto dto) {
+        if (dto.getProjectId() == null) {
+            if (dto.getConcatDetails() != null) {
+                for (ConcatDetailDto detail : dto.getConcatDetails()) {
+                    if (detail.getId() != null) {
+                        throw new BusinessException(ErrorCode.PROJECT_DETAIL_NOT_MATCH);
+                    }
+                }
+            }
+        }
+
+        // 시퀀스 검증
+        validateAudioSequence(dto.getConcatDetails());
+    }
+
+    // 오디오 시퀀스 유효성 검증
     private void validateAudioSequence(List<ConcatDetailDto> detailDtos) {
         Set<Integer> audioSeqSet = new HashSet<>();
 

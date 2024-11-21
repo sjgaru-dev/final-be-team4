@@ -153,7 +153,7 @@ public class TTSService_team_multi {
             if (dto.getTtsDetails() != null) {
                 for (TTSDetailDto detail : dto.getTtsDetails()) {
                     if (detail.getId() != null) {
-                        throw new IllegalArgumentException("프로젝트 ID가 null인데 디테일 ID가 존재할 수 없습니다.");
+                        throw new BusinessException(ErrorCode.PROJECT_DETAIL_NOT_MATCH);
                     }
                 }
             }

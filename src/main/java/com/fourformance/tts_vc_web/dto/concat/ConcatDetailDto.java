@@ -17,7 +17,6 @@ public class ConcatDetailDto {
     private boolean isChecked;
     private String unitScript;
     private Float endSilence;
-    private Boolean isDeleted;
 
     public static ConcatDetailDto createFromEntity(ConcatDetail concatDetail) {
         return new ConcatDetailDto(
@@ -25,8 +24,7 @@ public class ConcatDetailDto {
                 concatDetail.getAudioSeq(),
                 concatDetail.isChecked(),
                 concatDetail.getUnitScript(),
-                concatDetail.getEndSilence(),
-                concatDetail.getIsDeleted()
+                concatDetail.getEndSilence()
         );
     }
 }
