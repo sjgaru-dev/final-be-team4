@@ -35,7 +35,7 @@ public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta
     // 특정 사용자의 특정 AudioType을 가진 MemberAudioMeta를 조회
     List<MemberAudioMeta> findByMemberIdAndAudioType(Long memberId, AudioType audioType);
 
-    // VC TRG 오디오 url 추출
+    // VC TRG 오디오 url 추출 - 승민
     @Query("""
                 SELECT m.audioUrl 
                 FROM MemberAudioMeta m 

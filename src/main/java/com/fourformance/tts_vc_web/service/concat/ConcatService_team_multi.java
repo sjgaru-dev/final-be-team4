@@ -7,12 +7,9 @@ import com.fourformance.tts_vc_web.domain.entity.*;
 import com.fourformance.tts_vc_web.dto.concat.CNCTDetailDto;
 import com.fourformance.tts_vc_web.dto.concat.CNCTProjectDto;
 import com.fourformance.tts_vc_web.dto.concat.ConcatAudioDto;
-import com.fourformance.tts_vc_web.dto.vc.TrgAudioDto;
-import com.fourformance.tts_vc_web.dto.vc.VCDetailResDto;
-import com.fourformance.tts_vc_web.dto.vc.VCProjectDto;
-import com.fourformance.tts_vc_web.dto.vc.VCProjectResDto;
 import com.fourformance.tts_vc_web.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +21,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ConcatService_team_multi {
 
-    ConcatProjectRepository concatProjectRepository;
-    ConcatDetailRepository concatDetailRepository;
-    OutputAudioMetaRepository outputAudioMetaRepository;
-    MemberAudioMetaRepository memberAudioMetaRepository;
-    MemberAudioConcatRepository memberAudioConcatRepository;
+    private final ConcatProjectRepository concatProjectRepository;
+    private final ConcatDetailRepository concatDetailRepository;
+    private final OutputAudioMetaRepository outputAudioMetaRepository;
+    private final MemberAudioMetaRepository memberAudioMetaRepository;
+    private final MemberAudioConcatRepository memberAudioConcatRepository;
 
     // Concat 프로젝트 상태 조회하기
     @Transactional(readOnly = true)
@@ -43,16 +40,10 @@ public class ConcatService_team_multi {
 
         List<ConcatAudioDto> concatAudioDtos = null; // 변경된 구조에 맞는 변수 선언
         if (cnctPrjDto.getId() != null) {
-            // MemberAudioMeta ID 조회
-            List<Long> memberAudioIds = memberAudioConcatRepository.findMemberAudioMetaByVcProjectId(cnctPrjDto.getId());
-
-            // Audio URL과 ID 조회하여 TrgAudioDto 리스트 생성
-            List<MemberAudioMeta> memberAudioMetaList = memberAudioMetaRepository.findByMemberAudioIds(
-                    memberAudioIds, AudioType.CONCAT
-            );
+            List<OutputAudioMeta> outputAudioList = outputAudioMetaRepository.findAudioUrlsByConcatProject(cnctPrjDto.getId());
 
             // MemberAudioMeta를 ConcatAudioDto 변환
-            concatAudioDtos = memberAudioMetaList.stream()
+            concatAudioDtos = outputAudioList.stream()
                     .map(meta -> new ConcatAudioDto(meta.getId(), meta.getAudioUrl()))
                     .toList();
         }
@@ -63,7 +54,7 @@ public class ConcatService_team_multi {
                        resDto.setProjectName(cnctPrjDto.getProjectName());
                        resDto.setGlobalFrontSilenceLength(cnctPrjDto.getGlobalFrontSilenceLength());
                        resDto.setGlobalTotalSilenceLength(cnctPrjDto.getGlobalTotalSilenceLength());
-                       resDto.setConcatAudios(concatAudioDtos);
+                       resDto.setConcatAudios(concatAudioDtos); // Concat 생성된 오디오
 
         return resDto;
 
@@ -77,26 +68,24 @@ public class ConcatService_team_multi {
         // isDeleted가 false인 경우에만 VCDetailResDto 목록으로 변환
         return cocnatDetails.stream()
                 .filter(detail -> !detail.getIsDeleted()) // isDeleted가 false인 경우
-                .map(this::convertToVCDetailResDto) // VCDetailResDto로 변환
+                .map(this::convertToCNCTDetailDto) // CNCTDetailDto로 변환
                 .collect(Collectors.toList());
     }
 
     // ConcatDetail 엔티티를 CNCTDetailDto로 변환하는 메서드
-    private CNCTDetailDto convertToVCDetailResDto(ConcatDetail concatDetail) {
+    private CNCTDetailDto convertToCNCTDetailDto(ConcatDetail concatDetail) {
 
         // src 오디오 url 추가하기
-//        List<String> audioUrls = outputAudioMetaRepository.findAudioUrlsByConcatDetail(concatDetail.getId())
-//                .stream() // List<OutputAudioMeta>를 Stream으로 변환
-//                .filter(meta -> meta.getAudioUrl() != null) // audioUrl이 null이 아닌 경우만 필터링
-//                .map(OutputAudioMeta::getAudioUrl) // OutputAudioMeta의 audioUrl만 추출
-//                .collect(Collectors.toList()); // Stream 결과를 List<String>으로 변환
-//
+        MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findByIdAndAudioType(concatDetail.getMemberAudioMeta().getId(), AudioType.CONCAT);
+
         CNCTDetailDto resDto = new CNCTDetailDto();
-//                       resDto.setId(concatDetail.getId());
-//                       resDto.setProjectId(concatDetail.getVcProject().getId());
-//                       resDto.setIsChecked(concatDetail.getIsChecked());
-//                       resDto.setUnitScript(concatDetail.getUnitScript());
-//                       resDto.setGenAudios(audioUrls);
+                      resDto.setId(concatDetail.getId());
+                      resDto.setAudioSeq(concatDetail.getAudioSeq());
+                      resDto.setSrcUrl(memberAudioMeta.getAudioUrl());
+                      resDto.setChecked(concatDetail.isChecked());
+                      resDto.setUnitScript(concatDetail.getUnitScript());
+                      resDto.setEndSilence(concatDetail.getEndSilence());
+
         return resDto;
     }
 

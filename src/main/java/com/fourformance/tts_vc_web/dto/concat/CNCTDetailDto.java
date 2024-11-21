@@ -16,12 +16,11 @@ import org.modelmapper.config.Configuration;
 public class CNCTDetailDto {
 
     private Long id; // ConcatDetail ID
-    private Long projectId; // ConcatProject ID
     private Integer audioSeq; // 오디오 순서
+    private String srcUrl; // src 오디오 url
     private boolean isChecked; // 체크 상태
     private String unitScript; // 유닛 스크립트
     private Float endSilence; // 끝 부분 침묵 길이
-    private Boolean isDeleted; // 삭제 여부
 
     private static ModelMapper modelMapper = new ModelMapper();
 
