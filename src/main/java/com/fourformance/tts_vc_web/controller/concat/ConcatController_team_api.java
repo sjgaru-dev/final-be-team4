@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -26,7 +28,22 @@ public class ConcatController_team_api {
 
     private final ConcatService_team_api concatService;
 
-    @PostMapping(value = "/convert/batch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(
+            summary = "오디오 파일 병합",
+            description = "여러 오디오 파일을 업로드하고, 파일 사이에 무음을 추가하여 병합된 파일을 생성합니다.",
+            tags = {"Audio Concat"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "병합 성공", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = DataResponseDto.class))
+            }),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PostMapping(
+            value = "/convert/batch",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseDto convertMultipleAudios(
             @RequestPart("sourceAudios") MultipartFile[] sourceAudios) {
 
