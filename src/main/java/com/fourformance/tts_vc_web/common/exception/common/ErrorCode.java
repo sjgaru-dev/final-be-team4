@@ -57,6 +57,7 @@ public enum ErrorCode {
     DUPLICATE_TTS_DETAIL(5017, HttpStatus.INTERNAL_SERVER_ERROR,"중복된 TTSDetail이 발견되었습니다."),
     INVALID_UNIT_SCRIPT(5018, HttpStatus.BAD_REQUEST, "유효하지 않은 Unit Script입니다."),
     DIRECTORY_CREATION_FAILED(5019, HttpStatus.INTERNAL_SERVER_ERROR, "디렉토리 생성에 실패했습니다."),
+    TTS_PROJECT_NOT_FOUND(5020, HttpStatus.INTERNAL_SERVER_ERROR, "TTS Project를 찾을 수 없습니다."),
 
     // 9999 : 테스트용 커스텀 예외
     TEST_ERROR(9999, HttpStatus.BAD_REQUEST, "테스트용 커스텀 예외입니다."),
@@ -74,7 +75,7 @@ public enum ErrorCode {
     INVALID_UNIT_SEQUENCE_ORDER(3300, HttpStatus.BAD_REQUEST, "unitSequenc의 순서가 잘못됐습니다."),
 
     MEMBER_PROJECT_NOT_MATCH(9001, HttpStatus.BAD_REQUEST, "해당 유저의 프로젝트가 아닙니다!"),
-    TTS_PROJECT_DETAIL_NOT_MATCH(9002, HttpStatus.BAD_REQUEST, "해당 프로젝트의 유닛이 아닙니다."),
+    PROJECT_DETAIL_NOT_MATCH(9002, HttpStatus.BAD_REQUEST, "해당 프로젝트의 유닛이 아닙니다."),
     DTO_NOT_LOGICAL(9003, HttpStatus.BAD_REQUEST, "DTO가 논리적으로 어색합니다.(자세한건 다음에 쓸게요)");
 
     private final Integer code;
