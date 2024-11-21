@@ -5,11 +5,15 @@ import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.common.util.ElevenLabsClient_team_api;
 import com.fourformance.tts_vc_web.domain.entity.Member;
-import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.VCDetail;
-import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
+import com.fourformance.tts_vc_web.domain.entity.VCProject;
+import com.fourformance.tts_vc_web.dto.vc.AudioFileDto;
+import com.fourformance.tts_vc_web.dto.vc.VCDetailResDto;
+import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
 import com.fourformance.tts_vc_web.repository.VCDetailRepository;
+import com.fourformance.tts_vc_web.repository.VCProjectRepository;
+import com.fourformance.tts_vc_web.service.common.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -31,119 +34,147 @@ public class VCService_team_api {
     private static final Logger LOGGER = Logger.getLogger(VCService_team_api.class.getName());
     private final ElevenLabsClient_team_api elevenLabsClient;
     private final MemberRepository memberRepository;
-    private final MemberAudioMetaRepository memberAudioMetaRepository;
+    private final VCProjectRepository vcProjectRepository;
     private final VCDetailRepository vcDetailRepository;
-    // 로컬 파일 저장 경로 설정 (테스트 환경에서 사용)
+    private final S3Service s3Service; // S3Service 주입
+
     @Value("${user.home}/uploads")
     private String uploadDir;
 
     /**
-     * 사용자가 업로드한 타겟 오디오를 통해 Voice ID를 생성하고 저장합니다.
-     *
-     * **주요 흐름**:
-     * 1. 업로드된 오디오를 로컬 경로에 저장.
-     * 2. Eleven Labs API를 호출하여 Voice ID 생성.
-     * 3. 생성된 Voice ID와 관련된 정보를 MemberAudioMeta 엔티티에 저장.
-     *
-     * @param targetAudio 사용자가 업로드한 타겟 오디오 파일.
-     * @param memberId    Voice ID를 생성 요청한 사용자 ID.
-     * @return 생성된 Voice ID 문자열.
-     * @throws IOException 파일 저장 또는 Voice ID 생성 중 오류가 발생할 경우.
-     * @throws BusinessException 사용자가 존재하지 않을 경우.
+     * VC 프로젝트 처리
      */
-    public String createVoiceId(MultipartFile targetAudio, Long memberId) throws IOException {
-        // 1. 파일 저장 디렉토리를 생성 (이미 존재하면 무시)
-        Files.createDirectories(Paths.get(uploadDir));
+    public List<VCDetailResDto> processVCProject(VCSaveDto vcSaveDto, List<MultipartFile> files, Long memberId) {
+        LOGGER.info("VC 프로젝트 처리 시작");
 
-        // 2. 업로드된 파일의 경로 지정
-        String targetFilePath = uploadDir + File.separator + targetAudio.getOriginalFilename();
-        File targetFile = new File(targetFilePath);
-
-        LOGGER.info("타겟 오디오 파일 저장: " + targetFilePath);
-        // 3. 업로드된 파일을 로컬 디스크에 저장
-        targetAudio.transferTo(targetFile);
-
-        LOGGER.info("Eleven Labs API를 통해 Voice ID 생성 요청 중...");
-        // 4. Eleven Labs API 호출하여 Voice ID 생성
-        String voiceId = elevenLabsClient.uploadVoice(targetFilePath);
-
-        LOGGER.info("생성된 Voice ID: " + voiceId);
-
-        // 5. 사용자 ID를 통해 Member 엔티티를 조회
+        // 1. 멤버 확인
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> {
+                    LOGGER.severe("멤버 확인 실패: memberId = " + memberId);
+                    return new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
+                });
+        LOGGER.info("멤버 확인 완료: memberId = " + memberId);
 
-        // 6. MemberAudioMeta 엔티티 생성 및 저장
-        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(
-                member,
-                targetFilePath,  // 파일 경로
-                "http://local/file/url",  // 테스트 환경용 임시 URL
-                AudioType.VC_TRG,  // AudioType은 VC 타겟
-                voiceId  // 생성된 Voice ID
-        );
+        // 2. 프로젝트 생성/업데이트
+        Long projectId = saveOrUpdateProject(vcSaveDto, member);
+        LOGGER.info("프로젝트 생성/업데이트 완료: projectId = " + projectId);
 
-        memberAudioMetaRepository.save(memberAudioMeta);
-        LOGGER.info("Voice ID와 오디오 메타 정보 저장 완료: " + voiceId);
+        // 3. 타겟 파일 처리
+        String voiceId = processTargetFiles(vcSaveDto.getTrgFiles(), files);
+        LOGGER.info("타겟 파일 처리 완료: voiceId = " + voiceId);
 
-        return voiceId;
+        // 4. 소스 파일 처리 및 VCDetailResDto 생성
+        List<VCDetailResDto> vcDetails = processSourceFiles(vcSaveDto.getSrcFiles(), files, projectId, voiceId);
+        LOGGER.info("소스 파일 처리 완료, VCDetailResDto 리스트 생성");
+
+        LOGGER.info("VC 프로젝트 처리 완료");
+        return vcDetails;
     }
 
-    /**
-     * 사용자가 업로드한 소스 오디오 파일들을 주어진 Voice ID로 변환합니다.
-     *
-     * **주요 흐름**:
-     * 1. 각 소스 오디오 파일을 로컬 디스크에 저장.
-     * 2. Eleven Labs API를 호출하여 Voice ID를 이용한 변환 요청.
-     * 3. 변환된 파일의 경로를 리스트로 반환.
-     *
-     * @param sourceAudios 변환할 소스 오디오 파일 배열.
-     * @param voiceId      변환에 사용할 타겟 Voice ID.
-     * @return 변환된 오디오 파일의 경로 리스트.
-     * @throws IOException 파일 저장 또는 변환 중 오류가 발생할 경우.
-     */
-    public List<String> convertMultipleVoices(MultipartFile[] sourceAudios, String voiceId) throws IOException {
-        // 1. 파일 저장 디렉토리 생성
-        Files.createDirectories(Paths.get(uploadDir));
+    private Long saveOrUpdateProject(VCSaveDto vcSaveDto, Member member) {
+        if (vcSaveDto.getProjectId() == null) {
+            LOGGER.info("새 프로젝트 생성 중...");
+            VCProject vcProject = VCProject.createVCProject(member, vcSaveDto.getProjectName());
+            vcProjectRepository.save(vcProject);
+            LOGGER.info("새 프로젝트 생성 완료: projectId = " + vcProject.getId());
+            return vcProject.getId();
+        } else {
+            LOGGER.info("기존 프로젝트 업데이트 중...");
+            VCProject vcProject = vcProjectRepository.findById(vcSaveDto.getProjectId())
+                    .orElseThrow(() -> {
+                        LOGGER.severe("프로젝트 업데이트 실패: projectId = " + vcSaveDto.getProjectId());
+                        return new BusinessException(ErrorCode.NOT_EXISTS_PROJECT);
+                    });
+            vcProject.updateVCProject(vcSaveDto.getProjectName(), null);
+            LOGGER.info("기존 프로젝트 업데이트 완료: projectId = " + vcSaveDto.getProjectId());
+            return vcProject.getId();
+        }
+    }
 
-        // 2. 변환된 파일 경로를 저장할 리스트
-        List<String> convertedFiles = new ArrayList<>();
+    private String processTargetFiles(List<AudioFileDto> trgFiles, List<MultipartFile> files) {
+        if (trgFiles == null || trgFiles.isEmpty()) {
+            LOGGER.warning("타겟 파일이 없습니다.");
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
+        LOGGER.info("타겟 파일 처리 시작");
 
-        // 3. 소스 오디오 파일 하나씩 변환 처리
-        for (MultipartFile sourceAudio : sourceAudios) {
-            String sourceFilePath = uploadDir + File.separator + sourceAudio.getOriginalFilename();
-            File sourceFile = new File(sourceFilePath);
-
-            LOGGER.info("소스 오디오 파일 저장: " + sourceFilePath);
-            // 업로드된 파일을 로컬 디스크에 저장
-            sourceAudio.transferTo(sourceFile);
-
-            LOGGER.info("소스 오디오 변환 중 (Voice ID: " + voiceId + ")");
-            // Eleven Labs API를 통해 변환 요청
-            String convertedFile = elevenLabsClient.convertSpeechToSpeech(voiceId, sourceFilePath);
-
-            // 변환된 파일 경로를 리스트에 추가
-            convertedFiles.add("/uploads/" + convertedFile);
+        AudioFileDto targetFile = trgFiles.get(0); // 타겟 파일은 하나만 처리
+        MultipartFile file = findMultipartFileByName(files, targetFile.getLocalFileName());
+        if (file == null) {
+            LOGGER.severe("타겟 파일 로드 실패: " + targetFile.getLocalFileName());
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
         }
 
-        LOGGER.info("소스 오디오 변환 완료: " + convertedFiles);
-        return convertedFiles;
+        try {
+            String localFilePath = saveFileLocally(file);
+            LOGGER.info("타겟 파일 로컬 저장 완료: " + localFilePath);
+            String voiceId = elevenLabsClient.uploadVoice(localFilePath);
+            LOGGER.info("Voice ID 생성 완료: " + voiceId);
+            return voiceId;
+        } catch (IOException e) {
+            LOGGER.severe("타겟 파일 처리 실패: " + e.getMessage());
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
     }
 
-    /**
-     * VCDetail의 isChecked 상태를 업데이트합니다.
-     *
-     * @param vcDetailId VCDetail ID
-     * @param isChecked 새로운 isChecked 상태
-     */
-    public void updateIsChecked(Long vcDetailId, Boolean isChecked) {
-        LOGGER.info("VCDetail isChecked 상태 업데이트 요청: vcDetailId=" + vcDetailId + ", isChecked=" + isChecked);
-        VCDetail vcDetail = vcDetailRepository.findById(vcDetailId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.DETAIL_NOT_FOUND));
+    private List<VCDetailResDto> processSourceFiles(List<AudioFileDto> srcFiles, List<MultipartFile> files, Long projectId, String voiceId) {
+        if (srcFiles == null || srcFiles.isEmpty()) {
+            LOGGER.warning("소스 파일이 없습니다.");
+            return List.of();
+        }
+        LOGGER.info("소스 파일 처리 시작");
 
-        // VCDetail의 isChecked 필드를 업데이트
-        vcDetail.updateDetails(isChecked, vcDetail.getUnitScript());
-        vcDetailRepository.save(vcDetail);
+        return srcFiles.stream()
+                .map(srcFile -> {
+                    MultipartFile file = findMultipartFileByName(files, srcFile.getLocalFileName());
+                    if (file == null) {
+                        LOGGER.warning("소스 파일 로드 실패: " + srcFile.getLocalFileName());
+                        return null;
+                    }
 
-        LOGGER.info("VCDetail isChecked 상태 업데이트 완료: vcDetailId=" + vcDetailId + ", isChecked=" + vcDetail.getIsChecked());
+                    try {
+                        String localFilePath = saveFileLocally(file);
+                        LOGGER.info("소스 파일 로컬 저장 완료: " + localFilePath);
+                        String convertedFilePath = elevenLabsClient.convertSpeechToSpeech(voiceId, localFilePath);
+                        LOGGER.info("소스 파일 변환 완료: " + convertedFilePath);
+
+                        // VCDetail 엔티티 저장
+                        VCDetail vcDetail = VCDetail.createVCDetail(
+                                vcProjectRepository.findById(projectId).orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT)),
+                                null // 필요 시 MemberAudioMeta 설정
+                        );
+                        vcDetail.updateDetails(srcFile.getIsChecked(), srcFile.getUnitScript());
+                        vcDetailRepository.save(vcDetail);
+
+                        // VCDetailResDto 반환
+                        return new VCDetailResDto(
+                                vcDetail.getId(),
+                                projectId,
+                                srcFile.getIsChecked(),
+                                srcFile.getUnitScript(),
+                                file.getOriginalFilename(),
+                                List.of(convertedFilePath)
+                        );
+                    } catch (IOException e) {
+                        LOGGER.severe("소스 파일 처리 실패: " + e.getMessage());
+                        throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
+    private String saveFileLocally(MultipartFile file) throws IOException {
+        Files.createDirectories(Paths.get(uploadDir));
+        String localFilePath = uploadDir + File.separator + file.getOriginalFilename();
+        file.transferTo(new File(localFilePath));
+        LOGGER.info("로컬 파일 저장 완료: " + localFilePath);
+        return localFilePath;
+    }
+
+    private MultipartFile findMultipartFileByName(List<MultipartFile> files, String fileName) {
+        return files.stream()
+                .filter(file -> file.getOriginalFilename().equals(fileName))
+                .findFirst()
+                .orElse(null);
     }
 }

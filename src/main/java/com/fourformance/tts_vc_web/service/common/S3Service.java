@@ -54,6 +54,7 @@ public class S3Service {
     private final MemberAudioMetaRepository memberAudioMetaRepository;
     private final MemberRepository memberRepository;
 
+
     // TTS와 VC로 반환한 유닛 오디오를 S3 버킷에 저장
     public String uploadUnitSaveFile(MultipartFile file, Long userId, Long projectId, Long detailId) {
 
