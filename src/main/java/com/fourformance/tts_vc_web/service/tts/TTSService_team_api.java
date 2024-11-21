@@ -41,8 +41,8 @@ public class TTSService_team_api {
 
         // 프로젝트 생성 또는 업데이트
         Long projectId = Optional.ofNullable(ttsSaveDto.getProjectId())
-                .map(id -> ttsServiceTeamMulti.updateProject(ttsSaveDto))
-                .orElseGet(() -> ttsServiceTeamMulti.createNewProject(ttsSaveDto));
+                .map(id -> ttsServiceTeamMulti.updateProject(ttsSaveDto,null)) // memberId 값 넣기
+                .orElseGet(() -> ttsServiceTeamMulti.createNewProject(ttsSaveDto,null));
 
         // 프로젝트의 모든 TTS 디테일 처리
         List<Map<String, String>> fileUrls = new ArrayList<>();
@@ -90,8 +90,8 @@ public class TTSService_team_api {
 //        TTSDetail ttsDetail = ttsDetailRepository.findById(detailDto.getId()).get();
 //        System.out.println("값이 안나오면:" + ttsDetail.toString());
 
-        String languageCode = ttsDetailRepository.findVoiceStyleById(detailDto.getVoiceStyleId()).getLanguageCode();
-        String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getVoiceStyleId()).getGender();
+        String languageCode = ttsDetailRepository.findVoiceStyleById(detailDto.getUnitVoiceStyleId()).getLanguageCode();
+        String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getUnitVoiceStyleId()).getGender();
         // 요청 페이로드 생성
 //        String requestPayload = String.format(
 //                "{ \"text\": \"%s\", \"language\": \"%s\", \"gender\": \"%s\", \"speed\": %.2f, \"volume\": %.2f, \"pitch\": %.2f }",
@@ -178,7 +178,7 @@ public class TTSService_team_api {
      * @return 변환된 SsmlVoiceGender
      */
     private SsmlVoiceGender getSsmlVoiceGender(TTSDetailDto detailDto) {
-        String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getVoiceStyleId()).getGender();
+        String gender = ttsDetailRepository.findVoiceStyleById(detailDto.getUnitVoiceStyleId()).getGender();
         return switch (gender.toLowerCase()) {
             case "male" -> SsmlVoiceGender.MALE;
             case "female" -> SsmlVoiceGender.FEMALE;
