@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @ToString
@@ -70,5 +72,17 @@ public class VCDetail extends BaseEntity {
     public void markAsDeleted() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
+    }
+    @OneToMany(mappedBy = "vcDetail", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<APIStatus> apiStatuses = new ArrayList<>();
+    // 편의 메서드
+    public void addApiStatus(APIStatus apiStatus) {
+        this.apiStatuses.add(apiStatus);
+        apiStatus.setVcDetail(this); // 양방향 매핑 설정
+    }
+
+    public void removeApiStatus(APIStatus apiStatus) {
+        this.apiStatuses.remove(apiStatus);
+        apiStatus.setVcDetail(null); // 양방향 매핑 해제
     }
 }

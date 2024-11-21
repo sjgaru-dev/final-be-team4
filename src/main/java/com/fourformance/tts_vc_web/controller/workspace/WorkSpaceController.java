@@ -2,12 +2,14 @@ package com.fourformance.tts_vc_web.controller.workspace;
 
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
+import com.fourformance.tts_vc_web.dto.workspace.RecentExportDto;
 import com.fourformance.tts_vc_web.dto.workspace.RecentProjectDto;
 import com.fourformance.tts_vc_web.service.workspace.WorkspaceService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,5 +33,11 @@ public class WorkSpaceController {
         // Service에서 처리된 응답 그대로 반환
         List<RecentProjectDto> projects = workspaceService.getRecentProjects(memberId);
         return DataResponseDto.of(projects);
+    }
+    @GetMapping("/export-list")
+    public ResponseDto getRecentExports(HttpSession session) {
+        Long memberId = 1L; // 임시 하드코딩 (세션 구현 후 교체)
+        List<RecentExportDto> exports = workspaceService.getRecentExports(memberId);
+        return DataResponseDto.of(exports);
     }
 }

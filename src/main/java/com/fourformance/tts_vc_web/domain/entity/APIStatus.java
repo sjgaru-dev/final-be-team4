@@ -56,4 +56,18 @@ public class APIStatus extends BaseEntity {
         this.responseCode = responseCode;
     }
 
+    // 편의 메서드
+    public void setVcDetail(VCDetail vcDetail) {
+        this.vcDetail = vcDetail;
+        if (!vcDetail.getApiStatuses().contains(this)) {
+            vcDetail.getApiStatuses().add(this);
+        }
+    }
+
+    public void setTtsDetail(TTSDetail ttsDetail) {
+        this.ttsDetail = ttsDetail;
+        if (!ttsDetail.getApiStatuses().contains(this)) {
+            ttsDetail.getApiStatuses().add(this);
+        }
+    }
 }

@@ -1,23 +1,35 @@
 package com.fourformance.tts_vc_web.service.workspace;
 
 import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
+import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.Project;
+import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
+import com.fourformance.tts_vc_web.domain.entity.VCDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
 import com.fourformance.tts_vc_web.domain.entity.VCProject;
+import com.fourformance.tts_vc_web.domain.entity.APIStatus;
+import com.fourformance.tts_vc_web.dto.workspace.RecentExportDto;
 import com.fourformance.tts_vc_web.dto.workspace.RecentProjectDto;
+import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.ProjectRepository;
+
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.fourformance.tts_vc_web.service.common.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 @Service
 @RequiredArgsConstructor
 public class WorkspaceService {
 
     private final ProjectRepository projectRepository;
+    private final OutputAudioMetaRepository outputAudioMetaRepository;
+    private final S3Service s3Service;
 
     public List<RecentProjectDto> getRecentProjects(Long memberId) {
         // memberId가 null이면 예외 발생
@@ -66,4 +78,94 @@ public class WorkspaceService {
                 throw new BusinessException(ErrorCode.UNSUPPORTED_PROJECT_TYPE); // 지원하지 않는 타입 처리
         }
     }
+
+    /**
+     * -테스트
+     * @Test
+     * @Transactional
+     * void testFindTop5ByMemberIdWithNotDeletedProjects() {
+     *     Long memberId = 1L; // 테스트에 사용할 회원 ID
+     *
+     *     List<Project> projects = projectRepository.findTop5ByMemberIdOrderByCreatedAtDesc(memberId);
+     *
+     *     assertNotNull(projects);
+     *     assertTrue(projects.size() <= 5);
+     *     for (Project project : projects) {
+     *         assertFalse(project.getIsDeleted()); // 삭제되지 않은 프로젝트만 포함
+     *     }
+     * }
+     *
+     */
+
+
+
+    /**
+     * 최신 5개의 Export 작업 내역 조회
+     */
+
+    public List<RecentExportDto> getRecentExports(Long memberId) {
+
+        if (memberId == null) {
+            throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
+        }
+
+        // 최신 5개의 OutputAudioMeta 레코드 조회
+        List<OutputAudioMeta> recentExports = outputAudioMetaRepository.findTop5ByMemberId(memberId);
+
+        // DTO로 변환
+        return recentExports.stream()
+                .map(this::mapToRecentExportDto)
+                .collect(Collectors.toList());
+
+    }
+
+    private RecentExportDto mapToRecentExportDto(OutputAudioMeta meta) {
+        RecentExportDto dto = new RecentExportDto(); // DTO를 만들고
+
+        // 공통설정
+        dto.setMetaId(meta.getId()); // 메타아이디를 넣는거는 상관없음
+        dto.setFileName(extractFileName(meta.getBucketRoute()));
+        dto.setUrl(s3Service.generatePresignedUrl(meta.getBucketRoute()));
+        dto.setUnitStatus(getLatestUnitStatusFromMeta(meta));
+        dto.setUpdatedAt(meta.getLastModifiedDate());
+
+
+        if(meta.getTtsDetail() != null) {
+            dto.setProjectName(meta.getTtsDetail().getTtsProject().getProjectName());
+            dto.setScript(meta.getTtsDetail().getUnitScript());
+
+        }else if (meta.getVcDetail() != null) {
+            dto.setProjectName(meta.getVcDetail().getVcProject().getProjectName());
+            dto.setScript(meta.getVcDetail().getUnitScript());
+
+        } else if (meta.getConcatProject() != null) {
+            dto.setProjectName(meta.getConcatProject().getProjectName());
+            dto.setScript(null); // 조인해야지 볼 수 있음.
+        }
+
+        return dto;
+    }
+
+    private String extractFileName(String filePath) {
+        if (filePath == null || filePath.isEmpty()) {
+            return null;
+        }
+        return filePath.substring(filePath.lastIndexOf('/') + 1);
+    }
+
+    private APIUnitStatusConst getLatestUnitStatusFromMeta(OutputAudioMeta meta) {
+        if (meta.getTtsDetail() != null) {
+            return getLatestApiStatus(meta.getTtsDetail().getApiStatuses());
+        } else if (meta.getVcDetail() != null) {
+            return getLatestApiStatus(meta.getVcDetail().getApiStatuses());
+        }
+        return null;
+    }
+    private APIUnitStatusConst getLatestApiStatus(List<APIStatus> apiStatuses) {
+        return apiStatuses.stream()
+                .max(Comparator.comparing(APIStatus::getRequestAt)) // 가장 최신 APIStatus를 가져옴
+                .map(APIStatus::getApiUnitStatusConst) // APIUnitStatusConst 추출
+                .orElse(null); // 없을 경우 null 반환
+    }
+
 }
