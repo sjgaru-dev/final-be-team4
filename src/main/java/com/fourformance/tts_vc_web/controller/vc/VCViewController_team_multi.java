@@ -72,7 +72,9 @@ public class VCViewController_team_multi {
         // 프로젝트 삭제
         projectService.deleteVCProject(projectId);
 
-        // 작업 상태 : Terminated(종료)
+        // 작업 상태 : Terminated(종료) - 코드 추가 예정
+
+
         return DataResponseDto.of("","VC 프로젝트가 정상적으로 삭제되었습니다.");
     }
 
@@ -82,7 +84,13 @@ public class VCViewController_team_multi {
             description = "VC 프로젝트에서 선택된 모든 항목을 삭제합니다." )
     @PostMapping("/delete/details")
     public ResponseDto deleteVCDetail(@RequestBody List<Long> vcDetailsId) {
-        return DataResponseDto.of("");
+
+        // 프로젝트 삭제
+        projectService.deleteVCDetail(vcDetailsId);
+
+        // 작업 상태 : Terminated(종료) - 코드 추가 예정
+
+        return DataResponseDto.of("","선택된 모든 항목이 정상적으로 삭제되었습니다.");
     }
 
     // TRG 오디오 선택된 모든 항목 삭제

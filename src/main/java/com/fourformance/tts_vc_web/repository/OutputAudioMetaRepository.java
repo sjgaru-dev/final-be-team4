@@ -27,4 +27,8 @@ public interface OutputAudioMetaRepository extends JpaRepository<OutputAudioMeta
     @Query("SELECT o FROM OutputAudioMeta o WHERE o.vcDetail.id = :vcDetailId AND o.isDeleted = false")
     List<OutputAudioMeta> findAudioUrlsByVcDetail(@Param("vcDetailId") Long vcDetailId);
 
+    // TTS Detail Id로 생성된 오디오들을 찾아 리스트로 반환 - 승민
+    @Query("SELECT o FROM OutputAudioMeta o WHERE o.vcDetail.id IN :vcDetailIds AND o.isDeleted = false")
+    List<OutputAudioMeta> findByVcDetailAndIsDeletedFalse(@Param("vcDetailIds") List<Long> vcDetailIds);
+
 }

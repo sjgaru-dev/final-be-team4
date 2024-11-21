@@ -142,14 +142,13 @@ public class ProjectService_team_multi {
                     .map(VCDetail::getId)
                     .toList();
 
-            // OutputAudioMeta 삭제 처리
             List<OutputAudioMeta> outputAudio = outputAudioMetaRepository.findByTtsDetailAndIsDeletedFalse(vcDetailIds);
             for (OutputAudioMeta audio : outputAudio) {
                 audio.deleteOutputAudioMeta();
                 outputAudioMetaRepository.save(audio);
             }
 
-            // 4. VC src 오디오 삭제
+            // 4. VC src 오디오 isDeleted 설정
 
             List<Long> memberAudioIds = memberAudioVCRepository.findMemberAudioMetaByVcProjectId(projectId);
             List<MemberAudioMeta> memberAudioList = memberAudioMetaRepository.findByMemberAudioIds(memberAudioIds, AudioType.VC_SRC);
@@ -181,24 +180,34 @@ public class ProjectService_team_multi {
             throw new BusinessException(ErrorCode.INVALID_PROJECT_ID);
         }
 
-//        try {
-//
-//            // 1. VCDetail 삭제 처리
-//            for (VCDetail detail : vcDetails) {
-//                detail.markAsDeleted();
-//                vcDetailRepository.save(detail);
-//            }
-//
-//            // 2. OutputAudioMeta 삭제 처리
-//            List<OutputAudioMeta> outputAudio = outputAudioMetaRepository.findByTtsDetailAndIsDeletedFalse(ttsDetailIds);
-//            for (OutputAudioMeta audio : outputAudio) {
-//                audio.deleteOutputAudioMeta();
-//                outputAudioMetaRepository.save(audio);
-//            }
-//
-//        } catch (Exception e) {
-//            throw new BusinessException(ErrorCode.SERVER_ERROR);
-//        }
+        try {
+
+            // 1. VCDetail 삭제 처리
+            for (VCDetail detail : vcDetails) {
+                detail.markAsDeleted();
+                vcDetailRepository.save(detail);
+            }
+
+            // 2. OutputAudioMeta 삭제 처리
+            List<OutputAudioMeta> outputAudio = outputAudioMetaRepository.findByVcDetailAndIsDeletedFalse(vcDetailIds);
+            for (OutputAudioMeta audio : outputAudio) {
+                audio.deleteOutputAudioMeta();
+                outputAudioMetaRepository.save(audio);
+            }
+
+            // 3. MemberAudioMeta 에서 AudioType이 VC_SRC 인 것 삭제 처리
+            List<Long> memberAudioIds = vcDetailRepository.findMemberAudioIdsByVcDetailIds(vcDetailIds);
+            List<MemberAudioMeta> memberAudioList = memberAudioMetaRepository.findByMemberAudioIds(memberAudioIds, AudioType.VC_SRC);
+
+            for (MemberAudioMeta memberAudioMeta : memberAudioList) {
+                memberAudioMeta.delete(); // isDeleted = true, deletedAt 설정
+                memberAudioMetaRepository.save(memberAudioMeta); // 업데이트 저장
+            }
+
+
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
     }
 
 
