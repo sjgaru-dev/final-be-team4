@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface VCDetailRepository extends JpaRepository<VCDetail, Long> {
 
-    // 프로젝트 ID로 TTS 상세 값들을 찾아 리스트로 반환 - 승민
+    // 프로젝트 ID로 VC 상세 값들을 찾아 리스트로 반환 - 승민
     List<VCDetail> findByVcProject_Id(Long projectId);
 
     // VC Detail Id가 담긴 List로 VCDetail 객체 반환 받기 - 승민
