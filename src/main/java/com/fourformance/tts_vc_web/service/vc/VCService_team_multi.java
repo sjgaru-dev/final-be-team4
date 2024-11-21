@@ -1,9 +1,15 @@
 package com.fourformance.tts_vc_web.service.vc;
 
+import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.*;
+import com.fourformance.tts_vc_web.dto.vc.*;
+import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
+import com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta;
+import com.fourformance.tts_vc_web.domain.entity.VCDetail;
+import com.fourformance.tts_vc_web.domain.entity.VCProject;
 import com.fourformance.tts_vc_web.dto.vc.*;
 import com.fourformance.tts_vc_web.repository.*;
 import com.fourformance.tts_vc_web.service.common.S3Service;
@@ -39,26 +45,37 @@ public class VCService_team_multi {
         // VCProjectDto로 변환
         VCProjectDto vcPrjDto = VCProjectDto.createVCProjectDto(vcProject);
 
-        List<String> trgAudioUrls = null;
-        if(vcPrjDto.getId() != null){
+        List<TrgAudioDto> trgAudioDtos = null; // 변경된 구조에 맞는 변수 선언
+        if (vcPrjDto.getId() != null) {
+            // MemberAudioMeta ID 조회
+            List<Long> memberAudioIds = memberAudioVCRepository.findMemberAudioMetaByVcProjectId(vcPrjDto.getId());
 
-            List<Long> dd = memberAudioVCRepository.findMemberAudioMetaByVcProjectId(vcPrjDto.getId());
-            trgAudioUrls = memberAudioMetaRepository.findAudioUrlsByAudioMetaIds(dd, AudioType.VC_TRG);
+            // Audio URL과 ID 조회하여 TrgAudioDto 리스트 생성
+            List<MemberAudioMeta> memberAudioMetaList = memberAudioMetaRepository.findByMemberAudioIds(
+                    memberAudioIds, AudioType.VC_TRG
+            );
 
+            // MemberAudioMeta를 TrgAudioDto로 변환
+            trgAudioDtos = memberAudioMetaList.stream()
+                    .map(meta -> new TrgAudioDto(meta.getId(), meta.getAudioUrl()))
+                    .toList();
         }
 
+        // VCProjectResDto 생성 및 반환
         VCProjectResDto resDto = new VCProjectResDto();
                         resDto.setId(vcPrjDto.getId());
                         resDto.setProjectName(vcPrjDto.getProjectName());
-                        resDto.setTrgAudioUrls(trgAudioUrls);
-         return resDto;
+                        resDto.setTrgAudios(trgAudioDtos); // 새로운 구조 반영
+
+        return resDto;
     }
+
 
 
     // VC 프로젝트 상세 값 조회하기
     @Transactional(readOnly = true)
     public List<VCDetailResDto> getVCDetailsDto(Long projectId) {
-        List<VCDetail> vcDetails = vcDetailRepository.findByVcProjectId(projectId);
+        List<VCDetail> vcDetails = vcDetailRepository.findByVcProject_Id(projectId);
 
         // isDeleted가 false인 경우에만 VCDetailResDto 목록으로 변환
         return vcDetails.stream()
@@ -84,6 +101,26 @@ public class VCService_team_multi {
                        resDto.setUnitScript(vcDetail.getUnitScript());
                        resDto.setGenAudios(audioUrls);
         return resDto;
+    }
+
+    // VC 프로젝트 TRG 오디오 삭제
+    public void deleteTRGAudio(Long trgAudioId){
+
+        // trgVoiceId로 MemberAudioMeta를 조회
+        MemberAudioMeta audioMeta = memberAudioMetaRepository.findByIdAndAudioType(trgAudioId, AudioType.VC_TRG);
+
+        // isDeleted = true로 변경
+        if (audioMeta == null) { throw new BusinessException(ErrorCode.AUDIO_NOT_FOUND_EXCEPTION); }
+
+        try{
+
+            audioMeta.delete();
+            memberAudioMetaRepository.save(audioMeta);
+
+        }catch (Exception e) {
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
+
     }
 
     // VCProject, VCDetail 저장하는 메서드

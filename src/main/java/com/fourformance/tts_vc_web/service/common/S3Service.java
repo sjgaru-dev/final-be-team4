@@ -207,7 +207,8 @@ public class S3Service {
     }
 
     // 유저 오디오를 S3에 업로드하고 DB에 저장하는 메서드
-    public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId, AudioType audioType, String voiceId) {
+    public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId,
+                                                AudioType audioType, String voiceId) {
 
         try {
             // url을 담을 리스트

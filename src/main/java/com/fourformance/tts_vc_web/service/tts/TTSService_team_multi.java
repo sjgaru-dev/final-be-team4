@@ -51,7 +51,7 @@ public class TTSService_team_multi {
     // TTS 프로젝트 상세 값 조회하기
     @Transactional(readOnly = true)
     public List<TTSDetailDto> getTTSDetailsDto(Long projectId) {
-        List<TTSDetail> ttsDetails = ttsDetailRepository.findByTtsProjectId(projectId);
+        List<TTSDetail> ttsDetails = ttsDetailRepository.findByTtsProject_Id(projectId);
 
         // isDeleted가 false인 경우에만 TTSDetailDTO 목록으로 변환
         return ttsDetails.stream()

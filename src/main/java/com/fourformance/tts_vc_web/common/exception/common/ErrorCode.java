@@ -63,7 +63,7 @@ public enum ErrorCode {
     TEST_ERROR(9999, HttpStatus.BAD_REQUEST, "테스트용 커스텀 예외입니다."),
 
     // 10000 : 알 수 없는 예외
-    UNKNOWN_ERROR(10000, HttpStatus.BAD_REQUEST, "알 수 없는 에외입니다,"),
+    UNKNOWN_ERROR(10000, HttpStatus.BAD_REQUEST, "알 수 없는 예외입니다,"),
     METADATA_FORM_FAULT(1234,HttpStatus.BAD_REQUEST, "메타데이터 형식이 잘못되었습니다."),
 
     NOT_EXISTS_VOICESTYLE(3001, HttpStatus.BAD_REQUEST, "해당 voice style의 id를 찾을 수 없습니다."),

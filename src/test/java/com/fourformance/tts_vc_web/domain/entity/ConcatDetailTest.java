@@ -1,19 +1,19 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import com.fourformance.tts_vc_web.repository.ConcatDetailRepository;
 import com.fourformance.tts_vc_web.repository.ConcatProjectRepository;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
@@ -33,7 +33,8 @@ class ConcatDetailTest {
     ConcatDetailRepository concatDetailRepository;
 
     public Member createTestMember() {
-        Member member = Member.createMember("test@test.com", "1234", "testName", 0, LocalDateTime.now(), "010-1234-1234");
+        Member member = Member.createMember("test@test.com", "1234", "testName", 0, LocalDateTime.now(),
+                "010-1234-1234");
         return member;
     }
 
@@ -53,7 +54,8 @@ class ConcatDetailTest {
         em.clear();
 
         // Concat Detail 생성
-        ConcatDetail beforeConcatDetail = ConcatDetail.createConcatDetail(beforeConcatProject, 1, false, "안녕하세요", 1.0F);
+        ConcatDetail beforeConcatDetail = ConcatDetail.createConcatDetail(beforeConcatProject, 1, false, "안녕하세요", 1.0F,
+                null);
         concatDetailRepository.save(beforeConcatDetail);
         em.flush();
         em.clear();
@@ -85,7 +87,8 @@ class ConcatDetailTest {
         em.clear();
 
         // Concat Detail 생성
-        ConcatDetail beforeConcatDetail = ConcatDetail.createConcatDetail(beforeConcatProject, 1, false, "안녕하세요", 1.0F);
+        ConcatDetail beforeConcatDetail = ConcatDetail.createConcatDetail(beforeConcatProject, 1, false, "안녕하세요", 1.0F,
+                null);
         concatDetailRepository.save(beforeConcatDetail);
         em.flush();
         em.clear();
@@ -109,7 +112,7 @@ class ConcatDetailTest {
         ConcatDetail afterUpdateConcatDetail = concatDetailRepository.findById(afterConcatDetail.getId()).get();
 
         //then
-            //업데이트 전과 후 데이터 비교 -> 달라야 성공
+        //업데이트 전과 후 데이터 비교 -> 달라야 성공
         assertNotEquals(beforeConcatDetail.getEndSilence(), afterUpdateConcatDetail.getEndSilence());
 
         // 업데이트 후 EndSilence 인증
@@ -133,7 +136,8 @@ class ConcatDetailTest {
         em.clear();
 
         // Concat Detail 생성
-        ConcatDetail beforeConcatDetail = ConcatDetail.createConcatDetail(beforeConcatProject, 1, false, "안녕하세요", 1.0F);
+        ConcatDetail beforeConcatDetail = ConcatDetail.createConcatDetail(beforeConcatProject, 1, false, "안녕하세요", 1.0F,
+                null);
         concatDetailRepository.save(beforeConcatDetail);
         em.flush();
         em.clear();
@@ -148,13 +152,13 @@ class ConcatDetailTest {
         assertEquals(beforeConcatDetail.getId(), afterConcatDetail.getId());
 
         //when
-            // 조회된 객체 삭제
+        // 조회된 객체 삭제
         concatDetailRepository.delete(afterConcatDetail);
         em.flush();
         em.clear();
 
         //then
-         //DB에서 삭제된 concatDetail 정보에 대해 잘 삭제되었는지 확인
+        //DB에서 삭제된 concatDetail 정보에 대해 잘 삭제되었는지 확인
         ConcatDetail concatDetail = concatDetailRepository.findById(beforeConcatDetail.getId()).orElse(null);
         assertNull(concatDetail);
     }

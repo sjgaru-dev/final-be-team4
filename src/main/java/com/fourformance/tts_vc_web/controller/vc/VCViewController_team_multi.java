@@ -11,6 +11,8 @@ import com.fourformance.tts_vc_web.dto.vc.VCProjectWithDetailResDto;
 import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
 import com.fourformance.tts_vc_web.repository.VCProjectRepository;
+import com.fourformance.tts_vc_web.dto.vc.*;
+import com.fourformance.tts_vc_web.service.common.ProjectService_team_multi;
 import com.fourformance.tts_vc_web.service.vc.VCService_team_multi;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpSession;
@@ -26,6 +28,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VCViewController_team_multi {
 
+    private final ProjectService_team_multi projectService;
     private final VCService_team_multi vcService;
     private final VCProjectRepository vcProjectRepository;
     private final MemberRepository memberRepository;
@@ -93,26 +96,45 @@ public class VCViewController_team_multi {
     @Operation(
             summary = "VC 프로젝트 삭제",
             description = "VC 프로젝트와 생성된 오디오 등 관련된 데이터를 전부 삭제합니다." )
-    @PostMapping("/delete/{projectId}")
+    @DeleteMapping("/delete/{projectId}")
     public ResponseDto deleteVCProject(@PathVariable("projectId") Long projectId) {
-        return DataResponseDto.of("");
+        // 타입 검증
+        if(projectId == null) { throw new BusinessException(ErrorCode.INVALID_PROJECT_ID); }
+
+        // 프로젝트 삭제
+        projectService.deleteVCProject(projectId);
+
+        // 작업 상태 : Terminated(종료) - 코드 추가 예정
+
+
+        return DataResponseDto.of("","VC 프로젝트가 정상적으로 삭제되었습니다.");
     }
 
     // VC 선택된 모든 항목 삭제
     @Operation(
             summary = "VC 선택된 항목 삭제",
             description = "VC 프로젝트에서 선택된 모든 항목을 삭제합니다." )
-    @PostMapping("/delete/details")
+    @DeleteMapping("/delete/details")
     public ResponseDto deleteVCDetail(@RequestBody List<Long> vcDetailsId) {
-        return DataResponseDto.of("");
+
+        // 프로젝트 삭제
+        projectService.deleteVCDetail(vcDetailsId);
+
+        // 작업 상태 : Terminated(종료) - 코드 추가 예정
+
+        return DataResponseDto.of("","선택된 모든 항목이 정상적으로 삭제되었습니다.");
     }
 
     // TRG 오디오 선택된 모든 항목 삭제
     @Operation(
             summary = "VC 프로젝트 target 오디오 선택 항목 삭제",
             description = "VC 프로젝트에서 target 오디오 선택된 모든 항목을 삭제합니다." )
-    @PostMapping("/delete/trg")
-    public ResponseDto deleteTRGAudio(@RequestBody List<Long> targetAudioId) {
-        return DataResponseDto.of("");
+    @DeleteMapping("/delete/target/{audioId}")
+    public ResponseDto deleteTRGAudio(@PathVariable("audioId") Long targetAudioId) {
+
+        // 타겟 오디오 삭제
+        vcService.deleteTRGAudio(targetAudioId);
+
+        return DataResponseDto.of("","Target 오디오가 정상적으로 삭제되었습니다.");
     }
 }
