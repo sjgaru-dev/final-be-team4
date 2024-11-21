@@ -264,4 +264,117 @@ public class TTSService_team_multi {
         }
     }
 
+    // 프로젝트 생성 커스텀 메서드 - 원우
+    @Transactional
+    public Long createNewProjectCustom(TTSSaveDto dto) {
+
+        validateSaveDto(dto);
+
+        VoiceStyle voiceStyle = null;
+
+        // voiceStyleId가 null이 아닌 경우에만 조회 ( voiceStyleId에 null을 허용한다는 의미입니다. 보이스 스타일을 지정하지 않고 저장할 수 있으니까 )
+        if (dto.getGlobalVoiceStyleId() != null) {
+            voiceStyle = voiceStyleRepository.findById(dto.getGlobalVoiceStyleId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_VOICESTYLE));
+        }
+
+
+        // 받아온 멤버 id (세션에서) 로 멤버 찾기
+        Member member = memberRepository.findById(dto.getMemberId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // TTSProject 생성
+        TTSProject ttsProject = TTSProject.createTTSProject(
+                member,
+                dto.getProjectName(),
+                voiceStyle,
+                dto.getFullScript(),
+                dto.getGlobalSpeed(),
+                dto.getGlobalPitch(),
+                dto.getGlobalVolume()
+        );
+        ttsProject = ttsProjectRepository.save(ttsProject);
+
+        return ttsProject.getId();
+    }
+
+
+    // 프로젝트 업데이트 - 원우
+    @Transactional
+    public Long updateProjectCustom(TTSSaveDto dto) {
+        TTSProject ttsProject = ttsProjectRepository.findById(dto.getProjectId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+
+        VoiceStyle voiceStyle = voiceStyleRepository.findById(dto.getGlobalVoiceStyleId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_VOICESTYLE));
+
+
+        ttsProject.updateTTSProject(
+                dto.getProjectName(),
+                voiceStyle,
+                dto.getFullScript(),
+                dto.getGlobalSpeed(),
+                dto.getGlobalPitch(),
+                dto.getGlobalVolume()
+        );
+
+        ttsProjectRepository.save(ttsProject);
+
+        return ttsProject.getId();
+    }
+
+
+
+    // ttsDetail 생성 커스텀 메서드 - 원우
+    public Long createTTSDetailCustom(TTSDetailDto detailDto, TTSProject ttsProject) {
+        VoiceStyle voiceStyle = null;
+
+        // voiceStyleId가 null이 아닌 경우에만 조회 ( voiceStyleId에 null을 허용한다는 의미입니다. 보이스 스타일을 지정하지 않고 저장할 수 있으니까 )
+        if (detailDto.getUnitVoiceStyleId() != null) {
+            voiceStyle = voiceStyleRepository.findById(detailDto.getUnitVoiceStyleId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_VOICESTYLE));
+        }
+
+        TTSDetail ttsDetail = TTSDetail.createTTSDetail(
+                ttsProject,
+                detailDto.getUnitScript(),
+                detailDto.getUnitSequence()
+        );
+        ttsDetail.updateTTSDetail(
+                voiceStyle,
+                detailDto.getUnitScript(),
+                detailDto.getUnitSpeed(),
+                detailDto.getUnitPitch(),
+                detailDto.getUnitVolume(),
+                detailDto.getUnitSequence(),
+                detailDto.getIsDeleted()
+        );
+
+        ttsDetail = ttsDetailRepository.save(ttsDetail);
+
+        return ttsDetail.getId();
+    }
+
+    // ttsDetail 업데이트 커스텀 메서드 - 원우
+    public Long processTTSDetailCustom(TTSDetailDto detailDto, TTSProject ttsProject) {
+        VoiceStyle detailStyle = voiceStyleRepository.findById(detailDto.getUnitVoiceStyleId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+
+        TTSDetail ttsDetail = ttsDetailRepository.findById(detailDto.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL));
+
+        ttsDetail.updateTTSDetail(
+                detailStyle,
+                detailDto.getUnitScript(),
+                detailDto.getUnitSpeed(),
+                detailDto.getUnitPitch(),
+                detailDto.getUnitVolume(),
+                detailDto.getUnitSequence(),
+                detailDto.getIsDeleted()
+        );
+        ttsDetailRepository.save(ttsDetail);
+
+        return ttsDetail.getId();
+    }
+
 }
