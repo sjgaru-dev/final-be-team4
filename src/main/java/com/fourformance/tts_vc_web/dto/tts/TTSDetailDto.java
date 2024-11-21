@@ -1,21 +1,23 @@
 package com.fourformance.tts_vc_web.dto.tts;
 
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
+import com.fourformance.tts_vc_web.dto.member.MemberTestDto;
+import lombok.*;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.config.Configuration;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class TTSDetailDto {
 
     private Long id; // 상세 정보 ID
-    //    private Long ProjectId; // 프로젝트 ID
+    private Long projectId; // 프로젝트 ID
     private String unitScript; // 단위 스크립트
     private Float unitSpeed; // 단위 속도
     private Float unitPitch; // 단위 피치
@@ -26,7 +28,7 @@ public class TTSDetailDto {
 
     private static ModelMapper modelMapper = new ModelMapper();
 
-    public TTSDetail createTTSDetail() {
+    public TTSDetail createTTSDetail(){
         modelMapper.getConfiguration()
                 .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE)
                 .setFieldMatchingEnabled(true);

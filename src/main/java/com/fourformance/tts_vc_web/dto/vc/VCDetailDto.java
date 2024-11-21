@@ -8,6 +8,8 @@ import lombok.Setter;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.config.Configuration;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -20,6 +22,7 @@ public class VCDetailDto {
     private Boolean isChecked; // 체크 여부
     private String unitScript; // 단위 스크립트
     private Boolean isDeleted; // 삭제 여부
+
 
     private static ModelMapper modelMapper = new ModelMapper();
 
