@@ -1,7 +1,6 @@
 package com.fourformance.tts_vc_web;
 
-import com.fourformance.tts_vc_web.domain.entity.Member;
-import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
+import com.fourformance.tts_vc_web.domain.entity.*;
 import com.fourformance.tts_vc_web.repository.ConcatDetailRepository;
 import com.fourformance.tts_vc_web.repository.ConcatProjectRepository;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
@@ -59,82 +58,82 @@ public class DummyDataInitializer {
 
         Member firstMember = members.get(0);
 
-        // TTS 프로젝트 및 디테일 생성
-//        for (int i = 1; i <= 5; i++) {
-//            VoiceStyle voiceStyle = voiceStyles.get((i - 1) % voiceStyles.size());
-//            TTSProject ttsProject = TTSProject.createTTSProject(
-//                    firstMember,
-//                    "TTS Project " + i,
-//                    voiceStyle,
-//                    "This is the full script for project " + i,
-//                    1.0f + i * 0.1f,
-//                    0.0f,
-//                    0.0f
-//            );
-//
-//            ttsProjectRepository.save(ttsProject);
-//
-//            for (int j = 1; j <= 5; j++) {
-//                TTSDetail ttsDetail = TTSDetail.createTTSDetail(
-//                        ttsProject,
-//                        "Unit script " + j,
-//                        j
-//                );
-//
-//                ttsDetail.updateTTSDetail(
-//                        voiceStyle,
-//                        "Unit script " + j,
-//                        1.0f + j * 0.1f,
-//                        0.0f,
-//                        0.0f,
-//                        j,
-//                        false
-//                );
-//
-//                ttsDetailRepository.save(ttsDetail);
-//            }
-//        }
-//
-//        // VC 프로젝트 및 디테일 생성
-//        for (int i = 1; i <= 5; i++) {
-//            VCProject vcProject = VCProject.createVCProject(
-//                    firstMember,
-//                    "VC Project " + i
-//            );
-//
-//            vcProjectRepository.save(vcProject);
-//
-//            for (int j = 1; j <= 5; j++) {
-//                VCDetail vcDetail = VCDetail.createVCDetail(
-//                        vcProject,
-//                        null // memberAudioMeta는 여기서 null로 시작합니다.
-//                );
-//
-//                vcDetail.updateDetails(false, "Unit script " + j);
-//                vcDetailRepository.save(vcDetail);
-//            }
-//        }
-//
-//        // Concat 프로젝트 및 디테일 생성
-//        for (int i = 1; i <= 5; i++) {
-//            ConcatProject concatProject = ConcatProject.createConcatProject(
-//                    firstMember,
-//                    "Concat Project " + i
-//            );
-//
-//            concatProjectRepository.save(concatProject);
-//
-//            for (int j = 1; j <= 5; j++) {
-//                ConcatDetail concatDetail = ConcatDetail.createConcatDetail(
-//                        concatProject,
-//                        j,
-//                        true,
-//                        "Concat unit script " + j,
-//                        0.2f * j
-//                );
-//
-//                concatDetailRepository.save(concatDetail);
-//            }
-//        }
+         //TTS 프로젝트 및 디테일 생성
+        for (int i = 1; i <= 5; i++) {
+            VoiceStyle voiceStyle = voiceStyles.get((i - 1) % voiceStyles.size());
+            TTSProject ttsProject = TTSProject.createTTSProject(
+                    firstMember,
+                    "TTS Project " + i,
+                    voiceStyle,
+                    "This is the full script for project " + i,
+                    1.0f + i * 0.1f,
+                    0.0f,
+                    0.0f
+            );
+
+            ttsProjectRepository.save(ttsProject);
+
+            for (int j = 1; j <= 5; j++) {
+                TTSDetail ttsDetail = TTSDetail.createTTSDetail(
+                        ttsProject,
+                        "Unit script " + j,
+                        j
+                );
+
+                ttsDetail.updateTTSDetail(
+                        voiceStyle,
+                        "Unit script " + j,
+                        1.0f + j * 0.1f,
+                        0.0f,
+                        0.0f,
+                        j,
+                        false
+                );
+
+                ttsDetailRepository.save(ttsDetail);
+            }
+        }
+
+        // VC 프로젝트 및 디테일 생성
+        for (int i = 1; i <= 5; i++) {
+            VCProject vcProject = VCProject.createVCProject(
+                    firstMember,
+                    "VC Project " + i
+            );
+
+            vcProjectRepository.save(vcProject);
+
+            for (int j = 1; j <= 5; j++) {
+                VCDetail vcDetail = VCDetail.createVCDetail(
+                        vcProject,
+                        null // memberAudioMeta는 여기서 null로 시작합니다.
+                );
+
+                vcDetail.updateDetails(false, "Unit script " + j);
+                vcDetailRepository.save(vcDetail);
+            }
+        }
+
+        // Concat 프로젝트 및 디테일 생성
+        for (int i = 1; i <= 5; i++) {
+            ConcatProject concatProject = ConcatProject.createConcatProject(
+                    firstMember,
+                    "Concat Project " + i
+            );
+
+            concatProjectRepository.save(concatProject);
+
+            for (int j = 1; j <= 5; j++) {
+                ConcatDetail concatDetail = ConcatDetail.createConcatDetail(
+                        concatProject,
+                        j,
+                        true,
+                        "Concat unit script " + j,
+                        0.2f * j
+                );
+
+                concatDetailRepository.save(concatDetail);
+            }
+        }
     }
 }

@@ -85,6 +85,8 @@ public class VCService_team_multi {
                        resDto.setGenAudios(audioUrls);
         return resDto;
     }
+
+    // VCProject, VCDetail 저장하는 메서드
     public Long saveVCProject(VCSaveDto vcSaveDto, List<MultipartFile> localFiles, Member member) {
         // 1. VCProject 생성/업데이트
         VCProject vcProject = vcSaveDto.getProjectId() == null
@@ -100,6 +102,7 @@ public class VCService_team_multi {
         return vcProject.getId();
     }
 
+    // VCProject 생성, 저장
     private VCProject createNewVCProject(VCSaveDto vcSaveDto, Member member) {
 
         VCProject vcProject = VCProject.createVCProject(member, vcSaveDto.getProjectName());
@@ -107,6 +110,7 @@ public class VCService_team_multi {
         return vcProject;
     }
 
+    //VCProject 업데이트
     private VCProject updateExistingVCProject(VCSaveDto vcSaveDto) {
         VCProject vcProject = vcProjectRepository.findById(vcSaveDto.getProjectId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
@@ -150,7 +154,7 @@ public class VCService_team_multi {
             } else {
                 // 소스 파일은 VCDetail에 저장
                 VCDetail vcDetail = VCDetail.createVCDetail(vcProject, audioMeta);
-                vcDetail.updateDetails(true, fileDto.getUnitScript());
+                vcDetail.updateDetails(fileDto.getIsChecked(), fileDto.getUnitScript());
                 vcDetailRepository.save(vcDetail);
             }
         }
