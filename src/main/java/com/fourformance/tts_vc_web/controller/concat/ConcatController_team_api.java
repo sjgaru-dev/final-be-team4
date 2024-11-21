@@ -2,7 +2,6 @@ package com.fourformance.tts_vc_web.controller.concat;
 
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
-import com.fourformance.tts_vc_web.controller.tts.TTSController_team_api;
 import com.fourformance.tts_vc_web.dto.concat.ConcatRequestDetailDto;
 import com.fourformance.tts_vc_web.dto.concat.ConcatRequestDto;
 import com.fourformance.tts_vc_web.dto.concat.ConcatResponseDto;
@@ -30,9 +29,9 @@ import java.util.logging.Logger;
 @Slf4j
 public class ConcatController_team_api {
 
-    private static final Logger LOGGER = Logger.getLogger(ConcatController_team_api.class.getName()); // 로깅 설정
+    private static final Logger LOGGER = Logger.getLogger(ConcatController_team_api.class.getName()); // 로거 초기화
 
-    private final ConcatService_team_api concatService;
+    private final ConcatService_team_api concatService; // 병합 서비스 의존성 주입
 
     @PostMapping(
             value = "/convert/batch",
@@ -53,42 +52,42 @@ public class ConcatController_team_api {
     public ResponseDto convertMultipleAudios(
             @RequestPart("concatRequestDto") @Parameter(description = "요청 DTO") ConcatRequestDto concatRequestDto,
             @RequestPart("files") @Parameter(description = "업로드할 파일들") List<MultipartFile> files
-    )  {
+    ) {
 
         LOGGER.info("컨트롤러 메서드 호출됨: " + concatRequestDto); // 요청 데이터 로깅
 
-        // 유효성 검증: 요청 데이터가 null이거나 텍스트 세부사항 리스트가 비어있는 경우 예외 처리
-        if (concatRequestDto == null || concatRequestDto.getConcatRequestDetails() == null || concatRequestDto.getConcatRequestDetails().isEmpty()) {
-            LOGGER.warning("유효하지 않은 요청 데이터"); // 잘못된 요청 데이터 로깅
+        // 1. 유효성 검증: 요청 데이터 및 상세 데이터 확인
+        if (concatRequestDto == null ||
+                concatRequestDto.getConcatRequestDetails() == null ||
+                concatRequestDto.getConcatRequestDetails().isEmpty()) {
+            LOGGER.warning("유효하지 않은 요청 데이터: ConcatRequestDto가 null이거나 비어 있습니다."); // 잘못된 요청 데이터 로깅
             throw new BusinessException(ErrorCode.INVALID_REQUEST_DATA); // 커스텀 예외 발생
         }
 
         try {
-
-            // JSON과 파일 데이터 매핑
+            // 2. 파일 수와 요청 DTO의 상세 정보 수가 동일한지 확인
             List<ConcatRequestDetailDto> details = concatRequestDto.getConcatRequestDetails();
             if (details.size() != files.size()) {
+                LOGGER.warning("파일 수와 요청 DTO의 상세 데이터 수가 일치하지 않음");
                 throw new BusinessException(ErrorCode.INVALID_REQUEST_DATA);
             }
 
+            // 3. 요청 DTO의 각 상세 항목에 업로드된 파일 매핑
             for (int i = 0; i < details.size(); i++) {
                 details.get(i).setSourceAudio(files.get(i));
             }
 
-            // 서비스 로직 호출
-            // 서비스 계층에서 Concat 변환 로직 실행
+            // 4. 서비스 로직 호출: 병합 처리 실행
             ConcatResponseDto concatResponse = concatService.convertAllConcatDetails(concatRequestDto);
 
-            LOGGER.info("CONCAT 변환 성공");
-
-            LOGGER.info("CONCAT 변환 성공"); // 변환 성공 로그
-            // 성공적인 응답 데이터 반환
+            LOGGER.info("오디오 병합 성공"); // 성공 로그
+            // 5. 성공적인 응답 반환
             return DataResponseDto.of(concatResponse);
 
         } catch (Exception e) {
+            // 예외 발생 시 에러 로그 기록 및 커스텀 예외 반환
             log.error("오디오 병합 중 오류 발생", e);
-            //"오디오 병합 중 오류가 발생했습니다."
-            throw new BusinessException(ErrorCode.NOT_EXISTS_AUDIO);
+            throw new BusinessException(ErrorCode.NOT_EXISTS_AUDIO); // 에러 코드 반환
         }
     }
 }
