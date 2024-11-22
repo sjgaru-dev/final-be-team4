@@ -1,8 +1,12 @@
 package com.fourformance.tts_vc_web;
 
+import com.fourformance.tts_vc_web.common.constant.AudioType;
+import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.domain.entity.ConcatDetail;
 import com.fourformance.tts_vc_web.domain.entity.ConcatProject;
 import com.fourformance.tts_vc_web.domain.entity.Member;
+import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
+import com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
 import com.fourformance.tts_vc_web.domain.entity.VCDetail;
@@ -10,7 +14,9 @@ import com.fourformance.tts_vc_web.domain.entity.VCProject;
 import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
 import com.fourformance.tts_vc_web.repository.ConcatDetailRepository;
 import com.fourformance.tts_vc_web.repository.ConcatProjectRepository;
+import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
+import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.ProjectRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
 import com.fourformance.tts_vc_web.repository.TTSProjectRepository;
@@ -37,6 +43,8 @@ public class DummyDataInitializer {
     private final ConcatProjectRepository concatProjectRepository;
     private final ConcatDetailRepository concatDetailRepository;
     private final VoiceStyleRepository voiceStyleRepository;
+    private final OutputAudioMetaRepository outputAudioMetaRepository;
+    private final MemberAudioMetaRepository memberAudioMetaRepository;
 
     @Bean
     public ApplicationRunner initializeDummyData() {
@@ -98,6 +106,17 @@ public class DummyDataInitializer {
                 );
 
                 ttsDetailRepository.save(ttsDetail);
+
+                // OutputAudioMeta 생성
+                OutputAudioMeta outputAudioMeta = OutputAudioMeta.createOutputAudioMeta(
+                        "bucket/tts_project_" + i + "_detail_" + j,
+                        ttsDetail,
+                        null,
+                        null,
+                        ProjectType.TTS,
+                        "https://audio.example.com/tts_project_" + i + "_detail_" + j + ".wav"
+                );
+                outputAudioMetaRepository.save(outputAudioMeta);
             }
         }
 
@@ -118,6 +137,17 @@ public class DummyDataInitializer {
 
                 vcDetail.updateDetails(false, "Unit script " + j);
                 vcDetailRepository.save(vcDetail);
+
+                // OutputAudioMeta 생성
+                OutputAudioMeta outputAudioMeta = OutputAudioMeta.createOutputAudioMeta(
+                        "bucket/vc_project_" + i + "_detail_" + j,
+                        null,
+                        vcDetail,
+                        null,
+                        ProjectType.VC,
+                        "https://audio.example.com/vc_project_" + i + "_detail_" + j + ".wav"
+                );
+                outputAudioMetaRepository.save(outputAudioMeta);
             }
         }
 
@@ -131,16 +161,38 @@ public class DummyDataInitializer {
             concatProjectRepository.save(concatProject);
 
             for (int j = 1; j <= 5; j++) {
+                // MemberAudioMeta 추가
+                MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(
+                        firstMember,
+                        "bucket/concat_project_" + i + "_detail_" + j,
+                        "https://audio.example.com/concat_project_" + i + "_detail_" + j + ".wav",
+                        AudioType.CONCAT,
+                        "concat_voice_" + j
+                );
+                memberAudioMetaRepository.save(memberAudioMeta);
+
                 ConcatDetail concatDetail = ConcatDetail.createConcatDetail(
                         concatProject,
                         j,
                         true,
                         "Concat unit script " + j,
-                        0.2f * j
+                        0.2f * j,
+                        memberAudioMeta // MemberAudioMeta 연결
                 );
 
                 concatDetailRepository.save(concatDetail);
             }
+
+            // OutputAudioMeta 생성
+            OutputAudioMeta outputAudioMeta = OutputAudioMeta.createOutputAudioMeta(
+                    "bucket/concat_project_" + i,
+                    null,
+                    null,
+                    concatProject,
+                    ProjectType.CONCAT,
+                    "https://audio.example.com/concat_project_" + i + ".wav"
+            );
+            outputAudioMetaRepository.save(outputAudioMeta);
         }
     }
 }

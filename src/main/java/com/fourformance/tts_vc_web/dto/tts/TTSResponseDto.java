@@ -10,7 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TTSSaveDto {
+public class TTSResponseDto {
     private Long projectId;
     private Long memberId;
     private String projectName;
@@ -19,7 +19,8 @@ public class TTSSaveDto {
     private Float globalSpeed;
     private Float globalPitch;
     private Float globalVolume;
-//    private APIStatusConst apiStatus;
+    private APIStatusConst apiStatus;
 
-    private List<TTSDetailDto> ttsDetails;
+
+    private List<TTSResponseDetailDto> ttsDetails;
 }

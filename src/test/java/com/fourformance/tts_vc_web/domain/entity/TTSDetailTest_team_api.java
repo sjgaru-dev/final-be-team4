@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-@Rollback(value = false)
+//@Rollback(value = false)
 class TTSDetailTest {
 
     @Autowired
@@ -71,24 +71,26 @@ class TTSDetailTest {
         // 스타일 생성 및 저장
         VoiceStyle VoiceStyle = createTestStyle();
 
-        // when
-        // TTSDetail 생성 및 저장
-        TTSDetail ttsDetail = TTSDetail.createTTSDetail(ttsProject, "Sample Script", 1);
-        ttsDetailRepository.save(ttsDetail);
+        for (int i = 1; i < 11; i++) {
+            // when
+            // TTSDetail 생성 및 저장
+            TTSDetail ttsDetail = TTSDetail.createTTSDetail(ttsProject, "Sample Script", i);
+            ttsDetailRepository.save(ttsDetail);
 
-        // DB에 반영하고 영속성 컨텍스트 초기화
-        em.flush();
-        em.clear();
+            // DB에 반영하고 영속성 컨텍스트 초기화
+            em.flush();
+            em.clear();
 
-        // TTSDetail 객체 조회
-        TTSDetail afterTTSDetail = ttsDetailRepository.findById(ttsDetail.getId()).orElse(null);
+            // TTSDetail 객체 조회
+            TTSDetail afterTTSDetail = ttsDetailRepository.findById(ttsDetail.getId()).orElse(null);
 
-        // then
-        // 조회된 객체가 null이 아닌지 확인
-        assertNotNull(afterTTSDetail);
-        // 생성된 TTSDetail의 필드 값 검증
-        assertEquals(ttsDetail.getUnitScript(), afterTTSDetail.getUnitScript());
-        assertEquals(ttsDetail.getUnitSequence(), afterTTSDetail.getUnitSequence());
+            // then
+            // 조회된 객체가 null이 아닌지 확인
+            assertNotNull(afterTTSDetail);
+            // 생성된 TTSDetail의 필드 값 검증
+            assertEquals(ttsDetail.getUnitScript(), afterTTSDetail.getUnitScript());
+            assertEquals(ttsDetail.getUnitSequence(), afterTTSDetail.getUnitSequence());
+        }
     }
 
     // 2. TTSDetail 업데이트 테스트
