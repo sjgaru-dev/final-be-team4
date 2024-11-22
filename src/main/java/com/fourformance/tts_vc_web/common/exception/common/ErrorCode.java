@@ -31,6 +31,7 @@ public enum ErrorCode {
     // 3000번대 코드 : DB 관련
     NOT_EXISTS_PROJECT(3000, HttpStatus.BAD_REQUEST, "해당 프로젝트를 찾을 수 없습니다."),
     AUDIO_NOT_FOUND_EXCEPTION(3400, HttpStatus.BAD_REQUEST, "VC Target 오디오를 찾을 수 없습니다."),
+    VOICE_STYLE_NOT_FOUND_EXCEPTION(3500, HttpStatus.BAD_REQUEST, "Voice Style 데이터를 찾을 수 없습니다."),
 
     // 4000번대 코드 : 서버 내부 오류, 코드 오류
     SERVER_ERROR(4000, HttpStatus.BAD_REQUEST,"서버 내부 오류가 발생했습니다."),

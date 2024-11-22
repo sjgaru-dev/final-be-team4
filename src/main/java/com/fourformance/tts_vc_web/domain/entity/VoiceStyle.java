@@ -22,6 +22,7 @@ public class VoiceStyle extends BaseEntity {
     private String languageCode;
     private String voiceType; //"standard"
     private String voiceName;
+
     private String gender;
     private String personality;
     private boolean isVisible = true;
