@@ -2,9 +2,11 @@ package com.fourformance.tts_vc_web.controller.concat;
 
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.domain.entity.Member;
 import com.fourformance.tts_vc_web.dto.concat.ConcatSaveDto;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
+import com.fourformance.tts_vc_web.repository.MemberRepository;
 import com.fourformance.tts_vc_web.service.common.ProjectService_team_aws;
 import com.fourformance.tts_vc_web.service.concat.ConcatService_team_aws;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +29,34 @@ public class ConcatViewController_team_aws {
 
     private final ConcatService_team_aws concatService;
     private final ProjectService_team_aws projectService;
+    private final MemberRepository memberRepository;
+
+
+//    @Operation(
+//            summary = "Concat 상태 저장",
+//            description = "Concat 프로젝트 상태를 저장합니다.")
+//    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseDto concatSave11(
+//            @RequestPart(value = "concatSaveDto") ConcatSaveDto concatSaveDto, // 반드시 "concatSaveDto" 이름 지정
+//            @RequestPart(value = "file", required = false) List<MultipartFile> files,
+//            HttpSession session) {
+//        try {
+//            Long memberId = 1L; // 개발단계 임시 하드코딩
+//            Long projectId;
+//
+//            if (concatSaveDto.getProjectId() == null) {
+//                projectId = concatService.createNewProject(concatSaveDto, memberId, files);
+//            } else {
+//                projectId = concatService.updateProject(concatSaveDto, memberId, files);
+//            }
+//
+////            concatService.fileProcess(concatSaveDto, files, memberId);
+//
+//            return DataResponseDto.of(projectId, "상태가 성공적으로 저장되었습니다.");
+//        } catch (BusinessException e) {
+//            throw e;
+//        }
+//    }
 
     // Concat 상태 저장 메서드
     @Operation(
@@ -37,23 +67,14 @@ public class ConcatViewController_team_aws {
             @RequestPart(value = "concatSaveDto") ConcatSaveDto concatSaveDto, // 반드시 "concatSaveDto" 이름 지정
             @RequestPart(value = "file", required = false) List<MultipartFile> files,
             HttpSession session) {
-        try {
-            Long memberId = 1L; // 개발단계 임시 하드코딩
-            Long projectId;
 
-            if (concatSaveDto.getProjectId() == null) {
-                projectId = concatService.createNewProject(concatSaveDto, memberId, files);
-            } else {
-                projectId = concatService.updateProject(concatSaveDto, memberId, files);
-            }
+        Long memberId = 1L; // 개발단계 임시 하드코딩
 
-//            concatService.fileProcess(concatSaveDto, files, memberId);
+        Long projectId = concatService.saveConcatProject(concatSaveDto, files, memberId);
 
-            return DataResponseDto.of(projectId, "상태가 성공적으로 저장되었습니다.");
-        } catch (BusinessException e) {
-            throw e;
-        }
+        return DataResponseDto.of(projectId, "Concat 상태가 성공적으로 저장되었습니다.");
     }
+
 
     // Concat 프로젝트 삭제
     @Operation(

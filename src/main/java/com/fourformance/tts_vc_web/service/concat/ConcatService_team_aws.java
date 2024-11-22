@@ -3,11 +3,10 @@ package com.fourformance.tts_vc_web.service.concat;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
-import com.fourformance.tts_vc_web.domain.entity.ConcatDetail;
-import com.fourformance.tts_vc_web.domain.entity.ConcatProject;
-import com.fourformance.tts_vc_web.domain.entity.Member;
+import com.fourformance.tts_vc_web.domain.entity.*;
 import com.fourformance.tts_vc_web.dto.concat.ConcatDetailDto;
 import com.fourformance.tts_vc_web.dto.concat.ConcatSaveDto;
+import com.fourformance.tts_vc_web.dto.vc.AudioFileDto;
 import com.fourformance.tts_vc_web.repository.ConcatDetailRepository;
 import com.fourformance.tts_vc_web.repository.ConcatProjectRepository;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
@@ -31,7 +30,88 @@ public class ConcatService_team_aws {
     private final MemberRepository memberRepository;
     private final S3Service s3Service;
 
+    // concat 프로젝트 저장하는 메서드
+    public Long saveConcatProject(ConcatSaveDto dto, List<MultipartFile> localFiles, Long memberId) {
+        // 1. ConcatProject 생성/업데이트
+        ConcatProject concatProject = dto.getProjectId() == null
+                ? createNewConcatProject(dto, memberId)
+                : updateExistingConcatProject(dto);
 
+        // 2. Concat Detail(==Concat src 1개) 생성&저장
+        processFiles(dto.getConcatDetails(), localFiles, concatProject, AudioType.CONCAT);
+
+        return concatProject.getId();
+    }
+
+    // Concat 프로젝트 생성
+    private ConcatProject createNewConcatProject(ConcatSaveDto dto, Long memberId) {
+        // 멤버 id로 멤버 객체 찾기
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        ConcatProject concatProject = ConcatProject.createConcatProject(member, dto.getProjectName());
+        return concatProject;
+    }
+
+    // Concat 프로젝트 업데이트
+    private ConcatProject updateExistingConcatProject(ConcatSaveDto dto){
+        ConcatProject concatProject = concatProjectRepository.findById(dto.getProjectId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+
+        concatProject.updateConcatProject(dto.getProjectName(), dto.getGlobalFrontSilenceLength(), dto.getGlobalTotalSilenceLength());
+
+        return concatProject;
+    }
+
+    private void processFiles(List<ConcatDetailDto> fileDtos, List<MultipartFile> files, ConcatProject concatProject, AudioType audioType) {
+
+        if (fileDtos == null || fileDtos.isEmpty()) { // 업로드 된 파일이 없을 때
+            return;
+        }
+
+        for (ConcatDetailDto fileDto : fileDtos) {
+            MemberAudioMeta audioMeta = null;
+
+            if (fileDto.getS3MemberAudioMetaId() != null) {
+                // S3 파일 처리
+                audioMeta = memberAudioMetaRepository.findById(fileDto.getS3MemberAudioMetaId())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_AUDIO));
+            } else if (fileDto.getLocalFileName() != null) {
+                // 로컬 파일 처리
+                MultipartFile localFile = findMultipartFileByName(files, fileDto.getLocalFileName());
+                List<String> uploadedUrls = s3Service.uploadAndSaveMemberFile(
+                        List.of(localFile), vcProject.getMember().getId(), vcProject.getId(), audioType, null); // voiceId를 받아오는 api 호출해서 null을 반환값으로 채우면 될 듯
+                String fileUrl = uploadedUrls.get(0);
+
+                audioMeta = memberAudioMetaRepository.findFirstByAudioUrl(fileUrl)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_AUDIO));
+            }
+
+            if (audioMeta == null) {
+                throw new BusinessException(ErrorCode.INVALID_PROJECT_DATA);
+            }
+
+            if (audioType == AudioType.VC_TRG) {
+                // 타겟 파일은 VCProject에 저장
+                vcProject.updateVCProject(vcProject.getProjectName(), audioMeta);
+            } else {
+                // 소스 파일은 VCDetail에 저장
+                VCDetail vcDetail = VCDetail.createVCDetail(vcProject, audioMeta);
+                vcDetail.updateDetails(fileDto.getIsChecked(), fileDto.getUnitScript());
+                vcDetailRepository.save(vcDetail);
+            }
+        }
+    }
+    private MultipartFile findMultipartFileByName(List<MultipartFile> files, String localFileName) {
+        return files.stream()
+                .filter(file -> file.getOriginalFilename().equals(localFileName))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.FILE_PROCESSING_ERROR));
+    }
+
+
+
+//===================================================================================
     // Concat 프로젝트 생성
     @Transactional
     public Long createNewProject(ConcatSaveDto dto, Long memberId, List<MultipartFile> files) {
