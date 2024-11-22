@@ -1,128 +1,294 @@
 package com.fourformance.tts_vc_web.service.concat;
 
-import com.fourformance.tts_vc_web.service.tts.TTSService_team_api;
-import net.bramp.ffmpeg.FFmpeg;
-import net.bramp.ffmpeg.FFmpegExecutor;
-import net.bramp.ffmpeg.builder.FFmpegBuilder;
-import org.springframework.beans.factory.annotation.Value;
+import com.fourformance.tts_vc_web.common.constant.AudioType;
+import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.domain.entity.*;
+import com.fourformance.tts_vc_web.dto.concat.*;
+import com.fourformance.tts_vc_web.repository.ConcatDetailRepository;
+import com.fourformance.tts_vc_web.repository.ConcatProjectRepository;
+import com.fourformance.tts_vc_web.repository.MemberRepository;
+import com.fourformance.tts_vc_web.service.common.S3Service;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class ConcatService_team_api {
 
-    @Value("${upload.dir}")
-    private String uploadDir;
-
-    @Value("${ffmpeg.path}")
-    private String ffmpegPath;
+    // 서비스 의존성 주입
+    private final S3Service s3Service; // S3 연동 서비스
+    private final AudioProcessingService audioProcessingService; // 오디오 처리 서비스
+    private final ConcatProjectRepository concatProjectRepository; // 프로젝트 관련 저장소
+    private final ConcatDetailRepository concatDetailRepository; // 디테일 관련 저장소
+    private final MemberRepository memberRepository; // 멤버 관련 저장소
 
     private static final Logger LOGGER = Logger.getLogger(ConcatService_team_api.class.getName());
+    private String uploadDir; // 업로드 디렉토리 경로
 
-    public String convertMultipleAudios(MultipartFile[] sourceAudios) {
+    /**
+     * 서비스 초기화 메서드: 업로드 디렉토리를 생성합니다.
+     */
+    @PostConstruct
+    public void initialize() {
+        uploadDir = System.getProperty("user.home") + "/uploads";
+        File uploadFolder = new File(uploadDir);
+
+        // 디렉토리 존재 여부 확인 후 생성
+        if (!uploadFolder.exists()) {
+            if (!uploadFolder.mkdirs()) {
+                throw new RuntimeException("업로드 디렉토리를 생성할 수 없습니다: " + uploadDir);
+            }
+        }
+        LOGGER.info("업로드 디렉토리가 설정되었습니다: " + uploadDir);
+    }
+
+    /**
+     * 오디오 파일 병합 프로세스 수행
+     *
+     * @param concatRequestDto 요청 데이터 DTO
+     * @return 병합 결과 DTO
+     */
+    public ConcatResponseDto convertAllConcatDetails(ConcatRequestDto concatRequestDto) {
+        LOGGER.info("convertAllConcatDetails 호출: " + concatRequestDto);
+
+        // 1. 프로젝트 생성 또는 업데이트
+        ConcatProject concatProject = saveOrUpdateProject(concatRequestDto);
+
+        // 2. 응답 DTO 생성 및 초기화
+        ConcatResponseDto concatResponseDto = ConcatResponseDto.builder()
+                .projectId(concatProject.getId())
+                .projectName(concatProject.getProjectName())
+                .globalFrontSilenceLength(concatProject.getGlobalFrontSilenceLength())
+                .globalTotalSilenceLength(concatProject.getGlobalTotalSilenceLength())
+                .build();
+
+        List<ConcatResponseDetailDto> responseDetails = new ArrayList<>();
+        List<String> outputConcatAudios = new ArrayList<>();
+
+        // 3. 각 요청 디테일 처리
+        for (ConcatRequestDetailDto detailDto : concatRequestDto.getConcatRequestDetails()) {
+            try {
+                LOGGER.info("ConcatDetail 처리 시작: " + detailDto);
+                ConcatDetail concatDetail;
+                MemberAudioMeta memberAudioMeta = null;
+
+                if (detailDto.getId() == null) {
+                    LOGGER.info("새로운 ConcatDetail 생성 - AudioSeq: " + detailDto.getAudioSeq());
+                    // 새로운 디테일인 경우
+                    memberAudioMeta = uploadConcatDetailSourceAudio(detailDto, concatProject);
+                    concatDetail = saveOrUpdateDetail(detailDto, concatProject, memberAudioMeta);
+                } else {
+                    LOGGER.info("기존 ConcatDetail 업데이트 - ID: " + detailDto.getId());
+                    // 기존 디테일인 경우
+                    concatDetail = saveOrUpdateDetail(detailDto, concatProject, null);
+                    memberAudioMeta = concatDetail.getMemberAudioMeta();
+                }
+
+                // 응답 디테일 생성 및 추가
+                ConcatResponseDetailDto responseDetailDto = ConcatResponseDetailDto.builder()
+                        .id(concatDetail.getId())
+                        .audioSeq(concatDetail.getAudioSeq())
+                        .isChecked(concatDetail.isChecked())
+                        .unitScript(concatDetail.getUnitScript())
+                        .endSilence(concatDetail.getEndSilence())
+                        .audioUrl(memberAudioMeta != null ? memberAudioMeta.getAudioUrl() : null)
+//                        .sourceAudio(null) // 응답에 파일을 포함하지 않음
+                        .build();
+                responseDetails.add(responseDetailDto);
+
+                LOGGER.info("ConcatDetail 처리 완료 - ID: " + concatDetail.getId());
+
+            } catch (Exception e) {
+                LOGGER.severe("ConcatDetail 처리 중 오류 발생: " + detailDto + ", 메시지: " + e.getMessage());
+                throw new BusinessException(ErrorCode.TTS_DETAIL_PROCESSING_FAILED);
+            }
+        }
+
+        // 4. 병합된 오디오 생성 및 S3 업로드
+        String mergedFileUrl = mergeAudioFilesAndUploadToS3(responseDetails, uploadDir, concatRequestDto.getMemberId(), concatProject.getId());
+        outputConcatAudios.add(mergedFileUrl);
+        concatResponseDto.setOutputConcatAudios(outputConcatAudios);
+        concatResponseDto.setConcatResponseDetails(responseDetails);
+
+        return concatResponseDto;
+    }
+
+    /**
+     * 오디오 파일 병합 및 S3 업로드
+     *
+     * @param audioDetails 병합 대상 디테일 리스트
+     * @param uploadDir    업로드 디렉토리 경로
+     * @param userId       사용자 ID
+     * @param projectId    프로젝트 ID
+     * @return 업로드된 병합 파일의 URL
+     */
+    public String mergeAudioFilesAndUploadToS3(List<ConcatResponseDetailDto> audioDetails, String uploadDir, Long userId, Long projectId) {
+        List<String> savedFilePaths = new ArrayList<>();
+        List<String> silenceFilePaths = new ArrayList<>();
+        String mergedFilePath = null;
+
         try {
-            // 파일 저장 경로 확인 및 생성
-            File uploadFolder = new File(uploadDir.trim()); // 경로 공백 제거
-            if (!uploadFolder.exists()) {
-                boolean created = uploadFolder.mkdirs();
-                if (!created) {
-                    throw new RuntimeException("파일 저장 디렉토리를 생성할 수 없습니다: " + uploadDir);
+            // 1. 체크된 파일 필터링
+            List<ConcatResponseDetailDto> filteredDetails = audioDetails.stream()
+                    .filter(ConcatResponseDetailDto::isChecked)
+                    .collect(Collectors.toList());
+
+            if (filteredDetails.isEmpty()) {
+                LOGGER.severe("병합할 파일이 없습니다.");
+                throw new BusinessException(ErrorCode.NO_FILES_TO_MERGE);
+            }
+
+            // 2. S3에서 파일 다운로드 및 침묵 파일 생성
+            for (ConcatResponseDetailDto detail : filteredDetails) {
+                if (detail.getAudioUrl() != null) {
+                    String savedFilePath = s3Service.downloadFileFromS3(detail.getAudioUrl(), uploadDir);
+                    savedFilePaths.add(savedFilePath);
+
+                    String silenceFilePath = audioProcessingService.createSilenceFile(detail.getEndSilence().longValue(), uploadDir);
+                    if (silenceFilePath != null) silenceFilePaths.add(silenceFilePath);
+                } else {
+                    LOGGER.warning("Audio URL이 없습니다. Detail ID: " + detail.getId());
                 }
             }
 
-            // 소스 파일 저장
-            List<String> savedFilePaths = new ArrayList<>();
-            for (MultipartFile audio : sourceAudios) {
-                if (!audio.isEmpty()) {
-                    String savedFileName = UUID.randomUUID().toString() + "_" + audio.getOriginalFilename();
-                    File savedFile = new File(uploadFolder, savedFileName);
-                    audio.transferTo(savedFile);
-                    savedFilePaths.add(savedFile.getAbsolutePath());
-                    LOGGER.info("파일 저장 완료: " + savedFile.getAbsolutePath());
-                }
+            // 3. 병합된 파일 생성
+            mergedFilePath = audioProcessingService.mergeAudioFilesWithSilence(savedFilePaths, silenceFilePaths, uploadDir);
+
+            // 4. 병합된 파일을 S3에 업로드 후 URL 반환
+            return s3Service.uploadConcatSaveFile(audioProcessingService.convertToMultipartFile(mergedFilePath), userId, projectId);
+
+        } catch (IOException e) {
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        } finally {
+            // 5. 임시 파일 삭제
+            audioProcessingService.deleteFiles(savedFilePaths);
+            audioProcessingService.deleteFiles(silenceFilePaths);
+            if (mergedFilePath != null) {
+                audioProcessingService.deleteFiles(Collections.singletonList(mergedFilePath));
             }
-
-            if (savedFilePaths.isEmpty()) {
-                throw new RuntimeException("업로드된 파일이 없습니다.");
-            }
-
-            // 병합된 파일 경로
-            String mergedFilePath = uploadDir.trim() + "/merged_" + UUID.randomUUID() + ".mp3";
-
-            // FFmpeg로 오디오 병합
-            mergeAudioFilesWithSilence(savedFilePaths.toArray(new String[0]), mergedFilePath, 2);
-
-            LOGGER.info("병합된 파일 저장 경로: " + mergedFilePath);
-            return mergedFilePath;
-
-        } catch (Exception e) {
-            LOGGER.severe("오디오 병합 실패: " + e.getMessage());
-            throw new RuntimeException("오디오 병합 중 오류 발생", e);
         }
     }
 
-    private void mergeAudioFilesWithSilence(String[] audioPaths, String outputPath, int silenceDurationSec) throws IOException {
-        String silenceFilePath = uploadDir.trim() + "/temp_silence.mp3";
-
-        FFmpeg ffmpeg = new FFmpeg(ffmpegPath);
-
-        // 무음 파일 생성
-        FFmpegBuilder silenceBuilder = new FFmpegBuilder()
-                .setInput("anullsrc")
-                .addExtraArgs("-f", "lavfi")
-                .overrideOutputFiles(true)
-                .addOutput(silenceFilePath)
-                .setAudioCodec("libmp3lame")
-                .setAudioChannels(2)
-                .setAudioSampleRate(44100)
-                .setDuration(silenceDurationSec, TimeUnit.SECONDS)
-                .done();
-
-        FFmpegExecutor executor = new FFmpegExecutor(ffmpeg);
-        executor.createJob(silenceBuilder).run();
-
-        // concat 필터를 위한 입력 설정
-        StringBuilder filterComplexBuilder = new StringBuilder();
-        List<String> inputs = new ArrayList<>();
-
-        int inputIndex = 0;
-        for (String audioPath : audioPaths) {
-            inputs.add(audioPath);
-            filterComplexBuilder.append("[").append(inputIndex++).append(":a]");
-            if (audioPath != audioPaths[audioPaths.length - 1]) {
-                inputs.add(silenceFilePath);
-                filterComplexBuilder.append("[").append(inputIndex++).append(":a]");
-            }
-        }
-        filterComplexBuilder.append("concat=n=").append(inputIndex).append(":v=0:a=1[out]");
-
-        FFmpegBuilder mergeBuilder = new FFmpegBuilder()
-                .overrideOutputFiles(true)
-                .addOutput(outputPath)
-                .setAudioCodec("libmp3lame")
-                .setAudioChannels(2)
-                .setAudioBitRate(192000)
-                .addExtraArgs("-filter_complex", filterComplexBuilder.toString())
-                .addExtraArgs("-map", "[out]")
-                .done();
-
-        for (String input : inputs) {
-            mergeBuilder.addInput(input);
-        }
-
-        executor.createJob(mergeBuilder).run();
-
-        // 임시 무음 파일 삭제
-        Files.deleteIfExists(new File(silenceFilePath).toPath());
+    /**
+     * 프로젝트 생성 또는 업데이트
+     *
+     * @param concatRequestDto 요청 데이터
+     * @return 프로젝트 엔티티
+     */
+    private ConcatProject saveOrUpdateProject(ConcatRequestDto concatRequestDto) {
+        return Optional.ofNullable(concatRequestDto.getProjectId())
+                .map(projectId -> {
+                    updateProject(concatRequestDto);
+                    return concatProjectRepository.findById(projectId)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+                })
+                .orElseGet(() -> createNewProject(concatRequestDto));
     }
 
+    /**
+     * 새로운 프로젝트 생성
+     */
+    private ConcatProject createNewProject(ConcatRequestDto dto) {
+        Member member = memberRepository.findById(dto.getMemberId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        ConcatProject concatProject = ConcatProject.createConcatProject(
+                member,
+                dto.getProjectName()
+        );
+
+        // 프로젝트 전역 값이 하나라도 다르다면 수행
+        if(dto.getGlobalFrontSilenceLength() != 0.0F || dto.getGlobalTotalSilenceLength() != 0.0F || dto.getProjectName() != null){
+            concatProject.updateConcatProject(dto.getProjectName(), dto.getGlobalFrontSilenceLength(), dto.getGlobalFrontSilenceLength());
+        }
+
+        return concatProjectRepository.save(concatProject);
+    }
+
+    /**
+     * 기존 프로젝트 업데이트
+     */
+    private void updateProject(ConcatRequestDto dto) {
+        ConcatProject project = concatProjectRepository.findById(dto.getProjectId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+
+        if (!project.getMember().getId().equals(dto.getMemberId())) {
+            throw new BusinessException(ErrorCode.MEMBER_PROJECT_NOT_MATCH);
+        }
+
+        project.updateConcatProject(dto.getProjectName(), dto.getGlobalFrontSilenceLength(), dto.getGlobalTotalSilenceLength());
+    }
+
+    /**
+     * 디테일 저장 또는 업데이트
+     */
+    private ConcatDetail saveOrUpdateDetail(ConcatRequestDetailDto detailDto, ConcatProject concatProject, MemberAudioMeta memberAudioMeta) {
+        return Optional.ofNullable(detailDto.getId())
+                .map(id -> {
+                    updateConcatDetail(detailDto, concatProject);
+                    return concatDetailRepository.findById(id)
+                            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL));
+                })
+                .orElseGet(() -> {
+                    // 새로운 ConcatDetail 생성 시에만 memberAudioMeta를 설정합니다.
+                    return concatDetailRepository.save(
+                            ConcatDetail.createConcatDetail(
+                                    concatProject,
+                                    detailDto.getAudioSeq(),
+                                    detailDto.isChecked(),
+                                    detailDto.getUnitScript(),
+                                    detailDto.getEndSilence(),
+                                    memberAudioMeta
+                            )
+                    );
+                });
+    }
+
+    /**
+     * 기존 디테일 업데이트
+     */
+    private void updateConcatDetail(ConcatRequestDetailDto detailDto, ConcatProject concatProject) {
+        ConcatDetail concatDetail = concatDetailRepository.findById(detailDto.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL));
+
+        if (!concatDetail.getConcatProject().getId().equals(concatProject.getId())) {
+            throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL);
+        }
+
+        concatDetail.updateDetails(
+                detailDto.getAudioSeq(),
+                detailDto.isChecked(),
+                detailDto.getUnitScript(),
+                detailDto.getEndSilence(),
+                false
+        );
+    }
+
+    /**
+     * 요청된 디테일의 소스 오디오를 S3에 업로드 후 MemberAudioMeta 반환
+     */
+    private MemberAudioMeta uploadConcatDetailSourceAudio(ConcatRequestDetailDto detailDto, ConcatProject concatProject) {
+        // 파일 업로드 및 MemberAudioMeta 생성
+        List<MemberAudioMeta> memberAudioMetas = s3Service.uploadAndSaveMemberFile2(
+                Collections.singletonList(detailDto.getSourceAudio()),
+                concatProject.getMember().getId(),
+                concatProject.getId(),
+                AudioType.CONCAT,
+                null
+        );
+
+        // 업로드된 첫 번째 파일의 MemberAudioMeta를 반환
+        return memberAudioMetas.get(0);
+    }
 }

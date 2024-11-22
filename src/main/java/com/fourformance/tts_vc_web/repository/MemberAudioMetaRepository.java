@@ -64,4 +64,5 @@ public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta
             "WHERE c.id IN :concatDetailIds ")
     List<MemberAudioMeta> findByConcatDetailIds(@Param("concatDetailIds") List<Long> concatDetailIds);
 
+
 }
