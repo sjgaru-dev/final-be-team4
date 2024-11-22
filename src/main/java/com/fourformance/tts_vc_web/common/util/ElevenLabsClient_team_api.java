@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -27,9 +29,25 @@ public class ElevenLabsClient_team_api {
                 .addFormDataPart("name", "user_custom_voice")
                 .addFormDataPart("remove_background_noise", "false");
 
-        File audioFile = new File(targetAudioPath);
-        builder.addFormDataPart("files", audioFile.getName(),
-                RequestBody.create(audioFile, MediaType.parse("audio/mpeg")));
+        RequestBody audioRequestBody;
+        String fileName;
+
+        if (targetAudioPath.startsWith("http://") || targetAudioPath.startsWith("https://")) {
+            // S3 URL에서 파일 다운로드
+            URL url = new URL(targetAudioPath);
+            try (InputStream inputStream = url.openStream()) {
+                byte[] audioBytes = inputStream.readAllBytes();
+                fileName = Paths.get(url.getPath()).getFileName().toString();
+                audioRequestBody = RequestBody.create(audioBytes, MediaType.parse("audio/mpeg"));
+            }
+        } else {
+            // 로컬 파일 경로인 경우
+            File audioFile = new File(targetAudioPath);
+            fileName = audioFile.getName();
+            audioRequestBody = RequestBody.create(audioFile, MediaType.parse("audio/mpeg"));
+        }
+
+        builder.addFormDataPart("files", fileName, audioRequestBody);
 
         Request request = new Request.Builder()
                 .url(baseUrl + "/voices/add")
@@ -46,6 +64,7 @@ public class ElevenLabsClient_team_api {
             return extractVoiceId(responseBody);
         }
     }
+
 
     public String convertSpeechToSpeech(String voiceId, String audioFilePath) throws IOException {
         MultipartBody.Builder builder = new MultipartBody.Builder()
