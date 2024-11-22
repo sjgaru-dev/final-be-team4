@@ -27,4 +27,7 @@ public interface OutputAudioMetaRepository extends JpaRepository<OutputAudioMeta
     ORDER BY o.createdAt DESC
     """)
     List<OutputAudioMeta> findTop5ByMemberId(@Param("memberId") Long memberId);
+
+
+
 }

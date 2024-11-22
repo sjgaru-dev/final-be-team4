@@ -9,6 +9,11 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
+    //    @Query(value = "SELECT p " +
+//            "FROM Project p " +
+//            "WHERE p.member.id = :memberId " +
+//            "ORDER BY p.createdAt DESC")
+    List<Project> findTop5ByMemberIdOrderByUpdatedAtDesc(@Param("memberId") Long memberId);
 
     // 멤버 아이디가 같고 project의 컬럼이 isDeleted인지 확인.
     @Query("""
