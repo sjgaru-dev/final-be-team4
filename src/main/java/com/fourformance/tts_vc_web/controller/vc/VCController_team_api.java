@@ -2,6 +2,7 @@ package com.fourformance.tts_vc_web.controller.vc;
 
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.domain.entity.Member;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
@@ -32,9 +33,10 @@ public class VCController_team_api {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "VC 프로젝트 처리 성공")})
     @PostMapping(value = "/process", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseDto processVCProject(
+            @RequestParam("memberId") Long memberId,
             @RequestPart("vcSaveDto") VCSaveDto vcSaveDto,
-            @RequestPart("files") List<MultipartFile> files,
-            @RequestParam("memberId") Long memberId) {
+            @RequestPart("files") List<MultipartFile> files) {
+
         try {
             LOGGER.info("VC 프로젝트 처리 요청 수신");
             List<VCDetailResDto> response = vcService.processVCProject(vcSaveDto, files, memberId);
