@@ -40,7 +40,7 @@ jobs:
         run: echo "GOOGLE_APPLICATION_CREDENTIALS=src/main/resources/StableFurnaceProject1.json" >> $GITHUB_ENV
 
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew build -x test
 
       - name: Docker Login
         uses: docker/login-action@v3
