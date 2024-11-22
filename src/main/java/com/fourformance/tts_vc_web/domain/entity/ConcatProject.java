@@ -1,9 +1,6 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +10,7 @@ import lombok.ToString;
 @ToString
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "concat_project")
 public class ConcatProject extends Project {
     private Float globalFrontSilenceLength = 0.0F;
     private Float globalTotalSilenceLength = 0.0F;

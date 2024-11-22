@@ -2,8 +2,7 @@ package com.fourformance.tts_vc_web.service.common;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.*;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
@@ -24,8 +23,15 @@ import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.ProjectRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
 import com.fourformance.tts_vc_web.repository.VCDetailRepository;
+
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -208,7 +214,8 @@ public class S3Service {
     }
 
     // 유저 오디오를 S3에 업로드하고 DB에 저장하는 메서드
-    public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId, AudioType audioType, String voiceId) {
+    public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId,
+                                                AudioType audioType, String voiceId) {
 
         try {
             // url을 담을 리스트
@@ -246,6 +253,91 @@ public class S3Service {
             }
 
             return uploadedUrls;
+
+        } catch (AmazonClientException e) {
+            // S3 업로드 중 발생하는 예외
+            throw new BusinessException(ErrorCode.S3_UPLOAD_FAILED);
+        } catch (IOException e) {
+            // 파일 처리 중 발생하는 예외
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
+    }
+
+    /**
+     * S3에서 파일을 다운로드하여 로컬에 저장합니다.
+     *
+     * @param fileUrl   다운로드할 파일의 S3 URL
+     * @param localDir  로컬에 저장할 디렉토리 경로
+     * @return 로컬에 저장된 파일의 전체 경로
+     */
+    public String downloadFileFromS3(String fileUrl, String localDir) {
+        try {
+            // S3 버킷 이름과 키를 추출
+            URI uri = URI.create(fileUrl);
+            String bucketName = bucket; // 버킷 이름은 설정된 값을 사용
+            String key = uri.getPath().substring(1); // '/' 제거
+
+            // 파일 이름 추출
+            String fileName = Paths.get(key).getFileName().toString();
+
+            // 로컬 저장 경로 설정
+            Path localFilePath = Paths.get(localDir, fileName);
+            Files.createDirectories(localFilePath.getParent()); // 디렉토리 생성
+
+            // S3에서 파일 다운로드
+            S3Object s3Object = amazonS3Client.getObject(new GetObjectRequest(bucketName, key));
+            try (S3ObjectInputStream s3is = s3Object.getObjectContent();
+                 FileOutputStream fos = new FileOutputStream(localFilePath.toFile())) {
+                byte[] readBuf = new byte[1024];
+                int readLen;
+                while ((readLen = s3is.read(readBuf)) > 0) {
+                    fos.write(readBuf, 0, readLen);
+                }
+            }
+
+            return localFilePath.toString();
+        } catch (AmazonClientException e) {
+            throw new BusinessException(ErrorCode.S3_DOWNLOAD_FAILED);
+        } catch (IOException e) {
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
+    }
+
+    public List<MemberAudioMeta> uploadAndSaveMemberFile2(List<MultipartFile> files, Long memberId, Long projectId, AudioType audioType, String voiceId) {
+        try {
+            List<MemberAudioMeta> memberAudioMetas = new ArrayList<>();
+            // 필요한 리포지토리나 서비스를 주입받아 사용해야 합니다.
+            Project project = projectRepository.findById(projectId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) {
+                    throw new BusinessException(ErrorCode.EMPTY_FILE);
+                }
+
+                String originFilename = Normalizer.normalize(file.getOriginalFilename(), Normalizer.Form.NFC);
+                String filename = "member/" + memberId + "/" + audioType + "/" + projectId + "/" + originFilename;
+
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentType(file.getContentType());
+                metadata.setContentLength(file.getSize());
+
+                // S3 버킷에 파일 업로드
+                amazonS3Client.putObject(bucket, filename, file.getInputStream(), metadata);
+                String fileUrl = amazonS3Client.getUrl(bucket, filename).toString();
+
+                // MemberAudioMeta 객체 생성 및 저장
+                String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
+                MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
+                        audioType, finalVoiceId);
+                memberAudioMetaRepository.save(memberAudioMeta);
+
+                memberAudioMetas.add(memberAudioMeta);
+            }
+
+            return memberAudioMetas;
 
         } catch (AmazonClientException e) {
             // S3 업로드 중 발생하는 예외

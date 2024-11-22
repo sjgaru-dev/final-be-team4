@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 public class TTSDetailDto {
 
     private Long id; // 상세 정보 ID
-    private Long projectId; // 프로젝트 ID
+//    private Long ProjectId; // 프로젝트 ID
     private String unitScript; // 단위 스크립트
     private Float unitSpeed; // 단위 속도
     private Float unitPitch; // 단위 피치

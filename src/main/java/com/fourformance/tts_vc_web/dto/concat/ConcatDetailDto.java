@@ -1,6 +1,7 @@
 package com.fourformance.tts_vc_web.dto.concat;
 
 import com.fourformance.tts_vc_web.domain.entity.ConcatDetail;
+import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,6 +18,7 @@ public class ConcatDetailDto {
     private boolean isChecked;
     private String unitScript;
     private Float endSilence;
+    private MemberAudioMeta memberAudioMeta;
 
     public static ConcatDetailDto createFromEntity(ConcatDetail concatDetail) {
         return new ConcatDetailDto(
@@ -24,7 +26,8 @@ public class ConcatDetailDto {
                 concatDetail.getAudioSeq(),
                 concatDetail.isChecked(),
                 concatDetail.getUnitScript(),
-                concatDetail.getEndSilence()
+                concatDetail.getEndSilence(),
+                concatDetail.getMemberAudioMeta()
         );
     }
 }

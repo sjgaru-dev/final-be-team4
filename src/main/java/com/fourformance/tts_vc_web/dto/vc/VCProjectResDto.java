@@ -16,5 +16,5 @@ public class VCProjectResDto {
 
     private Long id; // 프로젝트 ID
     private String projectName; // 프로젝트 이름
-    private List<String> trgAudioUrls; // target 오디오 url
+    private List<TrgAudioDto> trgAudios; // target 오디오 리스트
 }
