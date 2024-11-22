@@ -23,8 +23,8 @@ public class VCSaveDto {
     private Long projectId;
     private String projectName;
 
-    private List<AudioFileDto> srcFiles; // 소스 오디오 파일 리스트
-    private List<AudioFileDto> trgFiles; // 타겟 오디오 파일 리스트 => 생각해보니까 얘는 리스트로 둘 필요가 없는디...
+    private List<SrcAudioFileDto> srcFiles; // 소스 오디오 파일 리스트
+    private List<TrgAudioFileDto> trgFiles; // 타겟 오디오 파일 리스트 => 생각해보니까 얘는 리스트로 둘 필요가 없는디...
 
     //    private String trgVoiceId; // 타겟 음성 ID, 필요하면 주석 풀어야지...
 

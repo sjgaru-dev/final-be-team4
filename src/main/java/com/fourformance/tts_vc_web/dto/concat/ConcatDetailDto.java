@@ -13,7 +13,6 @@ import lombok.Setter;
 public class ConcatDetailDto {
 
     private Long id;
-    private Long s3MemberAudioMetaId;
     private String localFileName;
     private Integer audioSeq;
     private Boolean isChecked;

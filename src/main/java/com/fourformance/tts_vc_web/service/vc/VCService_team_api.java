@@ -1,14 +1,11 @@
 package com.fourformance.tts_vc_web.service.vc;
 
 import com.fourformance.tts_vc_web.common.constant.AudioType;
-import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.common.util.ElevenLabsClient_team_api;
 import com.fourformance.tts_vc_web.domain.entity.*;
-import com.fourformance.tts_vc_web.dto.vc.AudioFileDto;
-import com.fourformance.tts_vc_web.dto.vc.VCDetailResDto;
-import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
+import com.fourformance.tts_vc_web.dto.vc.*;
 import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
 import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
@@ -80,7 +77,7 @@ public class VCService_team_api {
         }
     }
 
-    private String processTargetFiles(List<AudioFileDto> trgFiles, List<MultipartFile> files, Long memberId, Long projectId) {
+    private String processTargetFiles(List<TrgAudioFileDto> trgFiles, List<MultipartFile> files, Long memberId, Long projectId) {
         if (trgFiles == null || trgFiles.isEmpty()) {
             throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
         }
@@ -105,7 +102,7 @@ public class VCService_team_api {
         }
     }
 
-    private List<VCDetailResDto> processSourceFiles(List<AudioFileDto> srcFiles, List<MultipartFile> files, String voiceId, Long projectId, Long memberId) {
+    private List<VCDetailResDto> processSourceFiles(List<SrcAudioFileDto> srcFiles, List<MultipartFile> files, String voiceId, Long projectId, Long memberId) {
         if (srcFiles == null || srcFiles.isEmpty()) {
             return List.of();
         }
@@ -137,7 +134,7 @@ public class VCService_team_api {
         throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
     }
 
-    private void saveOutputAudioMeta(Long memberId, String filePath, String voiceId, Long projectId, AudioFileDto srcFile) {
+    private void saveOutputAudioMeta(Long memberId, String filePath, String voiceId, Long projectId, SrcAudioFileDto srcFile) {
         VCProject vcProject = vcProjectRepository.findById(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
 

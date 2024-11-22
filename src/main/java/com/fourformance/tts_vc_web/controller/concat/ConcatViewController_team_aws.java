@@ -68,9 +68,18 @@ public class ConcatViewController_team_aws {
             @RequestPart(value = "file", required = false) List<MultipartFile> files,
             HttpSession session) {
 
-        Long memberId = 1L; // 개발단계 임시 하드코딩
+        // 세션에 임의의 memberId 설정
+        if (session.getAttribute("memberId") == null) {
+            session.setAttribute("memberId", 1L);
+        }
 
-        Long projectId = concatService.saveConcatProject(concatSaveDto, files, memberId);
+        Long memberId = (Long) session.getAttribute("memberId");
+
+        // Member 객체 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalStateException("Member not found"));
+
+        Long projectId = concatService.saveConcatProject(concatSaveDto, files, member);
 
         return DataResponseDto.of(projectId, "Concat 상태가 성공적으로 저장되었습니다.");
     }
