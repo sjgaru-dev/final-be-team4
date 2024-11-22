@@ -213,8 +213,7 @@ public class S3Service {
     }
 
     // 유저 오디오를 S3에 업로드하고 DB에 저장하는 메서드
-    public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId,
-                                                AudioType audioType, String voiceId) {
+    public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId, AudioType audioType, String voiceId) {
 
         try {
             // url을 담을 리스트
@@ -262,8 +261,7 @@ public class S3Service {
         }
     }
 
-    public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId,
-                                          AudioType audioType, String voiceId) {
+    public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId,AudioType audioType) {
 
         try {
             if (file.isEmpty()) {
@@ -287,9 +285,9 @@ public class S3Service {
             String fileUrl = amazonS3Client.getUrl(bucket, filename).toString();
 
             // 오디오 메타 객체 생성 및 DB 저장
-            String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
+//            String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
             MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
-                    audioType, finalVoiceId);
+                    audioType);
             memberAudioMetaRepository.save(memberAudioMeta);
 
             return fileUrl;

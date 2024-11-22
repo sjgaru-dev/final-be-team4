@@ -9,6 +9,7 @@ import com.fourformance.tts_vc_web.dto.concat.ConcatSaveDto;
 import com.fourformance.tts_vc_web.dto.vc.AudioFileDto;
 import com.fourformance.tts_vc_web.repository.ConcatDetailRepository;
 import com.fourformance.tts_vc_web.repository.ConcatProjectRepository;
+import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
 import com.fourformance.tts_vc_web.service.common.S3Service;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ public class ConcatService_team_aws {
 
     private final ConcatProjectRepository concatProjectRepository;
     private final ConcatDetailRepository concatDetailRepository;
+    private final MemberAudioMetaRepository memberAudioMetaRepository;
     private final MemberRepository memberRepository;
     private final S3Service s3Service;
 
@@ -63,6 +65,15 @@ public class ConcatService_team_aws {
         return concatProject;
     }
 
+    // detail 저장하는 메서드
+    /**
+     * MultipartFile이 들어오면 로컬 파일이므로 s3에 저장하고 db에 저장해야함
+     *
+     * @param fileDtos
+     * @param files
+     * @param concatProject
+     * @param audioType
+     */
     private void processFiles(List<ConcatDetailDto> fileDtos, List<MultipartFile> files, ConcatProject concatProject, AudioType audioType) {
 
         if (fileDtos == null || fileDtos.isEmpty()) { // 업로드 된 파일이 없을 때
@@ -80,7 +91,7 @@ public class ConcatService_team_aws {
                 // 로컬 파일 처리
                 MultipartFile localFile = findMultipartFileByName(files, fileDto.getLocalFileName());
                 List<String> uploadedUrls = s3Service.uploadAndSaveMemberFile(
-                        List.of(localFile), vcProject.getMember().getId(), vcProject.getId(), audioType, null); // voiceId를 받아오는 api 호출해서 null을 반환값으로 채우면 될 듯
+                        localFile, concatProject.getMember().getId(), concatProject.getId(), audioType); // voiceId를 받아오는 api 호출해서 null을 반환값으로 채우면 될 듯
                 String fileUrl = uploadedUrls.get(0);
 
                 audioMeta = memberAudioMetaRepository.findFirstByAudioUrl(fileUrl)
@@ -91,15 +102,13 @@ public class ConcatService_team_aws {
                 throw new BusinessException(ErrorCode.INVALID_PROJECT_DATA);
             }
 
-            if (audioType == AudioType.VC_TRG) {
-                // 타겟 파일은 VCProject에 저장
-                vcProject.updateVCProject(vcProject.getProjectName(), audioMeta);
-            } else {
-                // 소스 파일은 VCDetail에 저장
-                VCDetail vcDetail = VCDetail.createVCDetail(vcProject, audioMeta);
-                vcDetail.updateDetails(fileDto.getIsChecked(), fileDto.getUnitScript());
-                vcDetailRepository.save(vcDetail);
-            }
+
+            // 소스 파일은 concatDetail에 저장
+            ConcatDetail concatDetail = ConcatDetail.createConcatDetail(concatProject, fileDto.getAudioSeq(), fileDto.getIsChecked(),fileDto.getUnitScript(), fileDto.getEndSilence(), audioMeta);
+            concatDetail.updateDetails(fileDto.getAudioSeq(), fileDto.getIsChecked(),fileDto.getUnitScript(),fileDto.getEndSilence(),fileDto.g);
+
+            concatDetailRepository.save(concatDetail);
+
         }
     }
     private MultipartFile findMultipartFileByName(List<MultipartFile> files, String localFileName) {
@@ -112,123 +121,99 @@ public class ConcatService_team_aws {
 
 
 //===================================================================================
-    // Concat 프로젝트 생성
-    @Transactional
-    public Long createNewProject(ConcatSaveDto dto, Long memberId, List<MultipartFile> files) {
-
-        validateSaveDto(dto);
-
-        // 멤버 id로 멤버 객체 찾기
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-
-        // 프로젝트 생성
-        ConcatProject concatProject = ConcatProject.createConcatProject(
-                member, // 멤버 ID를 주입
-                dto.getProjectName()
-        );
-        concatProject = concatProjectRepository.save(concatProject);
-
-        // 디테일 생성
-        if (dto.getConcatDetails() != null) {
-            // 파일 인덱스를 관리
-            int fileIndex = 0;
-
-            for (ConcatDetailDto detailDto : dto.getConcatDetails()) {
-                // 파일 꺼내오기
-                MultipartFile file = (files != null && fileIndex < files.size()) ? files.get(fileIndex) : null;
-
-                // 디테일 생성 로직 호출
-                createConcatDetail(detailDto, concatProject, memberId, file);
-
-                // 파일 인덱스 증가
-                fileIndex++;
-            }
-        }
-
-        return concatProject.getId();
-    }
-
-    // Concat 프로젝트 업데이트
-    @Transactional
-    public Long updateProject(ConcatSaveDto dto, Long memberId, List<MultipartFile> files) {
-
-        validateSaveDto(dto);
-
-        ConcatProject concatProject = concatProjectRepository.findById(dto.getProjectId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
-
-        // 소유권 확인
-        if (!concatProject.getMember().getId().equals(memberId)) {
-            throw new BusinessException(ErrorCode.MEMBER_PROJECT_NOT_MATCH);
-        }
-
-        // 프로젝트 업데이트
-        concatProject.updateConcatProject(
-                dto.getProjectName(),
-                dto.getGlobalFrontSilenceLength(),
-                dto.getGlobalTotalSilenceLength()
-        );
-
-//        // 디테일 업데이트
+//    // Concat 프로젝트 생성
+//    @Transactional
+//    public Long createNewProject(ConcatSaveDto dto, Long memberId, List<MultipartFile> files) {
+//
+//        validateSaveDto(dto);
+//
+//        // 멤버 id로 멤버 객체 찾기
+//        Member member = memberRepository.findById(memberId)
+//                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+//
+//        // 프로젝트 생성
+//        ConcatProject concatProject = ConcatProject.createConcatProject(
+//                member, // 멤버 ID를 주입
+//                dto.getProjectName()
+//        );
+//        concatProject = concatProjectRepository.save(concatProject);
+//
+//        // 디테일 생성
 //        if (dto.getConcatDetails() != null) {
+//            // 파일 인덱스를 관리
+//            int fileIndex = 0;
+//
 //            for (ConcatDetailDto detailDto : dto.getConcatDetails()) {
-//                processConcatDetail(detailDto, concatProject, memberId, files);
+//                // 파일 꺼내오기
+//                MultipartFile file = (files != null && fileIndex < files.size()) ? files.get(fileIndex) : null;
+//
+//                // 디테일 생성 로직 호출
+//                createConcatDetail(detailDto, concatProject, memberId, file);
+//
+//                // 파일 인덱스 증가
+//                fileIndex++;
 //            }
 //        }
-
-        return concatProject.getId();
-    }
-
-    // 디테일 생성
-    private void createConcatDetail(ConcatDetailDto detailDto, ConcatProject concatProject, Long memberId,
-                                    MultipartFile file) {
-
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-
-        if (file == null || file.isEmpty()) {
-            return;
-        }
-
-        // 버킷에 오디오 파일 저장하고 db 업데이트
-        s3Service.uploadAndSaveSingleMemberFile(file, memberId, concatProject.getId(), AudioType.CONCAT, null);
-
-        ConcatDetail concatDetail = ConcatDetail.createConcatDetail(
-                concatProject,
-                detailDto.getAudioSeq(),
-                detailDto.isChecked(),
-                detailDto.getUnitScript(),
-                detailDto.getEndSilence(),
-                null // 이거 나중에 멤버 오디오 메타 추가해야함
-        );
-        concatDetailRepository.save(concatDetail);
-    }
-
-    // 디테일 업데이트
-//    private void processConcatDetail(ConcatDetailDto detailDto, ConcatProject concatProject, Long memberId,
-//                                     List<MultipartFile> files) {
-//        if (detailDto.getId() != null) {
-//            ConcatDetail concatDetail = concatDetailRepository.findById(detailDto.getId())
-//                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL));
 //
-//            // 디테일이 해당 프로젝트의 디테일인지 검증
-//            if (!concatDetail.getConcatProject().getId().equals(concatProject.getId())) {
-//                throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL);
-//            }
-//
-//            concatDetail.updateDetails(
-//                    detailDto.getAudioSeq(),
-//                    detailDto.isChecked(),
-//                    detailDto.getUnitScript(),
-//                    detailDto.getEndSilence(),
-//                    false
-//            );
-//            concatDetailRepository.save(concatDetail);
-//        } else {
-//            createConcatDetail(detailDto, concatProject, memberId, files);
-//        }
+//        return concatProject.getId();
 //    }
+//
+//    // Concat 프로젝트 업데이트
+//    @Transactional
+//    public Long updateProject(ConcatSaveDto dto, Long memberId, List<MultipartFile> files) {
+//
+//        validateSaveDto(dto);
+//
+//        ConcatProject concatProject = concatProjectRepository.findById(dto.getProjectId())
+//                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+//
+//        // 소유권 확인
+//        if (!concatProject.getMember().getId().equals(memberId)) {
+//            throw new BusinessException(ErrorCode.MEMBER_PROJECT_NOT_MATCH);
+//        }
+//
+//        // 프로젝트 업데이트
+//        concatProject.updateConcatProject(
+//                dto.getProjectName(),
+//                dto.getGlobalFrontSilenceLength(),
+//                dto.getGlobalTotalSilenceLength()
+//        );
+//
+////        // 디테일 업데이트
+////        if (dto.getConcatDetails() != null) {
+////            for (ConcatDetailDto detailDto : dto.getConcatDetails()) {
+////                processConcatDetail(detailDto, concatProject, memberId, files);
+////            }
+////        }
+//
+//        return concatProject.getId();
+//    }
+
+//    // 디테일 생성
+//    private void createConcatDetail(ConcatDetailDto detailDto, ConcatProject concatProject, Long memberId,
+//                                    MultipartFile file) {
+//
+//        Member member = memberRepository.findById(memberId)
+//                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+//
+//        if (file == null || file.isEmpty()) {
+//            return;
+//        }
+//
+//        // 버킷에 오디오 파일 저장하고 db 업데이트
+//        s3Service.uploadAndSaveSingleMemberFile(file, memberId, concatProject.getId(), AudioType.CONCAT, null);
+//
+//        ConcatDetail concatDetail = ConcatDetail.createConcatDetail(
+//                concatProject,
+//                detailDto.getAudioSeq(),
+//                detailDto.isChecked(),
+//                detailDto.getUnitScript(),
+//                detailDto.getEndSilence(),
+//                null // 이거 나중에 멤버 오디오 메타 추가해야함
+//        );
+//        concatDetailRepository.save(concatDetail);
+//    }
+
 
     // DTO 유효성 검증
     private void validateSaveDto(ConcatSaveDto dto) {

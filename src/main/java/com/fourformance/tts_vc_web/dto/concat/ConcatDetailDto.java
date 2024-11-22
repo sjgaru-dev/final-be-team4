@@ -16,7 +16,7 @@ public class ConcatDetailDto {
     private Long s3MemberAudioMetaId;
     private String localFileName;
     private Integer audioSeq;
-    private boolean isChecked;
+    private Boolean isChecked;
     private String unitScript;
     private Float endSilence;
 

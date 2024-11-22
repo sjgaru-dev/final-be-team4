@@ -61,13 +61,11 @@ public class ConcatDetail extends BaseEntity {
     }
 
     // 업데이트 메서드
-    public void updateDetails(Integer audioSeq, boolean isChecked, String unitScript, Float endSilence,
-                              Boolean newIsDeleted) {
+    public void updateDetails(Integer audioSeq, boolean isChecked, String unitScript, Float endSilence) {
         this.audioSeq = audioSeq;
         this.isChecked = isChecked;
         this.unitScript = unitScript;
         this.endSilence = endSilence;
-        this.isDeleted = newIsDeleted;
         this.updatedAt = LocalDateTime.now();
     }
 
