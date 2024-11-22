@@ -43,16 +43,21 @@ public class MemberAudioMeta extends BaseEntity {
     private LocalDateTime deletedAt;
 
     // 생성 메서드
-    public static MemberAudioMeta createMemberAudioMeta(Member member, String bucketRoute, String audioUrl, AudioType audioType, String trgVoiceId) {
+    public static MemberAudioMeta createMemberAudioMeta(Member member, String bucketRoute, String audioUrl, AudioType audioType) {
         MemberAudioMeta memberAudioMeta = new MemberAudioMeta();
         memberAudioMeta.bucketRoute = bucketRoute;
         memberAudioMeta.member = member;
         memberAudioMeta.audioUrl = audioUrl;
         memberAudioMeta.audioType = audioType;
-        memberAudioMeta.trgVoiceId = trgVoiceId;
         memberAudioMeta.createdAt = LocalDateTime.now();
         return memberAudioMeta;
     }
+
+    // trg voiceId 주입 메서드
+    public void update(String trgVoiceId){
+        this.trgVoiceId = trgVoiceId;
+    }
+
 
     // 삭제 메서드
     public void delete() {

@@ -94,8 +94,7 @@ public class S3Controller {
             @RequestParam("projectId") Long projectId, @RequestParam("audioType") String audioType,
             @RequestParam("voiceId") String voiceId) {
         AudioType enumAudioType = AudioType.valueOf(audioType);
-        List<String> uploadedUrls = S3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType,
-                voiceId);
+        List<String> uploadedUrls = S3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType);
         return DataResponseDto.of(uploadedUrls);
     }
 }

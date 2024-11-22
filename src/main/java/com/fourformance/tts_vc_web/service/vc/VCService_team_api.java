@@ -142,7 +142,7 @@ public class VCService_team_api {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
 
         MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(
-                findMemberById(memberId), filePath, filePath, AudioType.VC_SRC, voiceId
+                findMemberById(memberId), filePath, filePath, AudioType.VC_SRC
         );
         memberAudioMetaRepository.save(memberAudioMeta);
 
@@ -159,13 +159,13 @@ public class VCService_team_api {
     }
 
     private String uploadFileToS3(MultipartFile file, Long memberId, Long projectId, AudioType audioType) throws IOException {
-        return s3Service.uploadAndSaveMemberFile(List.of(file), memberId, projectId, audioType, null).get(0);
+        return s3Service.uploadAndSaveMemberFile(List.of(file), memberId, projectId, audioType).get(0);
     }
 
     private void saveMemberAudioMeta(Long memberId, String fileUrl, String voiceId, AudioType audioType) {
         Member member = findMemberById(memberId);
         MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(
-                member, fileUrl, fileUrl, audioType, voiceId
+                member, fileUrl, fileUrl, audioType
         );
         memberAudioMetaRepository.save(memberAudioMeta);
     }
