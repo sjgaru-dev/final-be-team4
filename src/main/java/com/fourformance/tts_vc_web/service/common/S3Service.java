@@ -1,9 +1,9 @@
 package com.fourformance.tts_vc_web.service.common;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.*;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
@@ -53,6 +53,83 @@ public class S3Service {
     private final ProjectRepository projectRepository;
     private final MemberAudioMetaRepository memberAudioMetaRepository;
     private final MemberRepository memberRepository;
+
+    private final AmazonS3 amazonS3;
+
+    public void deleteProject(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found with ID: " + projectId));
+
+        String prefix = "Generated/" + project.getMember().getId() + "/";
+        if (project instanceof TTSProject) {
+            prefix += "TTS/" + project.getId() + "/";
+        } else if (project instanceof VCProject) {
+            prefix += "VC/" + project.getId() + "/";
+        } else if (project instanceof ConcatProject) {
+            prefix += "Concat/" + project.getId() + "/";
+        } else {
+            throw new IllegalArgumentException("Unsupported project type: " + project.getClass().getSimpleName());
+        }
+
+        // 디렉터리 삭제
+        deleteDirectoryBatch(amazonS3, bucket, prefix);
+    }
+
+//    public void deleteMemberAudio(Long memberId, Long projectId) {
+//        MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberId)
+//                .orElseThrow(() -> new IllegalArgumentException("Member audio metadata not found"));
+//
+//        String prefix = "member/" + memberId + "/";
+//        if ("VC_SRC".equals(memberAudioMeta.getAudioType())) {
+//            prefix += "VC_SRC/" + projectId + "/";
+//        } else if ("VC_TRG".equals(memberAudioMeta.getAudioType())) {
+//            prefix += "VC_TRG/" + projectId + "/";
+//        }
+//
+//        deleteDirectoryBatch(amazonS3, bucket, prefix);
+//    }
+
+    public void deleteMemberAudio(Long memberId, Long projectId) {
+//        MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberId)
+//                .orElseThrow(() -> new IllegalArgumentException("Member audio metadata not found"));
+
+//        String prefix = "member/" + memberId + "/";
+//        if ("VC_SRC".equals(memberAudioMeta.getAudioType())) {
+//            prefix += "VC_SRC/" + projectId + "/";
+//        } else if ("VC_TRG".equals(memberAudioMeta.getAudioType())) {
+//            prefix += "VC_TRG/" + projectId + "/";
+//        }
+
+        deleteDirectoryBatch(amazonS3, bucket, "member/1/VC_SRC/15/");
+    }
+
+
+
+    // 헬퍼메서드
+    public static void deleteDirectoryBatch(AmazonS3 s3Client, String bucketName, String prefix) {
+        ObjectListing objectListing = s3Client.listObjects(bucketName, prefix);
+
+        while (true) {
+            List<DeleteObjectsRequest.KeyVersion> keysToDelete = new ArrayList<>();
+            for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
+                keysToDelete.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
+            }
+
+            if (!keysToDelete.isEmpty()) {
+                DeleteObjectsRequest deleteRequest = new DeleteObjectsRequest(bucketName)
+                        .withKeys(keysToDelete)
+                        .withQuiet(false);
+                s3Client.deleteObjects(deleteRequest);
+                System.out.println("Deleted batch of objects.");
+            }
+
+            if (objectListing.isTruncated()) {
+                objectListing = s3Client.listNextBatchOfObjects(objectListing);
+            } else {
+                break;
+            }
+        }
+    }
 
     // TTS와 VC로 반환한 유닛 오디오를 S3 버킷에 저장
     public String uploadUnitSaveFile(MultipartFile file, Long userId, Long projectId, Long detailId) {
