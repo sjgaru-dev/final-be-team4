@@ -264,8 +264,7 @@ public class S3Service {
         }
     }
 
-    public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId,
-                                          AudioType audioType) {
+    public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId, AudioType audioType) {
 
         try {
             if (file.isEmpty()) {

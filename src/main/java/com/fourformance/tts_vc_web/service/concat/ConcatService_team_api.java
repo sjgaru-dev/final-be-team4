@@ -270,8 +270,7 @@ public class ConcatService_team_api {
                 detailDto.getAudioSeq(),
                 detailDto.isChecked(),
                 detailDto.getUnitScript(),
-                detailDto.getEndSilence(),
-                false
+                detailDto.getEndSilence()
         );
     }
 
