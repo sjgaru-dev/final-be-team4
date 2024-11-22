@@ -59,6 +59,8 @@ public enum ErrorCode {
     INVALID_UNIT_SCRIPT(5018, HttpStatus.BAD_REQUEST, "유효하지 않은 Unit Script입니다."),
     DIRECTORY_CREATION_FAILED(5019, HttpStatus.INTERNAL_SERVER_ERROR, "디렉토리 생성에 실패했습니다."),
     TTS_PROJECT_NOT_FOUND(5020, HttpStatus.INTERNAL_SERVER_ERROR, "TTS Project를 찾을 수 없습니다."),
+    MEMBER_AUDIO_META_NOT_FOUND(5022, HttpStatus.INTERNAL_SERVER_ERROR,"Member audio meta가 존재하지 않습니다."),
+    NO_FILES_TO_MERGE(5023, HttpStatus.INTERNAL_SERVER_ERROR,"병합할 파일이 없습니다."),
 
     // 9999 : 테스트용 커스텀 예외
     TEST_ERROR(9999, HttpStatus.BAD_REQUEST, "테스트용 커스텀 예외입니다."),

@@ -74,7 +74,14 @@ public class ConcatController_team_api {
 
             // 3. 요청 DTO의 각 상세 항목에 업로드된 파일 매핑
             for (int i = 0; i < details.size(); i++) {
-                details.get(i).setSourceAudio(files.get(i));
+                ConcatRequestDetailDto detail = details.get(i);
+                MultipartFile file = files.get(i);
+
+                // 예를 들어, 파일명과 detail의 정보가 일치하는지 확인
+                LOGGER.info("매핑 중 - Detail AudioSeq: " + detail.getAudioSeq() + ", 파일명: " + file.getOriginalFilename());
+
+                detail.setSourceAudio(file);
+
             }
 
             // 4. 서비스 로직 호출: 병합 처리 실행
