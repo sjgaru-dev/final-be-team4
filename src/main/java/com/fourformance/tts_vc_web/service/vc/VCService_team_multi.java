@@ -182,8 +182,11 @@ public class VCService_team_multi {
                 MultipartFile localFile = findMultipartFileByName(files, localFileName);
                 String uploadUrl = s3Service.uploadAndSaveMemberFile(localFile,vcProject.getMember().getId(), vcProject.getId(), audioType);
 
+
                 audioMeta = memberAudioMetaRepository.findFirstByAudioUrl(uploadUrl)
                         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_AUDIO));
+//                memberAudioMetaRepository.resetSelection(vcProject.getMember().getId(), AudioType.VC_TRG);
+                memberAudioMetaRepository.selectAudio(audioMeta.getId(), AudioType.VC_TRG);
             }
 
 

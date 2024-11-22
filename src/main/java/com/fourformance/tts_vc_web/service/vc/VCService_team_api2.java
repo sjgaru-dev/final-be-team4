@@ -7,10 +7,7 @@ import com.fourformance.tts_vc_web.common.util.ElevenLabsClient_team_api;
 import com.fourformance.tts_vc_web.domain.entity.Member;
 import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.VCDetail;
-import com.fourformance.tts_vc_web.dto.vc.AudioFileDto;
-import com.fourformance.tts_vc_web.dto.vc.VCDetailDto;
-import com.fourformance.tts_vc_web.dto.vc.VCDetailResDto;
-import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
+import com.fourformance.tts_vc_web.dto.vc.*;
 import com.fourformance.tts_vc_web.repository.*;
 import com.fourformance.tts_vc_web.service.common.S3Service;
 import lombok.RequiredArgsConstructor;
@@ -76,20 +73,20 @@ public class VCService_team_api2 {
 
 
     // target 오디오의 목소리 ID 추출
-    private String processTargetFiles(List<AudioFileDto> trgFiles, List<MultipartFile> files, Long memberId, MemberAudioMeta memberAudio) {
+    private String processTargetFiles(List<TrgAudioFileDto> trgFiles, List<MultipartFile> files, Long memberId, MemberAudioMeta memberAudio) {
 
         if (trgFiles == null || trgFiles.isEmpty()) {
             throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
         }
 
-        // trg 오디오 파일
-        MultipartFile file = findMultipartFileByName(files, trgFiles.get(0).getLocalFileName());
-        if (file == null) { throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR); }
+//        // trg 오디오 파일
+//        MultipartFile file = findMultipartFileByName(files, trgFiles.get(0).getLocalFileName());
+//        if (file == null) { throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR); }
 
         try {
 
             // trg 오디오 가져오기
-            String targetFileUrl = memberAudio.getAudioUrl();
+            String targetFileUrl = memberAudio.getAudioUrl(); //nullpointException 지점
 
             // trg 오디오 Voice Id 생성
             String voiceId = elevenLabsClient.uploadVoice(targetFileUrl);

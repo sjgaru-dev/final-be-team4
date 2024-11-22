@@ -26,7 +26,7 @@ public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta
 
 
     // audioType, memberId와 isSeleted=true 조건으로 memberAudioId 반환 - 승민
-    @Query("SELECT m.id FROM MemberAudioMeta m WHERE m.audioType = :audioType AND m.isSelected = true AND m.member.id = :memberId")
+    @Query("SELECT m FROM MemberAudioMeta m WHERE m.audioType = :audioType AND m.isSelected = true AND m.member.id = :memberId")
     MemberAudioMeta findSelectedAudioByTypeAndMember(@Param("audioType") AudioType audioType, @Param("memberId") Long memberId);
 
 
