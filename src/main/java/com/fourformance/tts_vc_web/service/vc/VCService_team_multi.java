@@ -174,7 +174,7 @@ public class VCService_team_multi {
                 // 로컬 파일 처리
                 MultipartFile localFile = findMultipartFileByName(files, fileDto.getLocalFileName());
                 List<String> uploadedUrls = s3Service.uploadAndSaveMemberFile(
-                        List.of(localFile), vcProject.getMember().getId(), vcProject.getId(), audioType, null); // voiceId를 받아오는 api 호출해서 null을 반환값으로 채우면 될 듯
+                        List.of(localFile), vcProject.getMember().getId(), vcProject.getId(), audioType); // voiceId를 받아오는 api 호출해서 null을 반환값으로 채우면 될 듯
                 String fileUrl = uploadedUrls.get(0);
 
                 audioMeta = memberAudioMetaRepository.findFirstByAudioUrl(fileUrl)

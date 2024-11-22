@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 @RequestMapping("/tts")
@@ -59,7 +60,7 @@ public class TTSViewController_team_multi {
             summary = "TTS 상태 저장",
             description = "TTS 프로젝트 상태를 저장합니다." )
     @PostMapping("/save")
-    public ResponseDto ttsSave(@RequestBody TTSSaveDto ttsSaveDto, HttpSession session) {
+    public RedirectView ttsSave(@RequestBody TTSSaveDto ttsSaveDto, HttpSession session) {
         try {
 
 //            Long memberId = (Long) session.getAttribute("memberId");
@@ -73,7 +74,8 @@ public class TTSViewController_team_multi {
                 // projectId가 존재하면, 기존 프로젝트 업데이트
                 projectId = ttsService.updateProject(ttsSaveDto, memberId);
             }
-            return DataResponseDto.of(projectId, "상태가 성공적으로 저장되었습니다.");
+            // 상태 저장 후 리다이렉트
+            return new RedirectView("/tts/" + projectId); // TTS 상태 로드 URL로 리다이렉트
         } catch (BusinessException e) {
             throw e;  // 기존의 BusinessException 그대로 던짐
         } catch (Exception e) {
