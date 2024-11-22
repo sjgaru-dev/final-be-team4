@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.config.Configuration;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class VCDetailDto {
     private Boolean isChecked; // 체크 여부
     private String unitScript; // 단위 스크립트
     private Boolean isDeleted; // 삭제 여부
-
+    private MultipartFile localFile; // 추가된 멀티파트 파일
 
     private static ModelMapper modelMapper = new ModelMapper();
 
