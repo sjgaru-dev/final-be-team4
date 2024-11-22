@@ -2,7 +2,11 @@ package com.fourformance.tts_vc_web.service.common;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
@@ -23,8 +27,6 @@ import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.ProjectRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
 import com.fourformance.tts_vc_web.repository.VCDetailRepository;
-
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -263,11 +265,52 @@ public class S3Service {
         }
     }
 
+    public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId,
+                                          AudioType audioType, String voiceId) {
+
+        try {
+            if (file.isEmpty()) {
+                throw new BusinessException(ErrorCode.EMPTY_FILE);
+            }
+
+            Project project = projectRepository.findById(projectId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+            String originFilename = Normalizer.normalize(file.getOriginalFilename(), Normalizer.Form.NFC);
+            String filename = "member/" + memberId + "/" + audioType + "/" + projectId + "/" + originFilename;
+
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType(file.getContentType());
+            metadata.setContentLength(file.getSize());
+
+            // S3 버킷에 업로드
+            amazonS3Client.putObject(bucket, filename, file.getInputStream(), metadata);
+            String fileUrl = amazonS3Client.getUrl(bucket, filename).toString();
+
+            // 오디오 메타 객체 생성 및 DB 저장
+            String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
+            MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
+                    audioType, finalVoiceId);
+            memberAudioMetaRepository.save(memberAudioMeta);
+
+            return fileUrl;
+
+        } catch (AmazonClientException e) {
+            // S3 업로드 중 발생하는 예외
+            throw new BusinessException(ErrorCode.S3_UPLOAD_FAILED);
+        } catch (IOException e) {
+            // 파일 처리 중 발생하는 예외
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
+    }
+
     /**
      * S3에서 파일을 다운로드하여 로컬에 저장합니다.
      *
-     * @param fileUrl   다운로드할 파일의 S3 URL
-     * @param localDir  로컬에 저장할 디렉토리 경로
+     * @param fileUrl  다운로드할 파일의 S3 URL
+     * @param localDir 로컬에 저장할 디렉토리 경로
      * @return 로컬에 저장된 파일의 전체 경로
      */
     public String downloadFileFromS3(String fileUrl, String localDir) {
@@ -303,7 +346,8 @@ public class S3Service {
         }
     }
 
-    public List<MemberAudioMeta> uploadAndSaveMemberFile2(List<MultipartFile> files, Long memberId, Long projectId, AudioType audioType, String voiceId) {
+    public List<MemberAudioMeta> uploadAndSaveMemberFile2(List<MultipartFile> files, Long memberId, Long projectId,
+                                                          AudioType audioType, String voiceId) {
         try {
             List<MemberAudioMeta> memberAudioMetas = new ArrayList<>();
             // 필요한 리포지토리나 서비스를 주입받아 사용해야 합니다.
