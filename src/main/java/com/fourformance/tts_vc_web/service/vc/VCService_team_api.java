@@ -105,20 +105,48 @@ public class VCService_team_api {
         }
 
         try {
-            // S3에 업로드
+            // 1. S3 업로드
             String targetFileUrl = uploadFileToS3(file, memberId, projectId, AudioType.VC_TRG);
             LOGGER.info("타겟 파일 S3 업로드 완료: " + targetFileUrl);
 
-            // Eleven Labs Voice ID 생성
+            // 2. Eleven Labs Voice ID 생성
             String voiceId = elevenLabsClient.uploadVoice(targetFileUrl);
             LOGGER.info("Voice ID 생성 완료: " + voiceId);
 
+            // 3. MemberAudioMeta 생성 및 저장
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+            MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(
+                    member,
+                    targetFileUrl,
+                    targetFileUrl,
+                    AudioType.VC_TRG,
+                    voiceId
+            );
+            memberAudioMetaRepository.save(memberAudioMeta); // 저장
+            LOGGER.info("MemberAudioMeta 저장 완료: ID = " + memberAudioMeta.getId());
+
+            // 4. VCProject 업데이트
+            VCProject vcProject = vcProjectRepository.findById(projectId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+
+            vcProject.updateVCProject(vcProject.getProjectName(), memberAudioMeta); // MemberAudioMeta 설정
+            vcProject.updateTrgVoiceId(voiceId); // Voice ID 설정
+            vcProjectRepository.save(vcProject); // 변경 사항 저장
+            LOGGER.info("VCProject 업데이트 완료: MemberAudioMeta ID = " + memberAudioMeta.getId());
+
             return voiceId;
+
         } catch (IOException e) {
             LOGGER.severe("타겟 파일 처리 실패: " + e.getMessage());
             throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
         }
     }
+
+
+
+
 
     /**
      * 소스 파일 처리 및 변환
@@ -148,19 +176,32 @@ public class VCService_team_api {
                         String convertedFilePath = elevenLabsClient.convertSpeechToSpeech(voiceId, sourceFileUrl);
                         LOGGER.info("소스 파일 변환 완료: " + convertedFilePath);
 
-                        // VCDetail 생성 및 저장
-                        VCDetail vcDetail = VCDetail.createVCDetail(
-                                vcProjectRepository.findById(projectId)
-                                        .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT)),
-                                null // 필요한 MemberAudioMeta 설정 가능
+                        // VCDetail 및 MemberAudioMeta 생성
+                        Member member = memberRepository.findById(memberId)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+                        VCProject vcProject = vcProjectRepository.findById(projectId)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
+
+                        // MemberAudioMeta 생성 및 저장
+                        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(
+                                member,
+                                convertedFilePath,
+                                convertedFilePath,
+                                AudioType.VC_SRC,
+                                voiceId
                         );
+                        memberAudioMetaRepository.save(memberAudioMeta);
+                        LOGGER.info("MemberAudioMeta 저장 완료: ID = " + memberAudioMeta.getId());
+
+                        // VCDetail 생성 및 저장
+                        VCDetail vcDetail = VCDetail.createVCDetail(vcProject, memberAudioMeta);
                         vcDetail.updateDetails(srcFile.getIsChecked(), srcFile.getUnitScript());
                         vcDetailRepository.save(vcDetail);
-                        LOGGER.info("VCDetail 저장 완료: id = " + vcDetail.getId());
+                        LOGGER.info("VCDetail 저장 완료: ID = " + vcDetail.getId());
 
                         // VCDetailResDto 반환
                         return new VCDetailResDto(
-                                vcDetail.getId(), // 저장된 VCDetail의 ID 사용
+                                vcDetail.getId(),
                                 projectId,
                                 srcFile.getIsChecked(),
                                 srcFile.getUnitScript(),
@@ -174,6 +215,7 @@ public class VCService_team_api {
                 })
                 .collect(Collectors.toList());
     }
+
 
 
     /**
@@ -207,4 +249,28 @@ public class VCService_team_api {
         List<String> uploadedUrls = s3Service.uploadAndSaveMemberFile(List.of(file), memberId, projectId, audioType, null);
         return uploadedUrls.get(0);
     }
+
+    private void saveMemberAudioMeta(Long memberId, String fileUrl, String voiceId, AudioType audioType) {
+        // 1. 멤버 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 2. MemberAudioMeta 생성
+        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(
+                member,
+                generateBucketRoute(fileUrl),
+                fileUrl,
+                audioType,
+                voiceId
+        );
+
+        // 3. 저장
+        memberAudioMetaRepository.save(memberAudioMeta);
+        LOGGER.info("MemberAudioMeta 저장 완료: " + memberAudioMeta.getId());
+    }
+
+    private String generateBucketRoute(String fileUrl) {
+        return fileUrl.replaceFirst("https://[^/]+/", ""); // URL에서 도메인을 제거하여 경로 반환
+    }
+
 }
