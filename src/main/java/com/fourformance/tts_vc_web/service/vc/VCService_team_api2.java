@@ -50,6 +50,7 @@
 //
 //        // VC 프로젝트 저장
 //        Long projectId = vcService.saveVCProject(vcSaveDto, files, member);
+//        VCProject aaaaa = VCProjectRepository.findMemberAudioIdById(projectId);
 //
 //        // 프로젝트 ID로 VC 상세 반환
 //        List<VCDetail> vcDetails = vcDetailRepository.findByVcProject_Id(projectId);
@@ -58,9 +59,11 @@
 //                                                  .map(VCDetailDto::createVCDetailDto) // VCDetail -> VCDetailDto 변환
 //                                                  .collect(Collectors.toList());
 //
+//        // 저장된 trg 오디오 ID 찾기
+//        Long memberAudioId = MemberAudioMetaRepository.findById()
 //
 //        // target 오디오의 목소리 ID 추출
-//        String voiceId = processTargetFiles(vcSaveDto.getTrgFiles(), files, memberId, projectId);
+//        String voiceId = processTargetFiles(vcSaveDto.getTrgFiles(), files, memberId, memberAudioId);
 //
 //        // src 오디오에 target 오디오 적용
 //        List<VCDetailResDto> vcDetailsRes = processSourceFiles(vcSrcDetails, files, voiceId, projectId, memberId);
@@ -69,7 +72,8 @@
 //    }
 //
 //
-//    private String processTargetFiles(List<AudioFileDto> trgFiles, List<MultipartFile> files, Long memberId, Long projectId) {
+//    // target 오디오의 목소리 ID 추출
+//    private String processTargetFiles(List<AudioFileDto> trgFiles, List<MultipartFile> files, Long memberId, Long memberAudioId) {
 //
 //        if (trgFiles == null || trgFiles.isEmpty()) {
 //            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
@@ -87,7 +91,13 @@
 //            // trg 오디오 Voice Id 생성
 //            String voiceId = elevenLabsClient.uploadVoice(targetFileUrl);
 //
-//            // MemberAudioMeta에 저장
+//            // MemberAudioMeta 조회
+//            MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberAudioId)
+//                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_AUDIO));
+//
+//            // trgVoiceId 업데이트
+//            memberAudioMeta.update(voiceId);
+//
 //            saveMemberAudioMeta(memberId, targetFileUrl, voiceId, AudioType.VC_TRG);
 //            return voiceId;
 //
