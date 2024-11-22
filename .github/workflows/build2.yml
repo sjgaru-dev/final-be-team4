@@ -34,7 +34,7 @@ jobs:
         run: |
           mkdir -p src/main/resources
           echo "${{ secrets.SECRET_PROPERTIES }}" > src/main/resources/secret.properties
-          echo "${{ secrets.SOUND_JSON }}" >  src/main/resources/Stable Furnace Project 1.json
+          echo "${{ secrets.SOUND_JSON }}" >  src/main/resources/StableFurnaceProject1.json
 
       - name: Build with Gradle
         run: ./gradlew build
