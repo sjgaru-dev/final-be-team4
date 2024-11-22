@@ -1,9 +1,12 @@
 package com.fourformance.tts_vc_web.service.common;
 
 import com.amazonaws.AmazonClientException;
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
@@ -24,7 +27,6 @@ import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.ProjectRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
 import com.fourformance.tts_vc_web.repository.VCDetailRepository;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -59,6 +61,7 @@ public class S3Service {
     private final ProjectRepository projectRepository;
     private final MemberAudioMetaRepository memberAudioMetaRepository;
     private final MemberRepository memberRepository;
+
 
     // TTS와 VC로 반환한 유닛 오디오를 S3 버킷에 저장
     public String uploadUnitSaveFile(MultipartFile file, Long userId, Long projectId, Long detailId) {
@@ -213,7 +216,8 @@ public class S3Service {
     }
 
     // 유저 오디오를 S3에 업로드하고 DB에 저장하는 메서드
-    public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId, AudioType audioType, String voiceId) {
+    public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId,
+                                                AudioType audioType) {
 
         try {
             // url을 담을 리스트
@@ -244,9 +248,8 @@ public class S3Service {
                 uploadedUrls.add(fileUrl);
 
                 // 오디오 메타 객체 생성 및 DB 저장
-                String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
                 MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
-                        audioType, finalVoiceId);
+                        audioType);
                 memberAudioMetaRepository.save(memberAudioMeta);
             }
 
@@ -261,7 +264,8 @@ public class S3Service {
         }
     }
 
-    public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId,AudioType audioType) {
+    public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId,
+                                          AudioType audioType) {
 
         try {
             if (file.isEmpty()) {
@@ -285,7 +289,6 @@ public class S3Service {
             String fileUrl = amazonS3Client.getUrl(bucket, filename).toString();
 
             // 오디오 메타 객체 생성 및 DB 저장
-//            String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
             MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
                     audioType);
             memberAudioMetaRepository.save(memberAudioMeta);
@@ -342,7 +345,7 @@ public class S3Service {
     }
 
     public List<MemberAudioMeta> uploadAndSaveMemberFile2(List<MultipartFile> files, Long memberId, Long projectId,
-                                                          AudioType audioType, String voiceId) {
+                                                          AudioType audioType) {
         try {
             List<MemberAudioMeta> memberAudioMetas = new ArrayList<>();
             // 필요한 리포지토리나 서비스를 주입받아 사용해야 합니다.
@@ -368,9 +371,8 @@ public class S3Service {
                 String fileUrl = amazonS3Client.getUrl(bucket, filename).toString();
 
                 // MemberAudioMeta 객체 생성 및 저장
-                String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
                 MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
-                        audioType, finalVoiceId);
+                        audioType);
                 memberAudioMetaRepository.save(memberAudioMeta);
 
                 memberAudioMetas.add(memberAudioMeta);
