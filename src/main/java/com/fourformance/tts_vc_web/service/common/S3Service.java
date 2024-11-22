@@ -283,7 +283,7 @@ public class S3Service {
         }
     }
 
-    // 유저 오디오를 S3에 업로드하고 DB에 저장하는 메서드
+    // 유저 오디오를 S3에 업로드하고 DB에 저장하는 메서드 (여러 파일)
     public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId,
                                                 AudioType audioType, String voiceId) {
 
@@ -332,4 +332,51 @@ public class S3Service {
             throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
         }
     }
+
+    // 유저 오디오를 S3에 업로드하고 DB에 저장하는 메서드 (단일 파일)
+    public String uploadAndSaveSingleMemberFile(MultipartFile file, Long memberId, Long projectId,
+                                                AudioType audioType, String voiceId) {
+
+        try {
+            if (file == null || file.isEmpty()) {
+                throw new BusinessException(ErrorCode.EMPTY_FILE);
+            }
+
+            // 프로젝트 및 멤버 조회
+            Project project = projectRepository.findById(projectId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+            // 파일 이름 생성
+            String originFilename = Normalizer.normalize(file.getOriginalFilename(), Normalizer.Form.NFC);
+            String filename = "member/" + memberId + "/" + audioType + "/" + projectId + "/" + originFilename;
+
+            // 메타데이터 설정
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType(file.getContentType());
+            metadata.setContentLength(file.getSize());
+
+            // 파일을 S3 버킷에 업로드
+            amazonS3Client.putObject(bucket, filename, file.getInputStream(), metadata);
+            String fileUrl = amazonS3Client.getUrl(bucket, filename).toString();
+
+            // 오디오 메타 객체 생성 및 DB 저장
+            String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
+            MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
+                    audioType, finalVoiceId);
+            memberAudioMetaRepository.save(memberAudioMeta);
+
+            return fileUrl;
+
+        } catch (AmazonClientException e) {
+            // S3 업로드 중 발생하는 예외
+            throw new BusinessException(ErrorCode.S3_UPLOAD_FAILED);
+        } catch (IOException e) {
+            // 파일 처리 중 발생하는 예외
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
+    }
+
+
 }

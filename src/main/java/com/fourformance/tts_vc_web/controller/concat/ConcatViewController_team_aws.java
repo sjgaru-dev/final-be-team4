@@ -11,11 +11,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,22 +32,23 @@ public class ConcatViewController_team_aws {
     @Operation(
             summary = "Concat 상태 저장",
             description = "Concat 프로젝트 상태를 저장합니다.")
-    @PostMapping("/save")
-    public ResponseDto concatSave(@RequestBody ConcatSaveDto concatSaveDto,
-                                  HttpSession session) {
+    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseDto concatSave(
+            @RequestPart(value = "concatSaveDto") ConcatSaveDto concatSaveDto, // 반드시 "concatSaveDto" 이름 지정
+            @RequestPart(value = "file", required = false) List<MultipartFile> files,
+            HttpSession session) {
         try {
-
-//            Long memberId = (Long) session.getAttribute("memberId");
             Long memberId = 1L; // 개발단계 임시 하드코딩
-
             Long projectId;
+
             if (concatSaveDto.getProjectId() == null) {
-                // projectId가 null인 경우, 새 프로젝트 생성
-                projectId = concatService.createNewProject(concatSaveDto, memberId);
+                projectId = concatService.createNewProject(concatSaveDto, memberId, files);
             } else {
-                // projectId가 존재하면, 기존 프로젝트 업데이트
-                projectId = concatService.updateProject(concatSaveDto, memberId);
+                projectId = concatService.updateProject(concatSaveDto, memberId, files);
             }
+
+//            concatService.fileProcess(concatSaveDto, files, memberId);
+
             return DataResponseDto.of(projectId, "상태가 성공적으로 저장되었습니다.");
         } catch (BusinessException e) {
             throw e;
