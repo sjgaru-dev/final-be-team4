@@ -192,6 +192,7 @@ public class VCService_team_multi {
                 // 소스 파일은 VCDetail에 저장
                 VCDetail vcDetail = VCDetail.createVCDetail(vcProject, audioMeta);
                 vcDetail.updateDetails(fileDto.getIsChecked(), fileDto.getUnitScript());
+                memberAudioMetaRepository.selectAudio(audioMeta.getId(), AudioType.VC_TRG); // 방금 저장한 trg select 표시
                 vcDetailRepository.save(vcDetail);
             }
         }

@@ -3,6 +3,7 @@ package com.fourformance.tts_vc_web.repository;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,22 @@ import java.util.Optional;
 
 @Repository
 public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta, Long> {
+
+    // 모든 오디오 isSelected = false로 설정 - 승민
+    @Modifying
+    @Query("UPDATE MemberAudioMeta m SET m.isSelected = false WHERE m.member.id = :memberId AND m.audioType = :audioType")
+    void resetSelection(@Param("memberId") Long memberId, @Param("audioType") AudioType audioType);
+
+    // 특정 audio만 isSelected = true로 설정 - 승민
+    @Modifying
+    @Query("UPDATE MemberAudioMeta m SET m.isSelected = true WHERE m.id = :audioId AND m.audioType = :audioType")
+    void selectAudio(@Param("audioId") Long audioId, @Param("audioType") AudioType audioType);
+
+
+    // audioType, memberId와 isSeleted=true 조건으로 memberAudioId 반환 - 승민
+    @Query("SELECT m.id FROM MemberAudioMeta m WHERE m.audioType = :audioType AND m.isSelected = true AND m.member.id = :memberId")
+    MemberAudioMeta findSelectedAudioByTypeAndMember(@Param("audioType") AudioType audioType, @Param("memberId") Long memberId);
+
 
     // id 리스트로 특정 오디오 타입 반환 - 승민
     @Query("""
@@ -39,13 +56,13 @@ public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta
     @Query("""
                 SELECT m.audioUrl 
                 FROM MemberAudioMeta m 
-                WHERE m.id IN :audioMetaIds 
+                WHERE m.id = :audioMetaId 
                   AND m.isDeleted = false 
                   AND m.audioType = :audioType 
                   AND m.audioUrl IS NOT NULL
             """)
-    List<String> findAudioUrlsByAudioMetaIds(
-            @Param("audioMetaIds") List<Long> audioMetaIds,
+    String findAudioUrlsByAudioMetaIds(
+            @Param("audioMetaId") Long audioMetaId,
             @Param("audioType") AudioType audioType
     );
 
