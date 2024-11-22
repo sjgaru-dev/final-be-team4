@@ -1,6 +1,7 @@
 package com.fourformance.tts_vc_web.controller.common;
 
 import com.fourformance.tts_vc_web.common.constant.AudioType;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.service.common.S3Service;
@@ -75,13 +76,9 @@ public class S3Controller {
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteOutputAudioMetaByS3(
             @RequestParam Long projectId,
-            @RequestParam Long memberId) {
-
-        try {
-            s3Service.deleteOutputAudioMeta(projectId, memberId);
-            return ResponseEntity.ok("프로젝트 삭제가 완료되었습니다.");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("프로젝트 삭제 실패: " + e.getMessage());
-        }
+            @RequestParam Long memberId
+            ) {
+        s3Service.deleteOutputAudioMeta(projectId, memberId);
+        return ResponseEntity.ok("삭제 성공하였습니다.");
     }
 }

@@ -59,8 +59,10 @@ public class S3Service {
 
     private final AmazonS3 amazonS3;
 
+
+    // OutputAudioMeta isdeleted update, S3File Delete
     public void deleteOutputAudioMeta(Long outputAudioMetaId, Long memberId) {
-        // 1. OutputAudioMeta 조회 및 검증
+        // 1. OutputAudioMeta 조회
         OutputAudioMeta outputAudioMeta = outputAudioMetaRepository.findById(outputAudioMetaId)
                 .orElseThrow(() -> new RuntimeException("OutputAudioMeta 데이터를 찾을 수 없습니다."));
 
@@ -68,12 +70,40 @@ public class S3Service {
         String filePath = outputAudioMeta.getBucketRoute(); // 예: "Generated/123/TTS/456/789.wav"
         String directoryPrefix = extractProjectDirectoryPrefix(filePath); // "Generated/123/TTS/456/"
 
+        /**
+         * 안전한 처리 순서  : 안전한 처리 순서: S3 삭제 -> DB 업데이트
+         * 이 순서가 일반적으로 더 안전합니다.
+         * S3 삭제 작업이 우선인 이유는, S3에서의 삭제 실패가 비가역적이기 때문입니다.
+         * 파일이 삭제되면 복구하기 어렵지만, DB 상태는 나중에 처리할 수 있기 때문입니다.
+         */
         // 3. S3 디렉토리 삭제
         deleteDirectoryFromS3(directoryPrefix);
 
         // 4. OutputAudioMeta 업데이트
-        outputAudioMeta.deleteOutputAudioMeta();
-        outputAudioMetaRepository.save(outputAudioMeta);
+        outputAudioMeta.deleteOutputAudioMeta(); // 업데이트 치고,
+        outputAudioMetaRepository.save(outputAudioMeta); // 저장
+
+
+    }
+
+    // MemberAudioMeta isdeleted update, S3File Delete
+    public void deleteMemberAudio(Long memberId, Long projectId) {
+        MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("멤버 오디오를 찾을 수 없습니다."));
+
+        String prefix = "member/" + memberId + "/";
+
+        if ("VC_SRC".equals(memberAudioMeta.getAudioType())) {
+            prefix += "VC_SRC/" + projectId + "/";
+        } else if ("VC_TRG".equals(memberAudioMeta.getAudioType())) {
+            prefix += "VC_TRG/" + projectId + "/";
+        } else if ("CONCAT".equals(memberAudioMeta.getAudioType())) {
+            prefix += "CONCAT/" + projectId + "/";
+        }
+        // S3 디렉토리수준 삭제
+        deleteDirectoryFromS3(prefix);
+        // DB 업데이트
+        memberAudioMeta.delete();// isDeleted = ture, 삭제시간 업데이트 메서드
     }
 
     // 경로 추출 헬프메서드
@@ -91,80 +121,41 @@ public class S3Service {
     }
 
 
+    // Prefix + bucket 값만 있으면 S3에서 삭제 가능
     public void deleteDirectoryFromS3(String directoryPrefix) {
         try {
+            // listObjects라는 메서드를 통해서 버킷에서 object리스트를 가지고 옴.
             ObjectListing objectListing = amazonS3.listObjects(bucket, directoryPrefix);
 
             while (true) {
+                // 삭제할 키들을 저장 할 곳
                 List<DeleteObjectsRequest.KeyVersion> keysToDelete = new ArrayList<>();
+
+                // 객체의 키에 삭제할 ObjectList들의 정보들을 담는다.
                 for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
                     keysToDelete.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
                     System.out.println("Deleting: " + objectSummary.getKey());
                 }
 
+                // 만약 삭제할 키가 있다면
                 if (!keysToDelete.isEmpty()) {
                     DeleteObjectsRequest deleteRequest = new DeleteObjectsRequest(bucket)
                             .withKeys(keysToDelete)
-                            .withQuiet(false);
-                    amazonS3.deleteObjects(deleteRequest);
-                    System.out.println("Batch deletion complete.");
+                            .withQuiet(false); // 기본값 false  삭제된 각 객체에 대한 정보를 로그로 출력
+                    amazonS3.deleteObjects(deleteRequest);// 객체를 삭제하는 요청을 실제로 실행하는 메서드
+                    System.out.println("배치 삭제 완료");
                 }
 
-                if (objectListing.isTruncated()) {
+                if (objectListing.isTruncated()) {  // 목록을 처리하면서 더 많은 객체가 있는지 확인.true면 더 많은 객체 존재함. false면 마지막 목록이다라는 뜻
                     objectListing = amazonS3.listNextBatchOfObjects(objectListing);
                 } else {
                     break;
                 }
             }
-
             System.out.println("All objects under directory deleted: " + directoryPrefix);
         } catch (Exception e) {
             System.err.println("Failed to delete objects from S3: " + e.getMessage());
         }
-    }
-
-
-    public void deleteMemberAudio(Long memberId, Long projectId) {
-        MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("멤버 오디오를 찾을 수 없습니다."));
-
-        String prefix = "member/" + memberId + "/";
-        if ("VC_SRC".equals(memberAudioMeta.getAudioType())) {
-            prefix += "VC_SRC/" + projectId + "/";
-        } else if ("VC_TRG".equals(memberAudioMeta.getAudioType())) {
-            prefix += "VC_TRG/" + projectId + "/";
-        }
-
-        memberAudioMeta.delete();
-        deleteDirectoryBatch(amazonS3, bucket, prefix);
-    }
-
-    // 헬퍼메서드
-    public static void deleteDirectoryBatch(AmazonS3 s3Client, String bucketName, String prefix) {
-        ObjectListing objectListing = s3Client.listObjects(bucketName, prefix);
-
-        while (true) {
-            List<DeleteObjectsRequest.KeyVersion> keysToDelete = new ArrayList<>();
-            for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
-                keysToDelete.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
-            }
-
-            if (!keysToDelete.isEmpty()) {
-                DeleteObjectsRequest deleteRequest = new DeleteObjectsRequest(bucketName)
-                        .withKeys(keysToDelete)
-                        .withQuiet(false);
-                s3Client.deleteObjects(deleteRequest);
-                System.out.println("Deleted batch of objects.");
-            }
-
-            if (objectListing.isTruncated()) {
-                objectListing = s3Client.listNextBatchOfObjects(objectListing);
-            } else {
-                break;
-            }
-        }
-
-        System.out.println("Deleted all objects in directory: " + prefix);
     }
 
     // TTS와 VC로 반환한 유닛 오디오를 S3 버킷에 저장

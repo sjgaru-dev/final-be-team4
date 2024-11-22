@@ -13,8 +13,6 @@ import java.util.List;
 public interface OutputAudioMetaRepository extends JpaRepository<OutputAudioMeta, Long> {
 
 
-
-    //
     @Query(""" 
     SELECT o
     FROM OutputAudioMeta o
