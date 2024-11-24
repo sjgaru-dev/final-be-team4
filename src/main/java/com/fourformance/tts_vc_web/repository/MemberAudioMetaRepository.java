@@ -16,8 +16,8 @@ public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta
 
     // 모든 오디오 isSelected = false로 설정 - 승민
     @Modifying
-    @Query("UPDATE MemberAudioMeta m SET m.isSelected = false WHERE m.member.id = :memberId AND m.audioType = :audioType")
-    void resetSelection(@Param("memberId") Long memberId, @Param("audioType") AudioType audioType);
+    @Query("UPDATE MemberAudioMeta m SET m.isSelected = false WHERE m.audioType = :audioType")
+    void resetSelection(@Param("audioType") AudioType audioType);
 
     // 특정 audio만 isSelected = true로 설정 - 승민
     @Modifying

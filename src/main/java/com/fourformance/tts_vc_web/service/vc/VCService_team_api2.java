@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -49,7 +50,6 @@ public class VCService_team_api2 {
         // VC 프로젝트 저장
         Long projectId = vcService.saveVCProject(vcSaveDto, files, member);
         if(projectId == null) {
-            System.out.println("뭐가 문제인지 아는 사람? " + projectId);
             throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND); }
 
         // 프로젝트 ID로 VC 상세 반환
@@ -63,25 +63,21 @@ public class VCService_team_api2 {
         MemberAudioMeta memberAudio = memberAudioMetaRepository.findSelectedAudioByTypeAndMember(AudioType.VC_TRG, memberId);
 
         // target 오디오의 목소리 ID 추출
-        String voiceId = processTargetFiles(vcSaveDto.getTrgFiles(), files, memberId, memberAudio);
+        String voiceId = processTargetFiles(vcSaveDto.getTrgFiles(), memberAudio);
 
         // src 오디오에 target 오디오 적용
-        List<VCDetailResDto> vcDetailsRes = processSourceFiles(vcSrcDetails, files, voiceId, memberId);
+        List<VCDetailResDto> vcDetailsRes = processSourceFiles(files, vcSrcDetails, voiceId, memberId);
 
         return vcDetailsRes;
     }
 
 
     // target 오디오의 목소리 ID 추출
-    private String processTargetFiles(List<TrgAudioFileDto> trgFiles, List<MultipartFile> files, Long memberId, MemberAudioMeta memberAudio) {
+    private String processTargetFiles(List<TrgAudioFileDto> trgFiles, MemberAudioMeta memberAudio) {
 
         if (trgFiles == null || trgFiles.isEmpty()) {
             throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
         }
-
-//        // trg 오디오 파일
-//        MultipartFile file = findMultipartFileByName(files, trgFiles.get(0).getLocalFileName());
-//        if (file == null) { throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR); }
 
         try {
 
@@ -97,7 +93,7 @@ public class VCService_team_api2 {
 
             // trgVoiceId 업데이트
             memberAudioMeta.update(voiceId);
-            memberAudioMetaRepository.resetSelection(memberId, AudioType.VC_TRG);
+            memberAudioMetaRepository.save(memberAudioMeta);
 
             return voiceId;
 
@@ -107,38 +103,55 @@ public class VCService_team_api2 {
     }
 
     // src 오디오에 trg 오디오 적용
-    private List<VCDetailResDto> processSourceFiles(List<VCDetailDto> srcFiles, List<MultipartFile> files, String voiceId, Long memberId) {
+    private List<VCDetailResDto> processSourceFiles( List<MultipartFile> inputFiles, List<VCDetailDto> srcFiles, String voiceId, Long memberId) {
 
-        // src 오디오가 없을 경우, 체크 여부 확인
-        if (srcFiles == null || srcFiles.isEmpty()) { throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR); }
-
-
-        return srcFiles.stream().map(srcFile -> {
-            try {
-                // src 오디오 파일 가져오기
-                String sourceFileUrl = memberAudioMetaRepository.findAudioUrlsByAudioMetaIds(srcFile.getMemberAudioMetaId(), AudioType.VC_SRC);
-
-                // voiceId를 이용해 src 오디오 변환
-                String convertedFilePath = elevenLabsClient.convertSpeechToSpeech(voiceId, sourceFileUrl);
-
-                // S3 오디오 저장
-                String vcOutputUrl = s3Service.uploadUnitSaveFile(
-                        (MultipartFile) new File(convertedFilePath),
-                        memberId,
-                        srcFile.getProjectId(),
-                        srcFile.getId()
-                );
-
-
-                return new VCDetailResDto(
-                        srcFile.getId(), srcFile.getProjectId(), srcFile.getIsChecked(),
-                        srcFile.getUnitScript(), sourceFileUrl, List.of(vcOutputUrl)
-                );
-            } catch (IOException e) {
-                throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
-            }
-        }).collect(Collectors.toList());
+        // srcFiles와 inputFiles를 매칭하여 처리
+        return srcFiles.stream()
+                .map(srcFile -> {
+                    MultipartFile matchingFile = findMultipartFileByName(inputFiles, srcFile.getLocalFile().getOriginalFilename()); // (수정 필요) src 파일 이름 매칭
+                    if (matchingFile != null) {
+                        return processSingleSourceFile(srcFile, matchingFile, voiceId, memberId);
+                    }
+                    return null; // 매칭되지 않는 경우 null 반환
+                })
+                .filter(Objects::nonNull) // null 제거
+                .collect(Collectors.toList());
     }
+
+    // 단일 src 파일 처리 메서드
+    private VCDetailResDto processSingleSourceFile(VCDetailDto srcFile, MultipartFile originFile, String voiceId, Long memberId) {
+        try {
+            // src 오디오 파일 가져오기
+            String sourceFileUrl = memberAudioMetaRepository.findAudioUrlsByAudioMetaIds(
+                    srcFile.getMemberAudioMetaId(),
+                    AudioType.VC_SRC
+            );
+
+            // voiceId를 이용해 src 오디오 변환
+            String convertedFilePath = elevenLabsClient.convertSpeechToSpeech(voiceId, sourceFileUrl);
+
+            // 변환된 파일을 S3에 저장
+            String vcOutputUrl = s3Service.uploadUnitSaveFile(
+                    originFile,
+                    memberId,
+                    srcFile.getProjectId(),
+                    srcFile.getId()
+            );
+
+            // 결과 DTO 생성 및 반환
+            return new VCDetailResDto(
+                    srcFile.getId(),
+                    srcFile.getProjectId(),
+                    srcFile.getIsChecked(),
+                    srcFile.getUnitScript(),
+                    sourceFileUrl,
+                    List.of(vcOutputUrl)
+            );
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
+    }
+
 
     // 로컬에서 업로드한 파일 정보 file 정보
     private MultipartFile findMultipartFileByName(List<MultipartFile> files, String fileName) {

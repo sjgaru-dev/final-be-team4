@@ -125,6 +125,9 @@ public class VCService_team_multi {
 
     // VCProject, VCDetail 저장하는 메서드
     public Long saveVCProject(VCSaveDto vcSaveDto, List<MultipartFile> localFiles, Member member) {
+
+        memberAudioMetaRepository.resetSelection(AudioType.VC_TRG);
+
         // 1. VCProject 생성/업데이트
         VCProject vcProject = vcSaveDto.getProjectId() == null
                 ? createNewVCProject(vcSaveDto, member)
@@ -185,7 +188,6 @@ public class VCService_team_multi {
 
                 audioMeta = memberAudioMetaRepository.findFirstByAudioUrl(uploadUrl)
                         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_AUDIO));
-//                memberAudioMetaRepository.resetSelection(vcProject.getMember().getId(), AudioType.VC_TRG);
                 memberAudioMetaRepository.selectAudio(audioMeta.getId(), AudioType.VC_TRG);
             }
 

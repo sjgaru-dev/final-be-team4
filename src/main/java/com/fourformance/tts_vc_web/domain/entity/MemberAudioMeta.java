@@ -56,10 +56,6 @@ public class MemberAudioMeta extends BaseEntity {
         return memberAudioMeta;
     }
 
-    public void updateIsSelected(Boolean isSelected){
-        this.isSelected = isSelected;
-    }
-
     // trg voiceId 주입 메서드
     public void update(String trgVoiceId){
         this.trgVoiceId = trgVoiceId;
