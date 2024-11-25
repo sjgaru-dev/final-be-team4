@@ -69,6 +69,11 @@ public class ConcatDetail extends BaseEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
+    // 멤버 오디오메타 주입 메서드
+    public void injectMemberAudioMeta(MemberAudioMeta memberAudioMeta) {
+        this.memberAudioMeta = memberAudioMeta;
+    }
+
     // 삭제 메서드
     public void deleteConcatDetail() {
         this.isDeleted = true;

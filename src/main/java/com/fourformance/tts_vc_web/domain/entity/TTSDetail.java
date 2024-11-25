@@ -26,14 +26,10 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "tts_detail")
 public class TTSDetail extends BaseEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tts_detail_id")
     private Long id;
-
-    @OneToMany(mappedBy = "ttsDetail", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<APIStatus> apiStatuses = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
@@ -64,17 +60,6 @@ public class TTSDetail extends BaseEntity {
         return ttsDetail;
     }
 
-    // 연관관계 편의 메서드
-    public void addAPIStatus(APIStatus apiStatus) {
-        this.apiStatuses.add(apiStatus);
-        apiStatus.setTtsDetail(this);
-    }
-
-    public void removeAPIStatus(APIStatus apiStatus) {
-        this.apiStatuses.remove(apiStatus);
-        apiStatus.setTtsDetail(null);
-    }
-
     // 업데이트 메서드
     public void updateTTSDetail(VoiceStyle voiceStyle, String newUnitScript, Float newUnitSpeed, Float newUnitPitch,
                                 Float newUnitVolume, Integer newUnitSequence, Boolean newIsDeleted) {
@@ -92,5 +77,19 @@ public class TTSDetail extends BaseEntity {
     public void deleteTTSDetail() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
+    }
+
+    @OneToMany(mappedBy = "ttsDetail", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<APIStatus> apiStatuses = new ArrayList<>();
+
+    // 편의 메서드
+    public void addApiStatus(APIStatus apiStatus) {
+        this.apiStatuses.add(apiStatus);
+        apiStatus.setTtsDetail(this); // 양방향 매핑 설정
+    }
+
+    public void removeApiStatus(APIStatus apiStatus) {
+        this.apiStatuses.remove(apiStatus);
+        apiStatus.setTtsDetail(null); // 양방향 매핑 해제
     }
 }
