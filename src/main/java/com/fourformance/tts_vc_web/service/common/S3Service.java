@@ -3,7 +3,11 @@ package com.fourformance.tts_vc_web.service.common;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
@@ -28,12 +32,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -58,105 +59,6 @@ public class S3Service {
     private final MemberRepository memberRepository;
 
     private final AmazonS3 amazonS3;
-
-
-    // OutputAudioMeta isdeleted update, S3File Delete
-    public void deleteOutputAudioMeta(Long outputAudioMetaId, Long memberId) {
-        // 1. OutputAudioMeta 조회
-        OutputAudioMeta outputAudioMeta = outputAudioMetaRepository.findById(outputAudioMetaId)
-                .orElseThrow(() -> new RuntimeException("OutputAudioMeta 데이터를 찾을 수 없습니다."));
-
-        // 2. 디렉토리 경로 추출
-        String filePath = outputAudioMeta.getBucketRoute(); // 예: "Generated/123/TTS/456/789.wav"
-        String directoryPrefix = extractProjectDirectoryPrefix(filePath); // "Generated/123/TTS/456/"
-
-        /**
-         * 안전한 처리 순서  : 안전한 처리 순서: S3 삭제 -> DB 업데이트
-         * 이 순서가 일반적으로 더 안전합니다.
-         * S3 삭제 작업이 우선인 이유는, S3에서의 삭제 실패가 비가역적이기 때문입니다.
-         * 파일이 삭제되면 복구하기 어렵지만, DB 상태는 나중에 처리할 수 있기 때문입니다.
-         */
-        // 3. S3 디렉토리 삭제
-        deleteDirectoryFromS3(directoryPrefix);
-
-        // 4. OutputAudioMeta 업데이트
-        outputAudioMeta.deleteOutputAudioMeta(); // 업데이트 치고,
-        outputAudioMetaRepository.save(outputAudioMeta); // 저장
-
-
-    }
-
-    // MemberAudioMeta isdeleted update, S3File Delete
-    public void deleteMemberAudio(Long memberId, Long projectId) {
-        MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("멤버 오디오를 찾을 수 없습니다."));
-
-        String prefix = "member/" + memberId + "/";
-
-        if ("VC_SRC".equals(memberAudioMeta.getAudioType())) {
-            prefix += "VC_SRC/" + projectId + "/";
-        } else if ("VC_TRG".equals(memberAudioMeta.getAudioType())) {
-            prefix += "VC_TRG/" + projectId + "/";
-        } else if ("CONCAT".equals(memberAudioMeta.getAudioType())) {
-            prefix += "CONCAT/" + projectId + "/";
-        }
-        // S3 디렉토리수준 삭제
-        deleteDirectoryFromS3(prefix);
-        // DB 업데이트
-        memberAudioMeta.delete();// isDeleted = ture, 삭제시간 업데이트 메서드
-    }
-
-    // 경로 추출 헬프메서드
-    private String extractProjectDirectoryPrefix(String filePath) {
-        // 슬래시(`/`) 기준으로 분리
-        String[] parts = filePath.split("/");
-
-        // 경로의 최소 길이를 확인
-        if (parts.length < 4) {
-            throw new RuntimeException("Invalid file path: " + filePath);
-        }
-
-        // projectId까지 포함된 경로를 반환
-        return String.join("/", parts[0], parts[1], parts[2], parts[3]) + "/";
-    }
-
-
-    // Prefix + bucket 값만 있으면 S3에서 삭제 가능
-    public void deleteDirectoryFromS3(String directoryPrefix) {
-        try {
-            // listObjects라는 메서드를 통해서 버킷에서 object리스트를 가지고 옴.
-            ObjectListing objectListing = amazonS3.listObjects(bucket, directoryPrefix);
-
-            while (true) {
-                // 삭제할 키들을 저장 할 곳
-                List<DeleteObjectsRequest.KeyVersion> keysToDelete = new ArrayList<>();
-
-                // 객체의 키에 삭제할 ObjectList들의 정보들을 담는다.
-                for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
-                    keysToDelete.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
-                    System.out.println("Deleting: " + objectSummary.getKey());
-                }
-
-                // 만약 삭제할 키가 있다면
-                if (!keysToDelete.isEmpty()) {
-                    DeleteObjectsRequest deleteRequest = new DeleteObjectsRequest(bucket)
-                            .withKeys(keysToDelete)
-                            .withQuiet(false); // 기본값 false  삭제된 각 객체에 대한 정보를 로그로 출력
-                    amazonS3.deleteObjects(deleteRequest);// 객체를 삭제하는 요청을 실제로 실행하는 메서드
-                    System.out.println("배치 삭제 완료");
-                }
-
-                if (objectListing.isTruncated()) {  // 목록을 처리하면서 더 많은 객체가 있는지 확인.true면 더 많은 객체 존재함. false면 마지막 목록이다라는 뜻
-                    objectListing = amazonS3.listNextBatchOfObjects(objectListing);
-                } else {
-                    break;
-                }
-            }
-            System.out.println("All objects under directory deleted: " + directoryPrefix);
-        } catch (Exception e) {
-            System.err.println("Failed to delete objects from S3: " + e.getMessage());
-        }
-    }
 
     // TTS와 VC로 반환한 유닛 오디오를 S3 버킷에 저장
     public String uploadUnitSaveFile(MultipartFile file, Long userId, Long projectId, Long detailId) {
@@ -357,6 +259,107 @@ public class S3Service {
         } catch (IOException e) {
             // 파일 처리 중 발생하는 예외
             throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
+    }
+
+    // OutputAudioMeta isdeleted update, S3File Delete
+    public void deleteOutputAudioMeta(Long outputAudioMetaId, Long memberId) {
+        // 1. OutputAudioMeta 조회
+        OutputAudioMeta outputAudioMeta = outputAudioMetaRepository.findById(outputAudioMetaId)
+                .orElseThrow(() -> new RuntimeException("OutputAudioMeta 데이터를 찾을 수 없습니다."));
+
+        // 2. 디렉토리 경로 추출
+        String filePath = outputAudioMeta.getBucketRoute(); // 예: "Generated/123/TTS/456/789.wav"
+        String directoryPrefix = extractProjectDirectoryPrefix(filePath); // "Generated/123/TTS/456/"
+
+        /**
+         * 안전한 처리 순서  : 안전한 처리 순서: S3 삭제 -> DB 업데이트
+         * 이 순서가 일반적으로 더 안전합니다.
+         * S3 삭제 작업이 우선인 이유는, S3에서의 삭제 실패가 비가역적이기 때문입니다.
+         * 파일이 삭제되면 복구하기 어렵지만, DB 상태는 나중에 처리할 수 있기 때문입니다.
+         */
+        // 3. S3 디렉토리 삭제
+        deleteDirectoryFromS3(directoryPrefix);
+
+        // 4. OutputAudioMeta 업데이트
+        outputAudioMeta.deleteOutputAudioMeta(); // 업데이트 치고,
+        outputAudioMetaRepository.save(outputAudioMeta); // 저장
+
+
+    }
+
+    // =========== 버킷 오디오 삭제 구현중 ============
+
+
+    // MemberAudioMeta isdeleted update, S3File Delete
+    public void deleteMemberAudio(Long memberId, Long projectId) {
+        MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("멤버 오디오를 찾을 수 없습니다."));
+
+        String prefix = "member/" + memberId + "/";
+
+        if ("VC_SRC".equals(memberAudioMeta.getAudioType())) {
+            prefix += "VC_SRC/" + projectId + "/";
+        } else if ("VC_TRG".equals(memberAudioMeta.getAudioType())) {
+            prefix += "VC_TRG/" + projectId + "/";
+        } else if ("CONCAT".equals(memberAudioMeta.getAudioType())) {
+            prefix += "CONCAT/" + projectId + "/";
+        }
+        // S3 디렉토리수준 삭제
+        deleteDirectoryFromS3(prefix);
+        // DB 업데이트
+        memberAudioMeta.delete();// isDeleted = ture, 삭제시간 업데이트 메서드
+    }
+
+    // 경로 추출 헬프메서드
+    private String extractProjectDirectoryPrefix(String filePath) {
+        // 슬래시(`/`) 기준으로 분리
+        String[] parts = filePath.split("/");
+
+        // 경로의 최소 길이를 확인
+        if (parts.length < 4) {
+            throw new RuntimeException("Invalid file path: " + filePath);
+        }
+
+        // projectId까지 포함된 경로를 반환
+        return String.join("/", parts[0], parts[1], parts[2], parts[3]) + "/";
+    }
+
+
+    // Prefix + bucket 값만 있으면 S3에서 삭제 가능
+    public void deleteDirectoryFromS3(String directoryPrefix) {
+        try {
+            // listObjects라는 메서드를 통해서 버킷에서 object리스트를 가지고 옴.
+            ObjectListing objectListing = amazonS3.listObjects(bucket, directoryPrefix);
+
+            while (true) {
+                // 삭제할 키들을 저장 할 곳
+                List<DeleteObjectsRequest.KeyVersion> keysToDelete = new ArrayList<>();
+
+                // 객체의 키에 삭제할 ObjectList들의 정보들을 담는다.
+                for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
+                    keysToDelete.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
+                    System.out.println("Deleting: " + objectSummary.getKey());
+                }
+
+                // 만약 삭제할 키가 있다면
+                if (!keysToDelete.isEmpty()) {
+                    DeleteObjectsRequest deleteRequest = new DeleteObjectsRequest(bucket)
+                            .withKeys(keysToDelete)
+                            .withQuiet(false); // 기본값 false  삭제된 각 객체에 대한 정보를 로그로 출력
+                    amazonS3.deleteObjects(deleteRequest);// 객체를 삭제하는 요청을 실제로 실행하는 메서드
+                    System.out.println("배치 삭제 완료");
+                }
+
+                if (objectListing.isTruncated()) {  // 목록을 처리하면서 더 많은 객체가 있는지 확인.true면 더 많은 객체 존재함. false면 마지막 목록이다라는 뜻
+                    objectListing = amazonS3.listNextBatchOfObjects(objectListing);
+                } else {
+                    break;
+                }
+            }
+            System.out.println("All objects under directory deleted: " + directoryPrefix);
+        } catch (Exception e) {
+            System.err.println("Failed to delete objects from S3: " + e.getMessage());
         }
     }
 }
