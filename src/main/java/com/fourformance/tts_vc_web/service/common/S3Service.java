@@ -431,37 +431,6 @@ public class S3Service {
 
     // ================================= 버킷 오디오 삭제 구현중 =============================================
 
-//
-//    public void deleteAudioPerProject(Long projectId) {
-//
-//        Project project = projectRepository.findById(projectId)
-//                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
-//
-//        String projectType = null;
-//
-//        if (project instanceof TTSProject) {
-//            projectType = "TTS";
-//        } else if (project instanceof VCProject) {
-//            projectType = "VC";
-//        } else if (project instanceof ConcatProject) {
-//            projectType = "CONCAT";
-//        }
-//
-//        Long memberId = project.getMember().getId();
-//
-//        String memberAudioRoute = "member/" + memberId + "/" + projectType + "/" + projectId;
-//        String outputAudioRoute = "Generated/" + memberId + "/" + projectType + "/" + projectId;
-//
-//        deleteDirectoryFromS3(memberAudioRoute);
-////        deleteDirectoryFromS3(outputAudioRoute);
-//
-//        // 멤버오디오메타디비 업데이트
-//        memberAudioMetaUpdate(projectId);
-//
-//        // 아웃풋오디오메타딥 업데이트
-////        outputAudioMetaUpdate(projectId);
-//    }
-
 
     public void deleteAudioPerProject(Long projectId) {
 
@@ -474,40 +443,49 @@ public class S3Service {
             projectType = "TTS";
         } else if (project instanceof VCProject) {
             projectType = "VC";
-//            VCProjectDelete(projectId);
         } else if (project instanceof ConcatProject) {
             projectType = "CONCAT";
         }
 
         Long memberId = project.getMember().getId();
 
-        String memberAudioRoute = "member/" + memberId + "/" + projectType + "/" + projectId;
-        String outputAudioRoute = "Generated/" + memberId + "/" + projectType + "/" + projectId;
+        String vcTrgAudioRoute = "member/" + memberId + "/" + "VC_TRG" + "/" + projectId;
+        String vcSRCAudioRoute = "member/" + memberId + "/" + "VC_SRC" + "/" + projectId;
+        String concatAudioRoute = "member/" + memberId + "/" + "CONCAT" + "/" + projectId;
 
-        deleteDirectoryFromS3(memberAudioRoute);
-//        deleteDirectoryFromS3(outputAudioRoute);
+        String outputAudioRoute = "Generated/" + memberId + "/" + projectType + "/" + projectId + "/";
+
+        if (project instanceof TTSProject) {
+            deleteDirectoryFromS3(outputAudioRoute);
+        } else if (project instanceof VCProject) {
+            deleteDirectoryFromS3(vcTrgAudioRoute);
+            deleteDirectoryFromS3(vcSRCAudioRoute);
+            deleteDirectoryFromS3(outputAudioRoute);
+        } else if (project instanceof ConcatProject) {
+            deleteDirectoryFromS3(concatAudioRoute);
+            deleteDirectoryFromS3(outputAudioRoute);
+        }
 
         // 멤버오디오메타디비 업데이트
         memberAudioMetaUpdate(projectId);
 
         // 아웃풋오디오메타딥 업데이트
-//        outputAudioMetaUpdate(projectId);
+        outputAudioMetaUpdate(projectId);
     }
 
-//    private void VCProjectDelete(Long projectId) {
-//
-//        Project project = projectRepository.findById(projectId)
-//                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
-//        Long memberId = project.getMember().getId();
-//
-//        String vcTargetRoute = "member/" + memberId + "/" + "VC_TRG" + "/" + projectId;
-//        String vcSourceRoute = "member/" + memberId + "/" + "VC_SRC" + "/" + projectId;
-//        String outputAudioRoute = "Generated/" + memberId + "/" + "VC" + "/" + projectId;
-//
-//        deleteDirectoryFromS3(vcTargetRoute);
-//        deleteDirectoryFromS3(vcSourceRoute);
-//        deleteDirectoryFromS3(outputAudioRoute);
-//    }
+    // DB update로직
+    private void outputAudioMetaUpdate(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+
+        // 프로젝트에서 OutputAudioMeta를 찾아서 OutputAudioMeta의 isDeleted업뎃 + 삭제시간업뎃
+        List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByAnyProjectId(
+                projectId);
+        for (OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {                    // 업데이트 치고, 저장.
+            outputAudioMeta.deleteOutputAudioMeta();
+            outputAudioMetaRepository.save(outputAudioMeta);
+        }
+    }
 
     private void memberAudioMetaUpdate(Long projectId) {
 
@@ -517,31 +495,47 @@ public class S3Service {
         if (project instanceof TTSProject) {
             return;
 
-            // VC 프로젝트일 떄
+            // VC 프로젝트일 때
         } else if (project instanceof VCProject) {
 
             // 1. 해당 VC 프로젝트에 일치하는 타겟 오디오에 대한 memberAudioMeta를 찾아서 isDeleted를 1로 업데이트
             Long memberAudioMetaId = memberAudioMetaRepository.findTargetAudioMetaIdByVCProjectId(projectId);
             System.out.println("========================   memberAudioMetaId = " + memberAudioMetaId);
-            MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberAudioMetaId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_AUDIO_META_NOT_FOUND));
-            memberAudioMetaRepository.save(memberAudioMeta);
+            if (memberAudioMetaId != null) {
+                MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberAudioMetaId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_AUDIO_META_NOT_FOUND));
+                memberAudioMeta.delete();
+                memberAudioMetaRepository.save(memberAudioMeta);
+            }
 
             // 2. 해당 VC 프로젝트에 일치하는 소스 오디오들에 대한 memberAudioMeta를 찾아서 isDeleted를 1로 업데이트
             List<Long> memberAudioMetaIds = memberAudioMetaRepository.findSourceAudioMetaIdsByVCProjectId(projectId);
-            for (Long sourceAudioMetaId : memberAudioMetaIds) {
-                System.out.println("======================  sourceAudioMetaId = " + sourceAudioMetaId);
-                MemberAudioMeta meta = memberAudioMetaRepository.findById(sourceAudioMetaId)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_AUDIO_META_NOT_FOUND));
-                memberAudioMetaRepository.save(meta);
+            if (memberAudioMetaIds != null && !memberAudioMetaIds.isEmpty()) {
+                for (Long sourceAudioMetaId : memberAudioMetaIds) {
+                    System.out.println("======================  sourceAudioMetaId = " + sourceAudioMetaId);
+                    if (sourceAudioMetaId != null) {
+                        MemberAudioMeta meta = memberAudioMetaRepository.findById(sourceAudioMetaId)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_AUDIO_META_NOT_FOUND));
+                        meta.delete();
+                        memberAudioMetaRepository.save(meta);
+                    }
+                }
             }
+
         } else if (project instanceof ConcatProject) {
+            // Concat 프로젝트일 때
             List<Long> memberAudioMetaIds = memberAudioMetaRepository.findMemberAudioMetaIdsByConcatProjectId(
                     projectId);
-            for (Long memberAudioMetaId : memberAudioMetaIds) {
-                MemberAudioMeta meta = memberAudioMetaRepository.findById(memberAudioMetaId)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_AUDIO_META_NOT_FOUND));
-                memberAudioMetaRepository.save(meta);
+            if (memberAudioMetaIds != null && !memberAudioMetaIds.isEmpty()) {
+                for (Long memberAudioMetaId : memberAudioMetaIds) {
+                    System.out.println("======================  memberAudioMetaId = " + memberAudioMetaId);
+                    if (memberAudioMetaId != null) {
+                        MemberAudioMeta meta = memberAudioMetaRepository.findById(memberAudioMetaId)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_AUDIO_META_NOT_FOUND));
+                        meta.delete();
+                        memberAudioMetaRepository.save(meta);
+                    }
+                }
             }
         }
     }

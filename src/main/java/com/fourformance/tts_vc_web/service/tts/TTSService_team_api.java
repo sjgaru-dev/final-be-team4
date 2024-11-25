@@ -1,5 +1,7 @@
 package com.fourformance.tts_vc_web.service.tts;
 
+import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
+import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.common.util.CommonFileUtils;
@@ -8,6 +10,7 @@ import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
 import com.fourformance.tts_vc_web.dto.tts.TTSDetailDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSResponseDetailDto;
+import com.fourformance.tts_vc_web.dto.tts.TTSResponseDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSSaveDto;
 import com.fourformance.tts_vc_web.repository.APIStatusRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
@@ -46,11 +49,23 @@ public class TTSService_team_api {
      * @param ttsSaveDto 프로젝트와 디테일 데이터를 포함한 DTO
      * @return 생성된 오디오 파일 경로 리스트
      */
-    public List<TTSResponseDetailDto> convertAllTtsDetails(TTSSaveDto ttsSaveDto, Long memberId) {
+    public TTSResponseDto convertAllTtsDetails(TTSSaveDto ttsSaveDto, Long memberId) {
         LOGGER.info("convertAllTtsDetails 호출: " + ttsSaveDto);
 
-        // 프로젝트 저장 또는 업데이트
+        // 1. 프로젝트 저장 또는 업데이트
         TTSProject ttsProject = saveOrUpdateProject(ttsSaveDto, memberId);
+
+        // 2. 응답 DTO 생성 및 초기화
+        TTSResponseDto ttsResponseDto = TTSResponseDto.builder()
+                .projectId(ttsProject.getId())
+                .projectName(ttsProject.getProjectName())
+                .globalVoiceStyleId(ttsProject.getVoiceStyle().getId())
+                .fullScript(ttsProject.getFullScript())
+                .globalSpeed(ttsProject.getGlobalSpeed())
+                .globalPitch(ttsProject.getGlobalPitch())
+                .globalVolume(ttsProject.getGlobalVolume())
+                .apiStatus(ttsProject.getApiStatus())
+                .build();
 
         // 프로젝트의 TTS 디테일 데이터 처리
         List<TTSResponseDetailDto> responseDetails = new ArrayList<>();
@@ -90,8 +105,15 @@ public class TTSService_team_api {
             }
         }
 
-        LOGGER.info("convertAllTtsDetails 완료: 생성된 Response Details = " + responseDetails);
-        return responseDetails;
+        // 여기까지 진행되면 API는 성공으로 처리 및 DB 반영
+        ttsProject.updateAPIStatus(APIStatusConst.SUCCESS);
+        ttsProjectRepository.save(ttsProject);
+
+        // ttsResponseDto 나머지 정보 값 처리
+        ttsResponseDto.setApiStatus(ttsProject.getApiStatus());
+        ttsResponseDto.setTtsDetails(responseDetails);
+        LOGGER.info("convertAllTtsDetails 완료: 생성된 ResponseDto = " + ttsResponseDto);
+        return ttsResponseDto;
     }
 
     /**
@@ -167,6 +189,14 @@ public class TTSService_team_api {
         TTSDetail ttsDetail = ttsDetailRepository.findById(ttsProject.getMember().getId()).orElseThrow();
         String languageCode = voiceStyleRepository.findById(detailDto.getUnitVoiceStyleId()).get().getLanguageCode();
         String gender = voiceStyleRepository.findById(detailDto.getUnitVoiceStyleId()).get().getGender();
+        String script = detailDto.getUnitScript();
+
+        System.out.println("gender = " + gender);
+        System.out.println("languageCode = " + languageCode);
+        System.out.println("script = " + script);
+
+        // 텍스트와 언어 코드 검증
+        checkTextLanguage(script, languageCode);
 
         // 요청 페이로드 생성
         String requestPayload = String.format(
@@ -178,6 +208,7 @@ public class TTSService_team_api {
                 detailDto.getUnitVolume(),
                 detailDto.getUnitPitch()
         );
+
 
         // APIStatus 엔티티 생성 및 저장
         APIStatus apiStatus = APIStatus.createAPIStatus(null, ttsDetail, requestPayload);
@@ -207,13 +238,38 @@ public class TTSService_team_api {
             // Google TTS API 호출
             SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
 
+            // 응답 데이터를 JSON으로 변환
+            String responsePayload = String.format(
+                    "{ \"audioSize\": \"%d\", \"contentType\": \"audio/linear16\", \"request\": %s }",
+                    response.getAudioContent().size(),
+                    requestPayload
+            );
+
             // 응답 검증 및 처리
             if (response.getAudioContent().isEmpty()) {
+                apiStatus.updateResponseInfo(requestPayload, 500, APIUnitStatusConst.FAILURE);
+                apiStatusRepository.save(apiStatus); // 상태 저장
+
+                ttsProject.updateAPIStatus(APIStatusConst.FAILURE);
+                ttsProjectRepository.save(ttsProject);
+
                 throw new BusinessException(ErrorCode.TTS_CONVERSION_FAILED_EMPTY_CONTENT);
             }
+
+            // 성공적인 처리
+            apiStatus.updateResponseInfo(responsePayload, 200, APIUnitStatusConst.SUCCESS);
+            apiStatusRepository.save(apiStatus);
+
             LOGGER.info("Google TTS API 호출 성공");
             return response.getAudioContent();
         } catch (IOException e) {
+
+            apiStatus.updateResponseInfo(requestPayload, 500, APIUnitStatusConst.FAILURE);
+            apiStatusRepository.save(apiStatus); // 상태 저장
+
+            ttsProject.updateAPIStatus(APIStatusConst.FAILURE);
+            ttsProjectRepository.save(ttsProject);
+
             LOGGER.severe("Google TTS API 호출 중 오류: " + e.getMessage());
             throw new BusinessException(ErrorCode.TTS_CONVERSION_FAILED);
         }
@@ -275,34 +331,105 @@ public class TTSService_team_api {
 
     /**
      * 텍스트와 언어 코드의 일치 여부를 검증
-     *
      * @param text 텍스트 데이터
      * @param languageCode 언어 코드
      */
     private void checkTextLanguage(String text, String languageCode) {
+        // 언어 코드 형식 검증 (xx-XX 형식)
+        if (!languageCode.matches("^[a-z]{2}-[A-Z]{2}$")) {
+            throw new BusinessException(ErrorCode.INVALID_LANGUAGE_CODE_FORMAT);
+        }
+
+        // 지원되는 언어 코드 리스트
+        Set<String> supportedLanguageCodes = Set.of(
+                "af-ZA", "ar-XA", "eu-ES", "bn-IN", "bg-BG", "ca-ES", "yue-HK", "cs-CZ",
+                "da-DK", "nl-BE", "nl-NL", "en-AU", "en-IN", "en-GB", "en-US", "fil-PH",
+                "fi-FI", "fr-CA", "fr-FR", "gl-ES", "de-DE", "el-GR", "gu-IN", "he-IL",
+                "hi-IN", "hu-HU", "is-IS", "id-ID", "it-IT", "ja-JP", "kn-IN", "ko-KR",
+                "lv-LV", "lt-LT", "ms-MY", "ml-IN", "cmn-CN", "cmn-TW", "mr-IN", "nb-NO",
+                "pl-PL", "pt-BR", "pt-PT", "pa-IN", "ro-RO", "ru-RU", "sr-RS", "sk-SK",
+                "es-ES", "es-US", "sv-SE", "ta-IN", "te-IN", "th-TH", "tr-TR", "uk-UA",
+                "vi-VN"
+        );
+
+        // 언어 코드 유효성 검증
+        if (!supportedLanguageCodes.contains(languageCode)) {
+            throw new BusinessException(ErrorCode.UNSUPPORTED_LANGUAGE_CODE);
+        }
+
+        // 텍스트와 언어 코드에 따른 일치 여부 검증
         boolean isKorean = text.matches(".*[가-힣].*");
         boolean isChinese = text.matches(".*[\\u4E00-\\u9FFF].*");
         boolean isJapanese = text.matches(".*[\\u3040-\\u30FF\\u31F0-\\u31FF].*");
         boolean isEnglish = text.matches(".*[A-Za-z].*");
 
-        // 언어 코드와 텍스트의 일치 여부 확인
         switch (languageCode) {
-            case "ko-KR":
+            case "ko-KR": // 한국어
                 if (!isKorean) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_KO_KR);
                 break;
-            case "zh-CN":
-                if (!isChinese) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_ZH_CN);
+            case "cmn-CN": // 중국어 간체
+            case "cmn-TW": // 중국어 번체
+            case "yue-HK": // 광둥어
+                if (!isChinese) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_CHINESE);
                 break;
-            case "ja-JP":
+            case "ja-JP": // 일본어
                 if (!isJapanese) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_JA_JP);
                 break;
-            case "en-US":
-            case "en-GB":
+            case "en-US": // 영어 (미국)
+            case "en-GB": // 영어 (영국)
+            case "en-AU": // 영어 (호주)
+            case "en-IN": // 영어 (인도)
                 if (!isEnglish) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_EN);
                 break;
+            case "fr-FR": // 프랑스어
+            case "fr-CA": // 프랑스어 (캐나다)
+            case "es-ES": // 스페인어
+            case "es-US": // 스페인어 (미국)
+            case "pt-BR": // 포르투갈어 (브라질)
+            case "pt-PT": // 포르투갈어 (포르투갈)
+            case "de-DE": // 독일어
+            case "it-IT": // 이탈리아어
+            case "nl-BE": // 네덜란드어 (벨기에)
+            case "nl-NL": // 네덜란드어 (네덜란드)
+                if (!text.matches(".*[A-Za-zÀ-ÿ].*")) { // 라틴 문자 포함 확인
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_LATIN_BASED);
+                }
+                break;
+            case "ru-RU": // 러시아어
+            case "uk-UA": // 우크라이나어
+            case "bg-BG": // 불가리아어
+            case "sr-RS": // 세르비아어
+                if (!text.matches(".*[А-яЁё].*")) { // 키릴 문자 포함 확인
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_CYRILLIC);
+                }
+                break;
+            case "th-TH": // 태국어
+                if (!text.matches(".*[ก-๛].*")) {
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_THAI);
+                }
+                break;
+            case "he-IL": // 히브리어
+                if (!text.matches(".*[א-ת].*")) {
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_HEBREW);
+                }
+                break;
+            case "ar-XA": // 아랍어
+                if (!text.matches(".*[؀-ۿ].*")) {
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_ARABIC);
+                }
+                break;
+            case "fil-PH": // 필리핀어
+            case "id-ID": // 인도네시아어
+            case "ms-MY": // 말레이어
+                if (!isEnglish) { // 필리핀어, 인도네시아어, 말레이어는 라틴 문자 기반
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_LATIN_BASED);
+                }
+                break;
             default:
-                throw new BusinessException(ErrorCode.UNSUPPORTED_LANGUAGE_CODE);
+                // 기타 언어 처리 (추가 검증 로직이 없으면 통과)
+                LOGGER.info("추가 검증 없이 언어 코드 통과: " + languageCode);
         }
     }
+
 }
 
