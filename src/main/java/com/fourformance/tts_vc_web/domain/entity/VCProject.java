@@ -1,8 +1,14 @@
 package com.fourformance.tts_vc_web.domain.entity;
 
 import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
-import jakarta.persistence.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -44,6 +50,11 @@ public class VCProject extends Project {
         this.memberTargetAudioMeta = memberTargetAudioMeta;
         super.projectName = projectName;
         super.updatedAt();
+    }
+
+    // 타겟 오디오 메타 주입 메서드
+    public void injectTargetAudioMeta(MemberAudioMeta memberTargetAudioMeta) {
+        this.memberTargetAudioMeta = memberTargetAudioMeta;
     }
 
     // Voice ID 업데이트 메서드 (새롭게 분리)

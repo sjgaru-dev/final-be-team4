@@ -9,17 +9,22 @@ import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/s3_test")
 public class S3Controller {
 
-    private final S3Service S3Service;
+    private final S3Service s3Service;
 
     // TTS나 VC로 반환한 유닛 오디오를 업로드하는 api
     @Operation(summary = "유닛(TTS or VC) 오디오 업로드", description = "유닛 오디오를 S3 버킷에 저장하고 메타데이터를 DB에 저장하는 api입니다."
@@ -30,7 +35,7 @@ public class S3Controller {
                                   @RequestParam("detailId") Long detailId,
                                   @RequestParam("projectId") Long projectId, HttpSession session) {
         Long userId = 0L; // 실제 프로젝트에서는 세션을 사용하여 사용자 ID를 가져옵니다.
-        String fileUrl = S3Service.uploadUnitSaveFile(file, userId, projectId, detailId);
+        String fileUrl = s3Service.uploadUnitSaveFile(file, userId, projectId, detailId);
         return DataResponseDto.of(fileUrl, "파일이 성공적으로 업로드되었습니다.");
     }
 
@@ -56,7 +61,7 @@ public class S3Controller {
 //            HttpSession session
 //    ) {
 //        Long userId = 0L; // 실제 프로젝트에서는 세션을 사용하여 사용자 ID를 가져옵니다.
-//        String fileUrl = S3Service.uploadUnitSaveFile(file, userId, projectId, detailId);
+//        String fileUrl = s3Service.uploadUnitSaveFile(file, userId, projectId, detailId);
 //        return DataResponseDto.of(fileUrl, "파일이 성공적으로 업로드되었습니다.");
 //    }
 
@@ -67,7 +72,7 @@ public class S3Controller {
     public ResponseDto uploadConcat(@RequestParam("file") MultipartFile file,
                                     @RequestParam("projectId") Long projectId, HttpSession session) {
         Long userId = 0L; // 실제 프로젝트에서는 세션을 사용하여 사용자 ID를 가져옵니다.
-        String fileUrl = S3Service.uploadConcatSaveFile(file, userId, projectId);
+        String fileUrl = s3Service.uploadConcatSaveFile(file, userId, projectId);
         return DataResponseDto.of(fileUrl, "파일 업로드가 성공적으로 완료되었습니다.");
     }
 
@@ -79,7 +84,7 @@ public class S3Controller {
             "/concat/download-generated-audio-from-bucket", "/vc/download-to-generate-audio-from-bucket",
             "/concat/download-to-generate-audio-from-bucket"})
     public ResponseDto downloadGeneratedAudio(@RequestParam("bucketRoute") String bucketRoute) {
-        String presignedUrl = S3Service.generatePresignedUrl(bucketRoute);
+        String presignedUrl = s3Service.generatePresignedUrl(bucketRoute);
         return DataResponseDto.of(presignedUrl, "파일 다운로드 URL 생성 성공");
     }
 
@@ -94,8 +99,31 @@ public class S3Controller {
             @RequestParam("projectId") Long projectId, @RequestParam("audioType") String audioType,
             @RequestParam("voiceId") String voiceId) {
         AudioType enumAudioType = AudioType.valueOf(audioType);
-        List<String> uploadedUrls = S3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType,
+        List<String> uploadedUrls = s3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType,
                 voiceId);
         return DataResponseDto.of(uploadedUrls);
+    }
+
+//    @DeleteMapping("/delete")
+//    public ResponseEntity<String> deleteOutputAudioMetaByS3(
+//            @RequestParam("projectId") Long projectId
+//    ) {
+//        s3Service.deleteAudioPerProject(projectId);
+//        return ResponseEntity.ok("삭제 성공하였습니다.");
+//    }
+
+    @DeleteMapping("/delete/{projectId}")
+    public ResponseEntity<String> deleteOutputAudioMetaByS3(
+            @PathVariable("projectId") Long projectId
+    ) {
+        System.out.println("projectId = " + projectId);
+        s3Service.deleteAudioPerProject(projectId);
+        return ResponseEntity.ok("삭제 성공하였습니다.");
+    }
+
+    @DeleteMapping("/deleteMemberAudioMeta")
+    public ResponseEntity<String> deleteMemberAudio(@RequestParam Long meberId, @RequestParam Long projectId) {
+        s3Service.deleteMemberAudio(meberId, projectId);
+        return ResponseEntity.ok("삭제성공");
     }
 }
