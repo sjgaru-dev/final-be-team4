@@ -1,20 +1,19 @@
 package com.fourformance.tts_vc_web.service.vc;
 
+import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.common.util.ConvertedMultipartFile_team_api;
 import com.fourformance.tts_vc_web.common.util.ElevenLabsClient_team_api;
-import com.fourformance.tts_vc_web.domain.entity.Member;
-import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
-import com.fourformance.tts_vc_web.domain.entity.VCDetail;
-import com.fourformance.tts_vc_web.domain.entity.VCProject;
+import com.fourformance.tts_vc_web.domain.entity.*;
 import com.fourformance.tts_vc_web.dto.vc.*;
 import com.fourformance.tts_vc_web.repository.*;
 import com.fourformance.tts_vc_web.service.common.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,6 +38,7 @@ public class VCService_team_api {
     private final MemberAudioMetaRepository memberAudioMetaRepository;
     private final OutputAudioMetaRepository outputAudioMetaRepository;
     private final VCService_team_multi vcService;
+    private final APIStatusRepository apiStatusRepository;
 
     /**
      * VC 프로젝트 오디오 변환 메서드
@@ -128,6 +128,30 @@ public class VCService_team_api {
 //        }
     }
 
+//    /**
+//     * src 파일 처리 및 변환
+//     */
+//    private List<VCDetailResDto> processSourceFiles(
+//            List<MultipartFile> inputFiles,
+//            List<VCDetailDto> srcFiles,
+//            String voiceId,
+//            Long memberId) {
+//        return srcFiles.stream()
+//                .map(srcFile -> {
+//                    // Step 1: 소스 파일 매칭
+//                    MultipartFile matchingFile = findMultipartFileByName(inputFiles, srcFile.getLocalFileName());
+//                    LOGGER.info("Matching file found: " + (matchingFile != null ? matchingFile.getOriginalFilename() : "null"));
+//
+//                    // Step 2: 변환 처리
+//                    if (matchingFile != null) {
+//                        return processSingleSourceFile(srcFile, matchingFile, voiceId, memberId);
+//                    }
+//                    return null;
+//                })
+//                .filter(Objects::nonNull)
+//                .collect(Collectors.toList());
+//    }
+
     /**
      * src 파일 처리 및 변환
      */
@@ -144,13 +168,38 @@ public class VCService_team_api {
 
                     // Step 2: 변환 처리
                     if (matchingFile != null) {
-                        return processSingleSourceFile(srcFile, matchingFile, voiceId, memberId);
+                        // APIStatus 생성: 요청 시작 단계 기록
+                        String requestPayload = String.format("Voice ID: %s, Source File: %s", voiceId, srcFile.getLocalFileName());
+                        VCDetail vcDetail = vcDetailRepository.findById(srcFile.getId())
+                                .orElseThrow(() -> new BusinessException(ErrorCode.VC_DETAIL_NOT_FOUND));
+                        APIStatus apiStatus = APIStatus.createAPIStatus(vcDetail, null, requestPayload);
+                        apiStatusRepository.save(apiStatus);
+
+                        // 변환 작업 처리
+                        try {
+                            VCDetailResDto result = processSingleSourceFile(srcFile, matchingFile, voiceId, memberId);
+
+                            // APIStatus 성공 상태 업데이트
+                            String responsePayload = String.format("File converted successfully. Output URL: %s", result.getGenAudios());
+                            apiStatus.updateResponseInfo(responsePayload, 200, APIUnitStatusConst.SUCCESS);
+                            apiStatusRepository.save(apiStatus);
+
+                            return result;
+                        } catch (Exception e) {
+                            // APIStatus 실패 상태 업데이트
+                            String responsePayload = String.format("Error during file conversion: %s", e.getMessage());
+                            apiStatus.updateResponseInfo(responsePayload, 500, APIUnitStatusConst.FAILURE);
+                            apiStatusRepository.save(apiStatus);
+
+                            throw e;
+                        }
                     }
                     return null;
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
+
 
     /**
      * 단일 소스 파일 처리
