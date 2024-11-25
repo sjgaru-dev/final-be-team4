@@ -350,7 +350,8 @@ public class S3Service {
         }
     }
 
-    private void handleVCTrgFiles(List<MultipartFile> files, Long projectId, Member member,List<String> uploadedUrls) throws IOException {
+    private void handleVCTrgFiles(List<MultipartFile> files, Long projectId, Member member, List<String> uploadedUrls)
+            throws IOException {
         if (files.size() != 1) {
             throw new BusinessException(ErrorCode.INVALID_FILE_COUNT); // VC_TRG는 단일 파일만 허용
         }
@@ -381,7 +382,8 @@ public class S3Service {
         return amazonS3Client.getUrl(bucket, filename).toString();
     }
 
-    private MemberAudioMeta saveMemberAudioMeta(Member member, MultipartFile file, String fileUrl, AudioType audioType) {
+    private MemberAudioMeta saveMemberAudioMeta(Member member, MultipartFile file, String fileUrl,
+                                                AudioType audioType) {
         MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(
                 member, file.getOriginalFilename(), fileUrl, audioType
         );
@@ -560,8 +562,6 @@ public class S3Service {
         // DB 업데이트
         memberAudioMeta.delete();// isDeleted = ture, 삭제시간 업데이트 메서드
         memberAudioMetaRepository.save(memberAudioMeta);
-
-
     }
 
 
@@ -601,6 +601,10 @@ public class S3Service {
             System.err.println("Failed to delete objects from S3: " + e.getMessage());
         }
     }
+
+//    public void deleteAudioPerUnit(Long projectId, Long detailId) {
+//
+//    }
 
     // ========================================================================================================================
 
@@ -644,7 +648,8 @@ public class S3Service {
         }
     }
 
-    public List<MemberAudioMeta> uploadAndSaveMemberFile2(List<MultipartFile> files, Long memberId, Long projectId, AudioType audioType) {
+    public List<MemberAudioMeta> uploadAndSaveMemberFile2(List<MultipartFile> files, Long memberId, Long projectId,
+                                                          AudioType audioType) {
         try {
             List<MemberAudioMeta> memberAudioMetas = new ArrayList<>();
             // 필요한 리포지토리나 서비스를 주입받아 사용해야 합니다.
