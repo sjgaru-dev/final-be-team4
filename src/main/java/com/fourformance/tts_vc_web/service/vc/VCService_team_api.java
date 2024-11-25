@@ -156,7 +156,7 @@ public class VCService_team_api {
     }
 
     private String uploadFileToS3(MultipartFile file, Long memberId, Long projectId, AudioType audioType) throws IOException {
-        return s3Service.uploadAndSaveMemberFile(List.of(file), memberId, projectId, audioType).get(0);
+        return s3Service.uploadAndSaveMemberFile(file, memberId, projectId, audioType);
     }
 
     private void saveMemberAudioMeta(Long memberId, String fileUrl, String voiceId, AudioType audioType) {
