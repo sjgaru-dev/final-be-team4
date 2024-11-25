@@ -18,5 +18,5 @@ public class VCDetailResDto {
     private Boolean isChecked; // 체크 여부s
     private String unitScript; // 단위 스크립트
     private String srcAudio; // source 오디오 url
-    private List<String> genAudios; // VC 변환된 오디오 url
+    private List<GeneratedAudioDto> genAudios; // VC 변환된 오디오 url
 }

@@ -88,11 +88,12 @@ public class VCService_team_multi {
     private VCDetailResDto convertToVCDetailResDto(VCDetail vcDetail) {
 
         // src 오디오 url 추가하기
-        List<String> audioUrls = outputAudioMetaRepository.findAudioUrlsByVcDetail(vcDetail.getId())
+        List<GeneratedAudioDto> audioUrls = outputAudioMetaRepository.findAudioUrlsByVcDetail(vcDetail.getId())
                 .stream() // List<OutputAudioMeta>를 Stream으로 변환
                 .filter(meta -> meta.getAudioUrl() != null) // audioUrl이 null이 아닌 경우만 필터링
-                .map(OutputAudioMeta::getAudioUrl) // OutputAudioMeta의 audioUrl만 추출
-                .collect(Collectors.toList()); // Stream 결과를 List<String>으로 변환
+                .map(meta -> new GeneratedAudioDto(meta.getId(), meta.getAudioUrl())) // OutputAudioMeta의 id와 audioUrl을 GeneratedAudioDto로 매핑
+                .collect(Collectors.toList()); // Stream 결과를 List<GeneratedAudioDto>로 변환
+
 
         VCDetailResDto resDto = new VCDetailResDto();
                        resDto.setId(vcDetail.getId());
