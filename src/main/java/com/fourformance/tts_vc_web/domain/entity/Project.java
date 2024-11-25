@@ -48,6 +48,7 @@ public abstract class Project extends BaseEntity {
 
     // deletedAt 업데이트 메서드
     public void deletedAt() {
+        this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
     }
 

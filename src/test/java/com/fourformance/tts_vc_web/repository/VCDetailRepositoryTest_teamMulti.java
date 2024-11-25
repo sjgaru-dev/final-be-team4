@@ -37,7 +37,8 @@ class VCDetailRepositoryTest_teamMulti {
 
     @Autowired
     MemberAudioMetaRepository memberAudioMetaRepository;
-
+    @Autowired
+    private OutputAudioMetaRepository outputAudioMetaRepository;
 
 
     //member 생성
@@ -134,6 +135,7 @@ class VCDetailRepositoryTest_teamMulti {
         Member savedMember = memberRepository.save(createMember());
         VCProject savedProject = vcProjectRepository.save(createVCProject(savedMember));
 
+        outputAudioMetaRepository.deleteAll();
         vcDetailRepository.deleteAll();
 
         // 여러 개의 VCDetail 저장 (10개 생성 예시)
@@ -181,6 +183,7 @@ class VCDetailRepositoryTest_teamMulti {
         Member savedMember = memberRepository.save(createMember());
         VCProject savedProject = vcProjectRepository.save(createVCProject(savedMember));
 
+        outputAudioMetaRepository.deleteAll();
         vcDetailRepository.deleteAll();
 
         // 여러 개의 VCDetail 저장 (10개 생성 예시)

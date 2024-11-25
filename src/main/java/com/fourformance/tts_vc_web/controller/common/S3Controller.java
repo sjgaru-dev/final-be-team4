@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -99,5 +98,15 @@ public class S3Controller {
         List<String> uploadedUrls = S3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType,
                 voiceId);
         return DataResponseDto.of(uploadedUrls);
+    }
+
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteOutputAudioMetaByS3(
+            @RequestParam Long projectId,
+            @RequestParam Long memberId
+            ) {
+        s3Service.deleteOutputAudioMeta(projectId, memberId);
+        return ResponseEntity.ok("삭제 성공하였습니다.");
     }
 }
