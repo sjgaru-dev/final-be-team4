@@ -125,6 +125,9 @@ public class VCService_team_multi {
 
     // VCProject, VCDetail 저장하는 메서드
     public Long saveVCProject(VCSaveDto vcSaveDto, List<MultipartFile> localFiles, Member member) {
+
+        memberAudioMetaRepository.resetSelection(AudioType.VC_TRG);
+
         // 1. VCProject 생성/업데이트
         VCProject vcProject = vcSaveDto.getProjectId() == null
                 ? createNewVCProject(vcSaveDto, member)
@@ -182,8 +185,10 @@ public class VCService_team_multi {
                 MultipartFile localFile = findMultipartFileByName(files, localFileName);
                 String uploadUrl = s3Service.uploadAndSaveMemberFile(localFile,vcProject.getMember().getId(), vcProject.getId(), audioType);
 
+
                 audioMeta = memberAudioMetaRepository.findFirstByAudioUrl(uploadUrl)
                         .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_AUDIO));
+                memberAudioMetaRepository.selectAudio(audioMeta.getId(), AudioType.VC_TRG);
             }
 
 

@@ -37,10 +37,13 @@ public class MemberAudioMeta extends BaseEntity {
     private String trgVoiceId;
 
     private Boolean isDeleted=false;
+    private Boolean isSelected=false;
+
     @Enumerated(EnumType.STRING)
     private AudioFormat audioFormat = AudioFormat.WAV;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
+
 
     // 생성 메서드
     public static MemberAudioMeta createMemberAudioMeta(Member member, String bucketRoute, String audioUrl, AudioType audioType) {
