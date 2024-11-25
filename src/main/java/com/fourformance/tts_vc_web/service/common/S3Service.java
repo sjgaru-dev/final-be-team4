@@ -88,7 +88,7 @@ public class S3Service {
                 String timeStamp = sdf.format(new Date());
                 fileName =
                         "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + timeStamp
-                                + ".wav";
+                                + ".mp3";
             } else {
                 throw new BusinessException(ErrorCode.UNSUPPORTED_PROJECT_TYPE);
             }

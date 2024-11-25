@@ -7,9 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.config.Configuration;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @Getter
 @Setter
@@ -23,7 +20,7 @@ public class VCDetailDto {
     private Boolean isChecked; // 체크 여부
     private String unitScript; // 단위 스크립트
     private Boolean isDeleted; // 삭제 여부
-    private String localFileName; // 추가된 멀티파트 파일
+    private String localFileName; // 로컬 파일 이름
 
     private static ModelMapper modelMapper = new ModelMapper();
 
@@ -37,6 +34,16 @@ public class VCDetailDto {
 
     // VCDetail -> VCDetailDto 매핑 메서드
     public static VCDetailDto createVCDetailDto(VCDetail vcDetail) {
-        return modelMapper.map(vcDetail, VCDetailDto.class);
+        // ModelMapper를 사용하되 필요한 경우 수동 설정
+        VCDetailDto dto = modelMapper.map(vcDetail, VCDetailDto.class);
+
+        // MemberAudioMeta에서 localFileName 설정
+        if (vcDetail.getMemberAudioMeta() != null) {
+            dto.setLocalFileName(vcDetail.getMemberAudioMeta().getBucketRoute());
+        } else {
+            dto.setLocalFileName(null);
+        }
+
+        return dto;
     }
 }
