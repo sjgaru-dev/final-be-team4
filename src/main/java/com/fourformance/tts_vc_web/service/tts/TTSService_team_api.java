@@ -189,6 +189,14 @@ public class TTSService_team_api {
         TTSDetail ttsDetail = ttsDetailRepository.findById(ttsProject.getMember().getId()).orElseThrow();
         String languageCode = voiceStyleRepository.findById(detailDto.getUnitVoiceStyleId()).get().getLanguageCode();
         String gender = voiceStyleRepository.findById(detailDto.getUnitVoiceStyleId()).get().getGender();
+        String script = detailDto.getUnitScript();
+
+        System.out.println("gender = " + gender);
+        System.out.println("languageCode = " + languageCode);
+        System.out.println("script = " + script);
+
+        // 텍스트와 언어 코드 검증
+        checkTextLanguage(script, languageCode);
 
         // 요청 페이로드 생성
         String requestPayload = String.format(
@@ -200,6 +208,7 @@ public class TTSService_team_api {
                 detailDto.getUnitVolume(),
                 detailDto.getUnitPitch()
         );
+
 
         // APIStatus 엔티티 생성 및 저장
         APIStatus apiStatus = APIStatus.createAPIStatus(null, ttsDetail, requestPayload);
@@ -322,34 +331,105 @@ public class TTSService_team_api {
 
     /**
      * 텍스트와 언어 코드의 일치 여부를 검증
-     *
      * @param text 텍스트 데이터
      * @param languageCode 언어 코드
      */
     private void checkTextLanguage(String text, String languageCode) {
+        // 언어 코드 형식 검증 (xx-XX 형식)
+        if (!languageCode.matches("^[a-z]{2}-[A-Z]{2}$")) {
+            throw new BusinessException(ErrorCode.INVALID_LANGUAGE_CODE_FORMAT);
+        }
+
+        // 지원되는 언어 코드 리스트
+        Set<String> supportedLanguageCodes = Set.of(
+                "af-ZA", "ar-XA", "eu-ES", "bn-IN", "bg-BG", "ca-ES", "yue-HK", "cs-CZ",
+                "da-DK", "nl-BE", "nl-NL", "en-AU", "en-IN", "en-GB", "en-US", "fil-PH",
+                "fi-FI", "fr-CA", "fr-FR", "gl-ES", "de-DE", "el-GR", "gu-IN", "he-IL",
+                "hi-IN", "hu-HU", "is-IS", "id-ID", "it-IT", "ja-JP", "kn-IN", "ko-KR",
+                "lv-LV", "lt-LT", "ms-MY", "ml-IN", "cmn-CN", "cmn-TW", "mr-IN", "nb-NO",
+                "pl-PL", "pt-BR", "pt-PT", "pa-IN", "ro-RO", "ru-RU", "sr-RS", "sk-SK",
+                "es-ES", "es-US", "sv-SE", "ta-IN", "te-IN", "th-TH", "tr-TR", "uk-UA",
+                "vi-VN"
+        );
+
+        // 언어 코드 유효성 검증
+        if (!supportedLanguageCodes.contains(languageCode)) {
+            throw new BusinessException(ErrorCode.UNSUPPORTED_LANGUAGE_CODE);
+        }
+
+        // 텍스트와 언어 코드에 따른 일치 여부 검증
         boolean isKorean = text.matches(".*[가-힣].*");
         boolean isChinese = text.matches(".*[\\u4E00-\\u9FFF].*");
         boolean isJapanese = text.matches(".*[\\u3040-\\u30FF\\u31F0-\\u31FF].*");
         boolean isEnglish = text.matches(".*[A-Za-z].*");
 
-        // 언어 코드와 텍스트의 일치 여부 확인
         switch (languageCode) {
-            case "ko-KR":
+            case "ko-KR": // 한국어
                 if (!isKorean) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_KO_KR);
                 break;
-            case "zh-CN":
-                if (!isChinese) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_ZH_CN);
+            case "cmn-CN": // 중국어 간체
+            case "cmn-TW": // 중국어 번체
+            case "yue-HK": // 광둥어
+                if (!isChinese) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_CHINESE);
                 break;
-            case "ja-JP":
+            case "ja-JP": // 일본어
                 if (!isJapanese) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_JA_JP);
                 break;
-            case "en-US":
-            case "en-GB":
+            case "en-US": // 영어 (미국)
+            case "en-GB": // 영어 (영국)
+            case "en-AU": // 영어 (호주)
+            case "en-IN": // 영어 (인도)
                 if (!isEnglish) throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_EN);
                 break;
+            case "fr-FR": // 프랑스어
+            case "fr-CA": // 프랑스어 (캐나다)
+            case "es-ES": // 스페인어
+            case "es-US": // 스페인어 (미국)
+            case "pt-BR": // 포르투갈어 (브라질)
+            case "pt-PT": // 포르투갈어 (포르투갈)
+            case "de-DE": // 독일어
+            case "it-IT": // 이탈리아어
+            case "nl-BE": // 네덜란드어 (벨기에)
+            case "nl-NL": // 네덜란드어 (네덜란드)
+                if (!text.matches(".*[A-Za-zÀ-ÿ].*")) { // 라틴 문자 포함 확인
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_LATIN_BASED);
+                }
+                break;
+            case "ru-RU": // 러시아어
+            case "uk-UA": // 우크라이나어
+            case "bg-BG": // 불가리아어
+            case "sr-RS": // 세르비아어
+                if (!text.matches(".*[А-яЁё].*")) { // 키릴 문자 포함 확인
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_CYRILLIC);
+                }
+                break;
+            case "th-TH": // 태국어
+                if (!text.matches(".*[ก-๛].*")) {
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_THAI);
+                }
+                break;
+            case "he-IL": // 히브리어
+                if (!text.matches(".*[א-ת].*")) {
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_HEBREW);
+                }
+                break;
+            case "ar-XA": // 아랍어
+                if (!text.matches(".*[؀-ۿ].*")) {
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_ARABIC);
+                }
+                break;
+            case "fil-PH": // 필리핀어
+            case "id-ID": // 인도네시아어
+            case "ms-MY": // 말레이어
+                if (!isEnglish) { // 필리핀어, 인도네시아어, 말레이어는 라틴 문자 기반
+                    throw new BusinessException(ErrorCode.INVALID_TEXT_FOR_LATIN_BASED);
+                }
+                break;
             default:
-                throw new BusinessException(ErrorCode.UNSUPPORTED_LANGUAGE_CODE);
+                // 기타 언어 처리 (추가 검증 로직이 없으면 통과)
+                LOGGER.info("추가 검증 없이 언어 코드 통과: " + languageCode);
         }
     }
+
 }
 
