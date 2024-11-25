@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,15 +55,22 @@ public class TTSController_team_api {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/convert/batch")
-    public ResponseDto convertBatchTexts(@RequestBody TTSSaveDto ttsSaveDto) {
+    public ResponseDto convertBatchTexts(@RequestBody TTSSaveDto ttsSaveDto, HttpSession session) {
         LOGGER.info("컨트롤러 호출됨: " + ttsSaveDto);
+
+        // 세션에 임의의 memberId 설정
+        if (session.getAttribute("memberId") == null) {
+            session.setAttribute("memberId", 1L);
+        }
+        // 임시 하드 코딩 -> 회원/로그인 개발 구현 후 수정 필요
+        Long memberId = (Long) session.getAttribute("memberId");
 
         // 요청 데이터 유효성 검사
         validateRequestData(ttsSaveDto);
 
         try {
             // TTS 변환 처리
-            TTSResponseDto ttsResponseDto = ttsService.convertAllTtsDetails(ttsSaveDto);
+            TTSResponseDto ttsResponseDto = ttsService.convertAllTtsDetails(ttsSaveDto, memberId);
 
             // 변환 결과가 비어있으면 실패로 간주
             if (ttsResponseDto.getTtsDetails().isEmpty()) {
