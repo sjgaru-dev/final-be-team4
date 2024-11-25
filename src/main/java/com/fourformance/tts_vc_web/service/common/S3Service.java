@@ -5,16 +5,12 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
-<<<<<<< HEAD
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-=======
 import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
->>>>>>> 6cf4b4bbfcc3e017a9bf3051af67d71d76b34912
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
@@ -70,10 +66,7 @@ public class S3Service {
     private final MemberAudioMetaRepository memberAudioMetaRepository;
     private final MemberRepository memberRepository;
 
-<<<<<<< HEAD
     private final AmazonS3 amazonS3;
-=======
->>>>>>> 6cf4b4bbfcc3e017a9bf3051af67d71d76b34912
 
     // TTS와 VC로 반환한 유닛 오디오를 S3 버킷에 저장
     public String uploadUnitSaveFile(MultipartFile file, Long userId, Long projectId, Long detailId) {
@@ -277,7 +270,6 @@ public class S3Service {
         }
     }
 
-<<<<<<< HEAD
     // OutputAudioMeta isdeleted update, S3File Delete
     public void deleteOutputAudioMeta(Long outputAudioMetaId, Long memberId) {
         // 1. OutputAudioMeta 조회
@@ -376,7 +368,9 @@ public class S3Service {
             System.out.println("All objects under directory deleted: " + directoryPrefix);
         } catch (Exception e) {
             System.err.println("Failed to delete objects from S3: " + e.getMessage());
-=======
+        }
+    }
+
     public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId,
                                           AudioType audioType, String voiceId) {
 
@@ -501,7 +495,6 @@ public class S3Service {
         } catch (IOException e) {
             // 파일 처리 중 발생하는 예외
             throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
->>>>>>> 6cf4b4bbfcc3e017a9bf3051af67d71d76b34912
         }
     }
 }
