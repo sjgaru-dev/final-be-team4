@@ -28,10 +28,12 @@ public enum ErrorCode {
     INVALID_TRG_FILE_COMBINATION(1012, HttpStatus.BAD_REQUEST,
             "trgVoiceId가 설정된 경우, audioFiles에 VC_TRG 파일이 포함될 수 없습니다."),
     MISSING_TRG_FILE(1013, HttpStatus.BAD_REQUEST, "VC_TRG 파일은 반드시 하나여야 합니다."),
+    S3_DOWNLOAD_FAILED(1014, HttpStatus.BAD_REQUEST, "VC_TRG 파일은 반드시 하나여야 합니다."),
 
     // 3000번대 코드 : DB 관련
     NOT_EXISTS_PROJECT(3000, HttpStatus.BAD_REQUEST, "해당 프로젝트를 찾을 수 없습니다."),
     AUDIO_NOT_FOUND_EXCEPTION(3400, HttpStatus.BAD_REQUEST, "VC Target 오디오를 찾을 수 없습니다."),
+    VOICE_STYLE_NOT_FOUND_EXCEPTION(3500, HttpStatus.BAD_REQUEST, "Voice Style 데이터를 찾을 수 없습니다."),
 
     // 4000번대 코드 : 서버 내부 오류, 코드 오류
     SERVER_ERROR(4000, HttpStatus.BAD_REQUEST, "서버 내부 오류가 발생했습니다."),
@@ -59,6 +61,13 @@ public enum ErrorCode {
     INVALID_UNIT_SCRIPT(5018, HttpStatus.BAD_REQUEST, "유효하지 않은 Unit Script입니다."),
     DIRECTORY_CREATION_FAILED(5019, HttpStatus.INTERNAL_SERVER_ERROR, "디렉토리 생성에 실패했습니다."),
     TTS_PROJECT_NOT_FOUND(5020, HttpStatus.INTERNAL_SERVER_ERROR, "TTS Project를 찾을 수 없습니다."),
+    FILE_NOT_FOUND(5021, HttpStatus.INTERNAL_SERVER_ERROR, "FILE를 찾을 수 없습니다."),
+
+    MEMBER_AUDIO_META_NOT_FOUND(5022, HttpStatus.INTERNAL_SERVER_ERROR,"Member audio meta가 존재하지 않습니다."),
+    NO_FILES_TO_MERGE(5023, HttpStatus.INTERNAL_SERVER_ERROR,"병합할 파일이 없습니다."),
+
+
+
 
     // 9999 : 테스트용 커스텀 예외
     TEST_ERROR(9999, HttpStatus.BAD_REQUEST, "테스트용 커스텀 예외입니다."),
