@@ -23,11 +23,15 @@ public enum ErrorCode {
     S3_UPLOAD_FAILED(1007, HttpStatus.INTERNAL_SERVER_ERROR, "S3 업로드에 실패했습니다."), // *
     FILE_PROCESSING_ERROR(1008, HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."), // *
     S3_PRESIGNED_URL_FAILED(1009, HttpStatus.INTERNAL_SERVER_ERROR, "S3 presigned URL 생성에 실패했습니다."), // *
-    MISSING_REQUIRED_FIELD(1010,HttpStatus.NOT_FOUND,"VC_TRG 파일이 누락되었습니다."),
-    INVALID_PROJECT_DATA(1011,HttpStatus.BAD_REQUEST,"AudioFileDto에 MemberAudioMetaId와 LocalAudioFile이 모두 누락되었습니다."),
-    INVALID_TRG_FILE_COMBINATION(1012, HttpStatus.BAD_REQUEST, "trgVoiceId가 설정된 경우, audioFiles에 VC_TRG 파일이 포함될 수 없습니다."),
+    MISSING_REQUIRED_FIELD(1010, HttpStatus.NOT_FOUND, "VC_TRG 파일이 누락되었습니다."),
+    INVALID_PROJECT_DATA(1011, HttpStatus.BAD_REQUEST, "AudioFileDto에 MemberAudioMetaId와 LocalAudioFile이 모두 누락되었습니다."),
+    INVALID_TRG_FILE_COMBINATION(1012, HttpStatus.BAD_REQUEST,
+            "trgVoiceId가 설정된 경우, audioFiles에 VC_TRG 파일이 포함될 수 없습니다."),
     MISSING_TRG_FILE(1013, HttpStatus.BAD_REQUEST, "VC_TRG 파일은 반드시 하나여야 합니다."),
     S3_DOWNLOAD_FAILED(1014, HttpStatus.BAD_REQUEST, "VC_TRG 파일은 반드시 하나여야 합니다."),
+    DETAIL_MISMATCH(1015, HttpStatus.BAD_REQUEST, "유닛 수와 파일 수가 일치하지 않습니다."),
+    UNSUPPORTED_AUDIO_TYPE(1016, HttpStatus.BAD_REQUEST, "지원하지 않는 형식의 오디오 타입입니다."),
+    INVALID_FILE_COUNT(1017, HttpStatus.BAD_REQUEST, "VC_TRG는 단일 파일만 허용합니다."),
 
     // 3000번대 코드 : DB 관련
     NOT_EXISTS_PROJECT(3000, HttpStatus.BAD_REQUEST, "해당 프로젝트를 찾을 수 없습니다."),
@@ -35,9 +39,9 @@ public enum ErrorCode {
     VOICE_STYLE_NOT_FOUND_EXCEPTION(3500, HttpStatus.BAD_REQUEST, "Voice Style 데이터를 찾을 수 없습니다."),
 
     // 4000번대 코드 : 서버 내부 오류, 코드 오류
-    SERVER_ERROR(4000, HttpStatus.BAD_REQUEST,"서버 내부 오류가 발생했습니다."),
+    SERVER_ERROR(4000, HttpStatus.BAD_REQUEST, "서버 내부 오류가 발생했습니다."),
     INVALID_REQUEST_DATA(4001, HttpStatus.BAD_REQUEST, "유효하지 않은 요청 데이터입니다."),
-    INVALID_PROJECT_ID(40001,HttpStatus.BAD_REQUEST,"유효하지 않은 프로젝트 ID입니다."),
+    INVALID_PROJECT_ID(40001, HttpStatus.BAD_REQUEST, "유효하지 않은 프로젝트 ID입니다."),
 
     // 5000번대 코드 : 서버 내부 오류 관련
     INTERNAL_SERVER_ERROR(5001, HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
@@ -56,16 +60,14 @@ public enum ErrorCode {
     INVALID_TEXT_FOR_EN(5014, HttpStatus.BAD_REQUEST, "언어 코드가 설정되었지만, 텍스트는 영어가 아닙니다."),
     UNSUPPORTED_LANGUAGE_CODE(5015, HttpStatus.BAD_REQUEST, "지원되지 않는 언어 코드입니다."),
     TTS_DETAIL_PROCESSING_FAILED(5016, HttpStatus.INTERNAL_SERVER_ERROR, "TTSDetail 처리 중 오류가 발생했습니다."),
-    DUPLICATE_TTS_DETAIL(5017, HttpStatus.INTERNAL_SERVER_ERROR,"중복된 TTSDetail이 발견되었습니다."),
+    DUPLICATE_TTS_DETAIL(5017, HttpStatus.INTERNAL_SERVER_ERROR, "중복된 TTSDetail이 발견되었습니다."),
     INVALID_UNIT_SCRIPT(5018, HttpStatus.BAD_REQUEST, "유효하지 않은 Unit Script입니다."),
     DIRECTORY_CREATION_FAILED(5019, HttpStatus.INTERNAL_SERVER_ERROR, "디렉토리 생성에 실패했습니다."),
     TTS_PROJECT_NOT_FOUND(5020, HttpStatus.INTERNAL_SERVER_ERROR, "TTS Project를 찾을 수 없습니다."),
     FILE_NOT_FOUND(5021, HttpStatus.INTERNAL_SERVER_ERROR, "FILE를 찾을 수 없습니다."),
 
-    MEMBER_AUDIO_META_NOT_FOUND(5022, HttpStatus.INTERNAL_SERVER_ERROR,"Member audio meta가 존재하지 않습니다."),
-    NO_FILES_TO_MERGE(5023, HttpStatus.INTERNAL_SERVER_ERROR,"병합할 파일이 없습니다."),
-
-
+    MEMBER_AUDIO_META_NOT_FOUND(5022, HttpStatus.INTERNAL_SERVER_ERROR, "Member audio meta가 존재하지 않습니다."),
+    NO_FILES_TO_MERGE(5023, HttpStatus.INTERNAL_SERVER_ERROR, "병합할 파일이 없습니다."),
 
 
     // 9999 : 테스트용 커스텀 예외
@@ -73,7 +75,7 @@ public enum ErrorCode {
 
     // 10000 : 알 수 없는 예외
     UNKNOWN_ERROR(10000, HttpStatus.BAD_REQUEST, "알 수 없는 예외입니다,"),
-    METADATA_FORM_FAULT(1234,HttpStatus.BAD_REQUEST, "메타데이터 형식이 잘못되었습니다."),
+    METADATA_FORM_FAULT(1234, HttpStatus.BAD_REQUEST, "메타데이터 형식이 잘못되었습니다."),
 
     NOT_EXISTS_VOICESTYLE(3001, HttpStatus.BAD_REQUEST, "해당 voice style의 id를 찾을 수 없습니다."),
 
