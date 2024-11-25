@@ -434,37 +434,6 @@ public class S3Service {
 
     // ================================= 버킷 오디오 삭제 구현중 =============================================
 
-//
-//    public void deleteAudioPerProject(Long projectId) {
-//
-//        Project project = projectRepository.findById(projectId)
-//                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
-//
-//        String projectType = null;
-//
-//        if (project instanceof TTSProject) {
-//            projectType = "TTS";
-//        } else if (project instanceof VCProject) {
-//            projectType = "VC";
-//        } else if (project instanceof ConcatProject) {
-//            projectType = "CONCAT";
-//        }
-//
-//        Long memberId = project.getMember().getId();
-//
-//        String memberAudioRoute = "member/" + memberId + "/" + projectType + "/" + projectId;
-//        String outputAudioRoute = "Generated/" + memberId + "/" + projectType + "/" + projectId;
-//
-//        deleteDirectoryFromS3(memberAudioRoute);
-////        deleteDirectoryFromS3(outputAudioRoute);
-//
-//        // 멤버오디오메타디비 업데이트
-//        memberAudioMetaUpdate(projectId);
-//
-//        // 아웃풋오디오메타딥 업데이트
-////        outputAudioMetaUpdate(projectId);
-//    }
-
 
     public void deleteAudioPerProject(Long projectId) {
 
@@ -475,7 +444,6 @@ public class S3Service {
 
         if (project instanceof TTSProject) {
             projectType = "TTS";
-
         } else if (project instanceof VCProject) {
             projectType = "VC";
         } else if (project instanceof ConcatProject) {
@@ -488,7 +456,7 @@ public class S3Service {
         String vcSRCAudioRoute = "member/" + memberId + "/" + "VC_SRC" + "/" + projectId;
         String concatAudioRoute = "member/" + memberId + "/" + "CONCAT" + "/" + projectId;
 
-        String outputAudioRoute = "Generated/" + memberId + "/" + projectType + "/" + projectId;
+        String outputAudioRoute = "Generated/" + memberId + "/" + projectType + "/" + projectId + "/";
 
         if (project instanceof TTSProject) {
             deleteDirectoryFromS3(outputAudioRoute);
@@ -505,58 +473,22 @@ public class S3Service {
         memberAudioMetaUpdate(projectId);
 
         // 아웃풋오디오메타딥 업데이트
-//        outputAudioMetaUpdate(projectId);
+        outputAudioMetaUpdate(projectId);
     }
 
     // DB update로직
     private void outputAudioMetaUpdate(Long projectId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(()->new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
-        if (project instanceof TTSProject) {
-            // 프로젝트에서 OutputAudioMeta를 찾아서 OutputAudioMeta의 isDeleted업뎃 + 삭제시간업뎃
-            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByProjectId(projectId);
-            for(OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {
-                if(outputAudioMeta.getProjectType() == ProjectType.TTS) {
-                    // 업데이트 치고, 저장.
-                    outputAudioMeta.deleteOutputAudioMeta();
-                    outputAudioMetaRepository.save(outputAudioMeta);
-                }
-            }
-        } else if (project instanceof VCProject) {
-            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByProjectId(projectId);
-            for(OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {
-                if(outputAudioMeta.getProjectType() == ProjectType.VC) {
-                    outputAudioMeta.deleteOutputAudioMeta();
-                    outputAudioMetaRepository.save(outputAudioMeta);
-                }
-            }
-
-        } else if (project instanceof ConcatProject) {
-            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByProjectId(projectId);
-            for(OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {
-                if(outputAudioMeta.getProjectType() == ProjectType.CONCAT) {
-                    outputAudioMeta.deleteOutputAudioMeta();
-                    outputAudioMetaRepository.save(outputAudioMeta);
-                }
-            }
+        // 프로젝트에서 OutputAudioMeta를 찾아서 OutputAudioMeta의 isDeleted업뎃 + 삭제시간업뎃
+        List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByAnyProjectId(
+                projectId);
+        for (OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {                    // 업데이트 치고, 저장.
+            outputAudioMeta.deleteOutputAudioMeta();
+            outputAudioMetaRepository.save(outputAudioMeta);
         }
-
     }
-//    private void VCProjectDelete(Long projectId) {
-//
-//        Project project = projectRepository.findById(projectId)
-//                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
-//        Long memberId = project.getMember().getId();
-//
-//        String vcTargetRoute = "member/" + memberId + "/" + "VC_TRG" + "/" + projectId;
-//        String vcSourceRoute = "member/" + memberId + "/" + "VC_SRC" + "/" + projectId;
-//        String outputAudioRoute = "Generated/" + memberId + "/" + "VC" + "/" + projectId;
-//
-//        deleteDirectoryFromS3(vcTargetRoute);
-//        deleteDirectoryFromS3(vcSourceRoute);
-//        deleteDirectoryFromS3(outputAudioRoute);
-//    }
 
     private void memberAudioMetaUpdate(Long projectId) {
 
