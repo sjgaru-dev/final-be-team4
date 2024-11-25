@@ -8,6 +8,7 @@ import com.fourformance.tts_vc_web.common.util.ElevenLabsClient_team_api;
 import com.fourformance.tts_vc_web.domain.entity.Member;
 import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.VCDetail;
+import com.fourformance.tts_vc_web.domain.entity.VCProject;
 import com.fourformance.tts_vc_web.dto.vc.*;
 import com.fourformance.tts_vc_web.repository.*;
 import com.fourformance.tts_vc_web.service.common.S3Service;
@@ -71,7 +72,10 @@ public class VCService_team_api {
         String voiceId = processTargetFiles(vcSaveDto.getTrgFiles(), memberAudio);
         LOGGER.info("기존 voiceId와 동일 여부 확인: " + voiceId);
 
-        // Step 7: src 오디오에 target 오디오 적용
+        // **Step 7: VCProject에 trg_voice_id 업데이트**
+        updateProjectTargetVoiceId(projectId, voiceId);
+
+        // Step 8: src 오디오에 target 오디오 적용
         List<VCDetailResDto> vcDetailsRes = processSourceFiles(files, vcDetailDtos, voiceId, memberId);
 
         return vcDetailsRes;
@@ -215,5 +219,14 @@ public class VCService_team_api {
                 .filter(file -> file.getOriginalFilename().equals(simpleFileName))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private void updateProjectTargetVoiceId(Long projectId, String trgVoiceId) {
+        VCProject vcProject = vcProjectRepository.findById(projectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+
+        vcProject.updateTrgVoiceId(trgVoiceId); // trg_voice_id 업데이트
+        vcProjectRepository.save(vcProject); // 변경 사항 저장
+        LOGGER.info("Updated VCProject trg_voice_id: " + trgVoiceId);
     }
 }
