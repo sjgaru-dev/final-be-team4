@@ -3,7 +3,14 @@ package com.fourformance.tts_vc_web.service.common;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.constant.ProjectType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
@@ -24,16 +31,18 @@ import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.ProjectRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
 import com.fourformance.tts_vc_web.repository.VCDetailRepository;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -58,103 +67,6 @@ public class S3Service {
     private final MemberRepository memberRepository;
 
     private final AmazonS3 amazonS3;
-
-
-    //프로젝트 단위 삭제
-    public void deleteAudioPerProject(Long projectId) {
-
-        // 2. 디렉토리 경로 추출 "Generated/" + memberid
-//        String filePath = outputAudioMeta.getBucketRoute(); // 예: "Generated/123/TTS/456/789.wav"
-        String directoryPrefix = extractProjectDirectoryPrefix(filePath); // "Generated/123/TTS/456/"
-
-        /**
-         * 안전한 처리 순서  : 안전한 처리 순서: S3 삭제 -> DB 업데이트
-         * 이 순서가 일반적으로 더 안전합니다.
-         * S3 삭제 작업이 우선인 이유는, S3에서의 삭제 실패가 비가역적이기 때문입니다.
-         * 파일이 삭제되면 복구하기 어렵지만, DB 상태는 나중에 처리할 수 있기 때문입니다.
-         */
-        // 3. S3 디렉토리 삭제
-        deleteDirectoryFromS3(directoryPrefix);
-
-        // 4. OutputAudioMeta 업데이트
-        outputAudioMeta.deleteOutputAudioMeta(); // 업데이트 치고,
-        outputAudioMetaRepository.save(outputAudioMeta); // 저장
-
-
-    }
-
-    // MemberAudioMeta isdeleted update, S3File Delete//  멤버오디오메타 경로추출 + 삭제
-    public void deleteMemberAudio(Long memberId, Long projectId) {
-        MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("멤버 오디오를 찾을 수 없습니다."));
-
-        String prefix = "member/" + memberId + "/";
-
-        if ("VC_SRC".equals(memberAudioMeta.getAudioType())) {
-            prefix += "VC_SRC/" + projectId + "/";
-        } else if ("VC_TRG".equals(memberAudioMeta.getAudioType())) {
-            prefix += "VC_TRG/" + projectId + "/";
-        } else if ("CONCAT".equals(memberAudioMeta.getAudioType())) {
-            prefix += "CONCAT/" + projectId + "/";
-        }
-        // S3 디렉토리수준 삭제
-        deleteDirectoryFromS3(prefix);
-        // DB 업데이트
-        memberAudioMeta.delete();// isDeleted = ture, 삭제시간 업데이트 메서드
-        memberAudioMetaRepository.save(memberAudioMeta);
-    }
-
-//    // 경로 추출 헬프메서드 - OutputAudioMeta경로 추출
-//    private String extractProjectDirectoryPrefix(String filePath) {
-//        // 슬래시(`/`) 기준으로 분리
-//        String[] parts = filePath.split("/");
-//
-//        // 경로의 최소 길이를 확인
-//        if (parts.length < 4) {
-//            throw new RuntimeException("Invalid file path: " + filePath);
-//        }
-//
-//        // projectId까지 포함된 경로를 반환
-//        return String.join("/", parts[0], parts[1], parts[2], parts[3]) + "/";
-//    }
-
-
-    // Prefix + bucket 값만 있으면 S3에서 삭제 가능
-    public void deleteDirectoryFromS3(String directoryPrefix) {
-        try {
-            // listObjects라는 메서드를 통해서 버킷에서 object리스트를 가지고 옴.
-            ObjectListing objectListing = amazonS3.listObjects(bucket, directoryPrefix);
-
-            while (true) {
-                // 삭제할 키들을 저장 할 곳
-                List<DeleteObjectsRequest.KeyVersion> keysToDelete = new ArrayList<>();
-
-                // 객체의 키에 삭제할 ObjectList들의 정보들을 담는다.
-                for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
-                    keysToDelete.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
-                    System.out.println("Deleting: " + objectSummary.getKey());
-                }
-
-                // 만약 삭제할 키가 있다면
-                if (!keysToDelete.isEmpty()) {
-                    DeleteObjectsRequest deleteRequest = new DeleteObjectsRequest(bucket)
-                            .withKeys(keysToDelete)
-                            .withQuiet(false); // 기본값 false  삭제된 각 객체에 대한 정보를 로그로 출력
-                    amazonS3.deleteObjects(deleteRequest);// 객체를 삭제하는 요청을 실제로 실행하는 메서드
-                    System.out.println("배치 삭제 완료");
-                }
-
-                if (objectListing.isTruncated()) {  // 목록을 처리하면서 더 많은 객체가 있는지 확인.true면 더 많은 객체 존재함. false면 마지막 목록이다라는 뜻
-                    objectListing = amazonS3.listNextBatchOfObjects(objectListing);
-                } else {
-                    break;
-                }
-            }
-            System.out.println("All objects under directory deleted: " + directoryPrefix);
-        } catch (Exception e) {
-            System.err.println("Failed to delete objects from S3: " + e.getMessage());
-        }
-    }
 
     // TTS와 VC로 반환한 유닛 오디오를 S3 버킷에 저장
     public String uploadUnitSaveFile(MultipartFile file, Long userId, Long projectId, Long detailId) {
@@ -348,6 +260,264 @@ public class S3Service {
             }
 
             return uploadedUrls;
+
+        } catch (AmazonClientException e) {
+            // S3 업로드 중 발생하는 예외
+            throw new BusinessException(ErrorCode.S3_UPLOAD_FAILED);
+        } catch (IOException e) {
+            // 파일 처리 중 발생하는 예외
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
+    }
+
+    public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId,
+                                          AudioType audioType, String voiceId) {
+
+        try {
+            if (file.isEmpty()) {
+                throw new BusinessException(ErrorCode.EMPTY_FILE);
+            }
+
+            Project project = projectRepository.findById(projectId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+            String originFilename = Normalizer.normalize(file.getOriginalFilename(), Normalizer.Form.NFC);
+            String filename = "member/" + memberId + "/" + audioType + "/" + projectId + "/" + originFilename;
+
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType(file.getContentType());
+            metadata.setContentLength(file.getSize());
+
+            // S3 버킷에 업로드
+            amazonS3Client.putObject(bucket, filename, file.getInputStream(), metadata);
+            String fileUrl = amazonS3Client.getUrl(bucket, filename).toString();
+
+            // 오디오 메타 객체 생성 및 DB 저장
+            String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
+            MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
+                    audioType, finalVoiceId);
+            memberAudioMetaRepository.save(memberAudioMeta);
+
+            return fileUrl;
+
+        } catch (AmazonClientException e) {
+            // S3 업로드 중 발생하는 예외
+            throw new BusinessException(ErrorCode.S3_UPLOAD_FAILED);
+        } catch (IOException e) {
+            // 파일 처리 중 발생하는 예외
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
+    }
+
+    // ================================= 버킷 오디오 삭제 구현중 =============================================
+
+
+    public void deleteAudioPerProject(Long projectId) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+        String projectType = null;
+
+        if (project instanceof TTSProject) {
+            projectType = "TTS";
+        } else if (project instanceof VCProject) {
+            projectType = "VC";
+        } else if (project instanceof ConcatProject) {
+            projectType = "CONCAT";
+        }
+
+        Long memberId = project.getMember().getId();
+
+        String memberAudioRoute = "member/" + memberId + "/" + projectType + "/" + projectId;
+        String outputAudioRoute = "Generated/" + memberId + "/" + projectType + "/" + projectId;
+
+        deleteDirectoryFromS3(memberAudioRoute);
+        deleteDirectoryFromS3(outputAudioRoute);
+
+        // 멤버오디오메타디비 업데이트
+        memberAudioMetaUpdate(projectId);
+
+        // 아웃풋오디오메타딥 업데이트
+//        outputAudioMetaUpdate(projectId);
+    }
+
+    private void memberAudioMetaUpdate(Long projectId) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+
+        if (project instanceof TTSProject) {
+            return;
+
+            // VC 프로젝트일 떄
+        } else if (project instanceof VCProject) {
+
+            // 1. 해당 VC 프로젝트에 일치하는 타겟 오디오에 대한 memberAudioMeta를 찾아서 isDeleted를 1로 업데이트
+            Long memberAudioMetaId = memberAudioMetaRepository.findTargetAudioMetaIdByVCProjectId(projectId);
+            MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberAudioMetaId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_AUDIO_META_NOT_FOUND));
+            memberAudioMetaRepository.save(memberAudioMeta);
+
+            // 2. 해당 VC 프로젝트에 일치하는 소스 오디오들에 대한 memberAudioMeta를 찾아서 isDeleted를 1로 업데이트
+            List<Long> memberAudioMetaIds = memberAudioMetaRepository.findSourceAudioMetaIdsByVCProjectId(projectId);
+            for (Long sourceAudioMetaId : memberAudioMetaIds) {
+                MemberAudioMeta meta = memberAudioMetaRepository.findById(sourceAudioMetaId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_AUDIO_META_NOT_FOUND));
+                memberAudioMetaRepository.save(meta);
+            }
+        } else if (project instanceof ConcatProject) {
+            List<Long> memberAudioMetaIds = memberAudioMetaRepository.findMemberAudioMetaIdsByConcatProjectId(
+                    projectId);
+            for (Long memberAudioMetaId : memberAudioMetaIds) {
+                MemberAudioMeta meta = memberAudioMetaRepository.findById(memberAudioMetaId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_AUDIO_META_NOT_FOUND));
+                memberAudioMetaRepository.save(meta);
+            }
+        }
+    }
+
+
+    // MemberAudioMeta isdeleted update, S3File Delete
+    public void deleteMemberAudio(Long memberId, Long projectId) {
+        MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("멤버 오디오를 찾을 수 없습니다."));
+
+        String prefix = "member/" + memberId + "/";
+
+        if ("VC_SRC".equals(memberAudioMeta.getAudioType())) {
+            prefix += "VC_SRC/" + projectId + "/";
+        } else if ("VC_TRG".equals(memberAudioMeta.getAudioType())) {
+            prefix += "VC_TRG/" + projectId + "/";
+        } else if ("CONCAT".equals(memberAudioMeta.getAudioType())) {
+            prefix += "CONCAT/" + projectId + "/";
+        }
+        // S3 디렉토리수준 삭제
+        deleteDirectoryFromS3(prefix);
+        // DB 업데이트
+        memberAudioMeta.delete();// isDeleted = ture, 삭제시간 업데이트 메서드
+        memberAudioMetaRepository.save(memberAudioMeta);
+
+
+    }
+
+
+    // Prefix + bucket 값만 있으면 S3에서 삭제 가능
+    public void deleteDirectoryFromS3(String directoryPrefix) {
+        try {
+            // listObjects라는 메서드를 통해서 버킷에서 object리스트를 가지고 옴.
+            ObjectListing objectListing = amazonS3.listObjects(bucket, directoryPrefix);
+
+            while (true) {
+                // 삭제할 키들을 저장 할 곳
+                List<DeleteObjectsRequest.KeyVersion> keysToDelete = new ArrayList<>();
+
+                // 객체의 키에 삭제할 ObjectList들의 정보들을 담는다.
+                for (S3ObjectSummary objectSummary : objectListing.getObjectSummaries()) {
+                    keysToDelete.add(new DeleteObjectsRequest.KeyVersion(objectSummary.getKey()));
+                    System.out.println("Deleting: " + objectSummary.getKey());
+                }
+
+                // 만약 삭제할 키가 있다면
+                if (!keysToDelete.isEmpty()) {
+                    DeleteObjectsRequest deleteRequest = new DeleteObjectsRequest(bucket)
+                            .withKeys(keysToDelete)
+                            .withQuiet(false); // 기본값 false  삭제된 각 객체에 대한 정보를 로그로 출력
+                    amazonS3.deleteObjects(deleteRequest);// 객체를 삭제하는 요청을 실제로 실행하는 메서드
+                    System.out.println("배치 삭제 완료");
+                }
+
+                if (objectListing.isTruncated()) {  // 목록을 처리하면서 더 많은 객체가 있는지 확인.true면 더 많은 객체 존재함. false면 마지막 목록이다라는 뜻
+                    objectListing = amazonS3.listNextBatchOfObjects(objectListing);
+                } else {
+                    break;
+                }
+            }
+            System.out.println("All objects under directory deleted: " + directoryPrefix);
+        } catch (Exception e) {
+            System.err.println("Failed to delete objects from S3: " + e.getMessage());
+        }
+    }
+
+    // ========================================================================================================================
+
+    /**
+     * S3에서 파일을 다운로드하여 로컬에 저장합니다.
+     *
+     * @param fileUrl  다운로드할 파일의 S3 URL
+     * @param localDir 로컬에 저장할 디렉토리 경로
+     * @return 로컬에 저장된 파일의 전체 경로
+     */
+    public String downloadFileFromS3(String fileUrl, String localDir) {
+        try {
+            // S3 버킷 이름과 키를 추출
+            URI uri = URI.create(fileUrl);
+            String bucketName = bucket; // 버킷 이름은 설정된 값을 사용
+            String key = uri.getPath().substring(1); // '/' 제거
+
+            // 파일 이름 추출
+            String fileName = Paths.get(key).getFileName().toString();
+
+            // 로컬 저장 경로 설정
+            Path localFilePath = Paths.get(localDir, fileName);
+            Files.createDirectories(localFilePath.getParent()); // 디렉토리 생성
+
+            // S3에서 파일 다운로드
+            S3Object s3Object = amazonS3Client.getObject(new GetObjectRequest(bucketName, key));
+            try (S3ObjectInputStream s3is = s3Object.getObjectContent();
+                 FileOutputStream fos = new FileOutputStream(localFilePath.toFile())) {
+                byte[] readBuf = new byte[1024];
+                int readLen;
+                while ((readLen = s3is.read(readBuf)) > 0) {
+                    fos.write(readBuf, 0, readLen);
+                }
+            }
+
+            return localFilePath.toString();
+        } catch (AmazonClientException e) {
+            throw new BusinessException(ErrorCode.S3_DOWNLOAD_FAILED);
+        } catch (IOException e) {
+            throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+        }
+    }
+
+    public List<MemberAudioMeta> uploadAndSaveMemberFile2(List<MultipartFile> files, Long memberId, Long projectId,
+                                                          AudioType audioType, String voiceId) {
+        try {
+            List<MemberAudioMeta> memberAudioMetas = new ArrayList<>();
+            // 필요한 리포지토리나 서비스를 주입받아 사용해야 합니다.
+            Project project = projectRepository.findById(projectId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+            for (MultipartFile file : files) {
+                if (file.isEmpty()) {
+                    throw new BusinessException(ErrorCode.EMPTY_FILE);
+                }
+
+                String originFilename = Normalizer.normalize(file.getOriginalFilename(), Normalizer.Form.NFC);
+                String filename = "member/" + memberId + "/" + audioType + "/" + projectId + "/" + originFilename;
+
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentType(file.getContentType());
+                metadata.setContentLength(file.getSize());
+
+                // S3 버킷에 파일 업로드
+                amazonS3Client.putObject(bucket, filename, file.getInputStream(), metadata);
+                String fileUrl = amazonS3Client.getUrl(bucket, filename).toString();
+
+                // MemberAudioMeta 객체 생성 및 저장
+                String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
+                MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
+                        audioType, finalVoiceId);
+                memberAudioMetaRepository.save(memberAudioMeta);
+
+                memberAudioMetas.add(memberAudioMeta);
+            }
+
+            return memberAudioMetas;
 
         } catch (AmazonClientException e) {
             // S3 업로드 중 발생하는 예외

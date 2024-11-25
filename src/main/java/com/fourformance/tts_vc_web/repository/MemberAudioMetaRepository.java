@@ -2,25 +2,24 @@ package com.fourformance.tts_vc_web.repository;
 
 import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta, Long> {
 
     // id 리스트로 특정 오디오 타입 반환 - 승민
     @Query("""
-        SELECT m 
-        FROM MemberAudioMeta m 
-        WHERE m.id IN :memberAudioIds 
-          AND m.isDeleted = false 
-          AND m.audioType = :audioType
-    """)
+                SELECT m 
+                FROM MemberAudioMeta m 
+                WHERE m.id IN :memberAudioIds 
+                  AND m.isDeleted = false 
+                  AND m.audioType = :audioType
+            """)
     List<MemberAudioMeta> findByMemberAudioIds(
             @Param("memberAudioIds") List<Long> memberAudioIds,
             @Param("audioType") AudioType audioType
@@ -32,7 +31,7 @@ public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta
             @Param("id") Long id,
             @Param("audioType") AudioType audioType);
 
-    // 특정 사용자의 특정 AudioType을 가진 MemberAudioMeta를 조회
+    // 특정 사용자의 특정 AudioType을 가진 MemberAudioMeta를 조회 - 재홍
     List<MemberAudioMeta> findByMemberIdAndAudioType(Long memberId, AudioType audioType);
 
     // VC TRG 오디오 url 추출 - 승민
@@ -63,5 +62,22 @@ public interface MemberAudioMetaRepository extends JpaRepository<MemberAudioMeta
             "JOIN c.memberAudioMeta m " +
             "WHERE c.id IN :concatDetailIds ")
     List<MemberAudioMeta> findByConcatDetailIds(@Param("concatDetailIds") List<Long> concatDetailIds);
+
+
+    // (VC) project id로 유저오디오메타 찾기 (타겟)  - 의준, 소정
+    @Query("SELECT ma.id FROM MemberAudioMeta ma " +
+            "JOIN VCProject p ON ma.id = p.memberTargetAudioMeta.id " +
+            "WHERE p.id = :projectId")
+    Long findTargetAudioMetaIdByVCProjectId(@Param("projectId") Long projectId);
+
+    // (VC) project id로 유저오디오메타 찾기 (소스) - 의준, 소정
+    @Query("SELECT d.memberAudioMeta.id FROM VCDetail d " +
+            "WHERE d.vcProject.id = :vcProjectId")
+    List<Long> findSourceAudioMetaIdsByVCProjectId(@Param("vcProjectId") Long vcProjectId);
+
+    // (Concat) project id로 유저오디오메타 찾기 (컨캣 소스) - 의준, 소정
+    @Query("SELECT cd.memberAudioMeta.id FROM ConcatDetail cd " +
+            "WHERE cd.concatProject.id = :concatProjectId")
+    List<Long> findMemberAudioMetaIdsByConcatProjectId(@Param("concatProjectId") Long concatProjectId);
 
 }

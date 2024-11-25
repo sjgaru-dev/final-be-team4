@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class TtsVcWebApplication {
 
     public static void main(String[] args) {
+        System.out.println("GOOGLE_APPLICATION_CREDENTIALS: " + System.getenv("GOOGLE_APPLICATION_CREDENTIALS"));
         SpringApplication.run(TtsVcWebApplication.class, args);
     }
 }

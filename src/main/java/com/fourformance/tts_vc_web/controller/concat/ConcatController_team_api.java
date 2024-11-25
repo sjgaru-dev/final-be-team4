@@ -2,21 +2,26 @@ package com.fourformance.tts_vc_web.controller.concat;
 
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.dto.concat.ConcatRequestDetailDto;
+import com.fourformance.tts_vc_web.dto.concat.ConcatRequestDto;
+import com.fourformance.tts_vc_web.dto.concat.ConcatResponseDto;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.service.concat.ConcatService_team_api;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.logging.Logger;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,30 +29,72 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class ConcatController_team_api {
 
-    private final ConcatService_team_api concatService;
+    private static final Logger LOGGER = Logger.getLogger(ConcatController_team_api.class.getName()); // 로거 초기화
 
-    @PostMapping(value = "/convert/batch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    private final ConcatService_team_api concatService; // 병합 서비스 의존성 주입
+
+    @PostMapping(
+            value = "/convert/batch",
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}
+    )
+    @Operation(
+            summary = "오디오 파일 병합",
+            description = "여러 오디오 파일을 업로드하고, 파일 사이에 무음을 추가하여 병합된 파일을 생성합니다.",
+            tags = {"Audio Concat"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "병합 성공", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = DataResponseDto.class))
+            }),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
     public ResponseDto convertMultipleAudios(
-            @RequestPart("sourceAudios") MultipartFile[] sourceAudios) {
+            @RequestPart("concatRequestDto") @Parameter(description = "요청 DTO") ConcatRequestDto concatRequestDto,
+            @RequestPart("files") @Parameter(description = "업로드할 파일들") List<MultipartFile> files
+    ) {
+
+        LOGGER.info("컨트롤러 메서드 호출됨: " + concatRequestDto); // 요청 데이터 로깅
+
+        // 1. 유효성 검증: 요청 데이터 및 상세 데이터 확인
+        if (concatRequestDto == null ||
+                concatRequestDto.getConcatRequestDetails() == null ||
+                concatRequestDto.getConcatRequestDetails().isEmpty()) {
+            LOGGER.warning("유효하지 않은 요청 데이터: ConcatRequestDto가 null이거나 비어 있습니다."); // 잘못된 요청 데이터 로깅
+            throw new BusinessException(ErrorCode.INVALID_REQUEST_DATA); // 커스텀 예외 발생
+        }
 
         try {
-            log.info("오디오 파일 병합 요청 수신: {}개 파일 업로드", sourceAudios.length);
-
-            if (sourceAudios == null || sourceAudios.length == 0) {
-                //"파일이 업로드되지 않았습니다."
-                throw new BusinessException(ErrorCode.NOT_EXISTS_AUDIO);
+            // 2. 파일 수와 요청 DTO의 상세 정보 수가 동일한지 확인
+            List<ConcatRequestDetailDto> details = concatRequestDto.getConcatRequestDetails();
+            if (details.size() != files.size()) {
+                LOGGER.warning("파일 수와 요청 DTO의 상세 데이터 수가 일치하지 않음");
+                throw new BusinessException(ErrorCode.INVALID_REQUEST_DATA);
             }
 
-            // 서비스 호출
-            String mergedFilePath = concatService.convertMultipleAudios(sourceAudios);
+            // 3. 요청 DTO의 각 상세 항목에 업로드된 파일 매핑
+            for (int i = 0; i < details.size(); i++) {
+                ConcatRequestDetailDto detail = details.get(i);
+                MultipartFile file = files.get(i);
 
-            log.info("병합된 파일 경로: {}", mergedFilePath);
+                // 예를 들어, 파일명과 detail의 정보가 일치하는지 확인
+                LOGGER.info("매핑 중 - Detail AudioSeq: " + detail.getAudioSeq() + ", 파일명: " + file.getOriginalFilename());
 
-            return DataResponseDto.of(mergedFilePath);
+                detail.setSourceAudio(file);
+
+            }
+
+            // 4. 서비스 로직 호출: 병합 처리 실행
+            ConcatResponseDto concatResponse = concatService.convertAllConcatDetails(concatRequestDto);
+
+            LOGGER.info("오디오 병합 성공"); // 성공 로그
+            // 5. 성공적인 응답 반환
+            return DataResponseDto.of(concatResponse);
+
         } catch (Exception e) {
+            // 예외 발생 시 에러 로그 기록 및 커스텀 예외 반환
             log.error("오디오 병합 중 오류 발생", e);
-            //"오디오 병합 중 오류가 발생했습니다."
-            throw new BusinessException(ErrorCode.NOT_EXISTS_AUDIO);
+            throw new BusinessException(ErrorCode.NOT_EXISTS_AUDIO); // 에러 코드 반환
         }
     }
 }
