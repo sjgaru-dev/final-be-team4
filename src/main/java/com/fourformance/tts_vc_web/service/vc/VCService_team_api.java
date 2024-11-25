@@ -8,6 +8,10 @@ import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.common.util.ConvertedMultipartFile_team_api;
 import com.fourformance.tts_vc_web.common.util.ElevenLabsClient_team_api;
 import com.fourformance.tts_vc_web.domain.entity.*;
+import com.fourformance.tts_vc_web.domain.entity.Member;
+import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
+import com.fourformance.tts_vc_web.domain.entity.VCDetail;
+import com.fourformance.tts_vc_web.domain.entity.VCProject;
 import com.fourformance.tts_vc_web.dto.vc.*;
 import com.fourformance.tts_vc_web.repository.*;
 import com.fourformance.tts_vc_web.service.common.S3Service;
@@ -272,3 +276,4 @@ public class VCService_team_api {
                 .orElse(null);
     }
 }
+
