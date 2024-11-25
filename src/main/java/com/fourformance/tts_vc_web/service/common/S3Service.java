@@ -278,7 +278,7 @@ public class S3Service {
 
     // 유저 오디오를 S3에 업로드하고 DB에 저장하는 메서드
     public List<String> uploadAndSaveMemberFile(List<MultipartFile> files, Long memberId, Long projectId,
-                                                AudioType audioType, String voiceId) {
+                                                AudioType audioType) {
 
         try {
             // url을 담을 리스트
@@ -294,7 +294,7 @@ public class S3Service {
             } else if (audioType.equals(AudioType.CONCAT)) {
                 handleConcatFiles(files, projectId, member, uploadedUrls);
             } else if (audioType.equals(AudioType.VC_TRG)) {
-                handleVCTrgFiles(files, projectId, member, voiceId, uploadedUrls);
+                handleVCTrgFiles(files, projectId, member, uploadedUrls);
             } else {
                 throw new BusinessException(ErrorCode.UNSUPPORTED_AUDIO_TYPE);
             }
@@ -320,7 +320,7 @@ public class S3Service {
             String fileUrl = uploadFileToS3(file, member.getId(), projectId, AudioType.VC_SRC);
             uploadedUrls.add(fileUrl);
 
-            MemberAudioMeta memberAudioMeta = saveMemberAudioMeta(member, file, fileUrl, AudioType.VC_SRC, null);
+            MemberAudioMeta memberAudioMeta = saveMemberAudioMeta(member, file, fileUrl, AudioType.VC_SRC);
 
             // VCDetail 업데이트
             VCDetail vcDetail = vcDetails.get(index++);
@@ -341,7 +341,7 @@ public class S3Service {
             String fileUrl = uploadFileToS3(file, member.getId(), projectId, AudioType.CONCAT);
             uploadedUrls.add(fileUrl);
 
-            MemberAudioMeta memberAudioMeta = saveMemberAudioMeta(member, file, fileUrl, AudioType.CONCAT, null);
+            MemberAudioMeta memberAudioMeta = saveMemberAudioMeta(member, file, fileUrl, AudioType.CONCAT);
 
             // ConcatDetail 업데이트
             ConcatDetail concatDetail = concatDetails.get(index++);
@@ -350,8 +350,7 @@ public class S3Service {
         }
     }
 
-    private void handleVCTrgFiles(List<MultipartFile> files, Long projectId, Member member, String voiceId,
-                                  List<String> uploadedUrls) throws IOException {
+    private void handleVCTrgFiles(List<MultipartFile> files, Long projectId, Member member,List<String> uploadedUrls) throws IOException {
         if (files.size() != 1) {
             throw new BusinessException(ErrorCode.INVALID_FILE_COUNT); // VC_TRG는 단일 파일만 허용
         }
@@ -360,7 +359,7 @@ public class S3Service {
         String fileUrl = uploadFileToS3(file, member.getId(), projectId, AudioType.VC_TRG);
         uploadedUrls.add(fileUrl);
 
-        MemberAudioMeta memberAudioMeta = saveMemberAudioMeta(member, file, fileUrl, AudioType.VC_TRG, voiceId);
+        MemberAudioMeta memberAudioMeta = saveMemberAudioMeta(member, file, fileUrl, AudioType.VC_TRG);
 
         // VCProject 업데이트
         VCProject vcProject = vcProjectRepository.findById(projectId)
@@ -382,17 +381,16 @@ public class S3Service {
         return amazonS3Client.getUrl(bucket, filename).toString();
     }
 
-    private MemberAudioMeta saveMemberAudioMeta(Member member, MultipartFile file, String fileUrl, AudioType audioType,
-                                                String voiceId) {
+    private MemberAudioMeta saveMemberAudioMeta(Member member, MultipartFile file, String fileUrl, AudioType audioType) {
         MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(
-                member, file.getOriginalFilename(), fileUrl, audioType, voiceId
+                member, file.getOriginalFilename(), fileUrl, audioType
         );
         return memberAudioMetaRepository.save(memberAudioMeta);
     }
 
 
     public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId,
-                                          AudioType audioType, String voiceId) {
+                                          AudioType audioType) {
 
         try {
             if (file.isEmpty()) {
@@ -416,9 +414,8 @@ public class S3Service {
             String fileUrl = amazonS3Client.getUrl(bucket, filename).toString();
 
             // 오디오 메타 객체 생성 및 DB 저장
-            String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
             MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
-                    audioType, finalVoiceId);
+                    audioType);
             memberAudioMetaRepository.save(memberAudioMeta);
 
             return fileUrl;
@@ -653,8 +650,7 @@ public class S3Service {
         }
     }
 
-    public List<MemberAudioMeta> uploadAndSaveMemberFile2(List<MultipartFile> files, Long memberId, Long projectId,
-                                                          AudioType audioType, String voiceId) {
+    public List<MemberAudioMeta> uploadAndSaveMemberFile2(List<MultipartFile> files, Long memberId, Long projectId, AudioType audioType) {
         try {
             List<MemberAudioMeta> memberAudioMetas = new ArrayList<>();
             // 필요한 리포지토리나 서비스를 주입받아 사용해야 합니다.
@@ -680,9 +676,8 @@ public class S3Service {
                 String fileUrl = amazonS3Client.getUrl(bucket, filename).toString();
 
                 // MemberAudioMeta 객체 생성 및 저장
-                String finalVoiceId = (audioType == AudioType.VC_TRG) ? voiceId : null;
                 MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
-                        audioType, finalVoiceId);
+                        audioType);
                 memberAudioMetaRepository.save(memberAudioMeta);
 
                 memberAudioMetas.add(memberAudioMeta);
