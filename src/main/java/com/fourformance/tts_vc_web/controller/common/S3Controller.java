@@ -96,11 +96,9 @@ public class S3Controller {
             "/concat/upload-local-to-bucket"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseDto uploadFiles(
             @RequestParam("files") List<MultipartFile> files, @RequestParam("memberId") Long memberId,
-            @RequestParam("projectId") Long projectId, @RequestParam("audioType") String audioType,
-            @RequestParam("voiceId") String voiceId) {
+            @RequestParam("projectId") Long projectId, @RequestParam("audioType") String audioType) {
         AudioType enumAudioType = AudioType.valueOf(audioType);
-        List<String> uploadedUrls = s3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType,
-                voiceId);
+        List<String> uploadedUrls = s3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType);
         return DataResponseDto.of(uploadedUrls);
     }
 
