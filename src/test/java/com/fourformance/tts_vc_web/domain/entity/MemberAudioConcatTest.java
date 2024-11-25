@@ -40,7 +40,7 @@ class MemberAudioConcatTest {
         em.flush();
         em.clear();
             // 멤버오디오메타와 컨캣 프로젝트 객체 생성후 DB 저장
-        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member,null, "url", AudioType.CONCAT,null);
+        MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member,null, "url", AudioType.CONCAT);
         ConcatProject concatProject = ConcatProject.createConcatProject(member, "컨캣프로젝트");
         memberAudioMetaRepository.save(memberAudioMeta);
         concatProjectRepository.save(concatProject);

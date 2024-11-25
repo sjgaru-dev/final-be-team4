@@ -1,6 +1,8 @@
 # TRUNCATE TABLE voice_style;
 # ALTER TABLE voice_style AUTO_INCREMENT = 1;
 
+DELETE FROM voice_style;
+
 
 INSERT INTO voice_style (country, language_code, voice_type, voice_name, gender, personality, is_visible)
 VALUES (

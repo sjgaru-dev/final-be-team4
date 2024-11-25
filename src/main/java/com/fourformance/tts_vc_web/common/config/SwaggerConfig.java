@@ -1,10 +1,10 @@
 package com.fourformance.tts_vc_web.common.config;
 
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Info;
 
 // Swagger UI 주소입니다.
 // http://localhost:8080/swagger-ui/index.html#/
@@ -18,13 +18,43 @@ public class SwaggerConfig {
                         .description("기업연계 파이널 프로젝트 API 문서 백엔드 개발용"));
     }
 
-    // api들을 그룹으로 지정하는 기능입니다.
-    // 당분간은 모든 api들을 하나의 그룹으로 지정하고 개발 중 api들이 많아지면 회의를 통해 어떻게 그룹화 할지 얘기하도록 해요!
     @Bean
-    public GroupedOpenApi publicApi() {
+    public GroupedOpenApi ttsApi() {
         return GroupedOpenApi.builder()
-                .group("v1-definition") // 이 그룹으로 API들이 표시
-                .pathsToMatch("/**") // 이 경로의 API들이 그룹에 속하게 됨
+                .group("TTS API")
+                .pathsToMatch("/tts/**") // '/tts'로 시작하는 모든 엔드포인트를 포함
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi vcApi() {
+        return GroupedOpenApi.builder()
+                .group("VC API")
+                .pathsToMatch("/vc/**") // '/vc'로 시작하는 모든 엔드포인트를 포함
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi concatApi() {
+        return GroupedOpenApi.builder()
+                .group("Concat API")
+                .pathsToMatch("/concat/**") // '/concat'로 시작하는 모든 엔드포인트를 포함
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi s3Api() {
+        return GroupedOpenApi.builder()
+                .group("S3 Test")
+                .pathsToMatch("/s3_test/**") // '/tts'로 시작하는 모든 엔드포인트를 포함
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi defaultApi() {
+        return GroupedOpenApi.builder()
+                .group("Default API") // 특정 그룹에 포함되지 않은 엔드포인트
+                .pathsToExclude("/tts/**", "/vc/**", "/concat/**", "s3_test") // 다른 그룹들에서 제외된 엔드포인트만 포함
                 .build();
     }
 }

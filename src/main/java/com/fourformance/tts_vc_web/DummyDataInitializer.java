@@ -166,8 +166,7 @@ public class DummyDataInitializer {
                         firstMember,
                         "bucket/concat_project_" + i + "_detail_" + j,
                         "https://audio.example.com/concat_project_" + i + "_detail_" + j + ".wav",
-                        AudioType.CONCAT,
-                        "concat_voice_" + j
+                        AudioType.CONCAT
                 );
                 memberAudioMetaRepository.save(memberAudioMeta);
 
