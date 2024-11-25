@@ -61,9 +61,16 @@ public class TTSController_team_api {
         // 세션에 임의의 memberId 설정
         if (session.getAttribute("memberId") == null) {
             session.setAttribute("memberId", 1L);
+
         }
         // 임시 하드 코딩 -> 회원/로그인 개발 구현 후 수정 필요
         Long memberId = (Long) session.getAttribute("memberId");
+
+        // 유효성 검증: 요청 데이터가 null이거나 텍스트 세부사항 리스트가 비어있는 경우 예외 처리
+        if (ttsSaveDto == null || ttsSaveDto.getTtsDetails() == null || ttsSaveDto.getTtsDetails().isEmpty()) {
+            LOGGER.warning("유효하지 않은 요청 데이터"); // 잘못된 요청 데이터 로깅
+            throw new BusinessException(ErrorCode.INVALID_REQUEST_DATA); // 커스텀 예외 발생
+        }
 
         // 요청 데이터 유효성 검사
         validateRequestData(ttsSaveDto);

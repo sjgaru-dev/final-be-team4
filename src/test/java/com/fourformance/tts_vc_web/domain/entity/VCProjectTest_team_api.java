@@ -43,7 +43,7 @@ class VCProjectTest_team_api {
 
     // 테스트용 MemberAudioMeta 생성
     private MemberAudioMeta createTestAudioMeta(Member member, String audioUrl, AudioType audioType) {
-        return MemberAudioMeta.createMemberAudioMeta(member, null, audioUrl, audioType, "testVoiceId");
+        return MemberAudioMeta.createMemberAudioMeta(member, null, audioUrl, audioType);
     }
 
     @Test
@@ -123,7 +123,7 @@ class VCProjectTest_team_api {
         vcProjectRepository.save(vcProject);
 
         MemberAudioMeta audioMeta = MemberAudioMeta.createMemberAudioMeta(
-                member, null, "/audio/path", AudioType.VC_TRG, "SampleVoiceId");
+                member, null, "/audio/path", AudioType.VC_TRG);
         memberAudioMetaRepository.save(audioMeta);
 
         VCDetail vcDetail = VCDetail.createVCDetail(vcProject, audioMeta);
