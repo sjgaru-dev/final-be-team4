@@ -46,11 +46,11 @@ public class TTSService_team_api {
      * @param ttsSaveDto 프로젝트와 디테일 데이터를 포함한 DTO
      * @return 생성된 오디오 파일 경로 리스트
      */
-    public List<TTSResponseDetailDto> convertAllTtsDetails(TTSSaveDto ttsSaveDto) {
+    public List<TTSResponseDetailDto> convertAllTtsDetails(TTSSaveDto ttsSaveDto, Long memberId) {
         LOGGER.info("convertAllTtsDetails 호출: " + ttsSaveDto);
 
         // 프로젝트 저장 또는 업데이트
-        TTSProject ttsProject = saveOrUpdateProject(ttsSaveDto);
+        TTSProject ttsProject = saveOrUpdateProject(ttsSaveDto, memberId);
 
         // 프로젝트의 TTS 디테일 데이터 처리
         List<TTSResponseDetailDto> responseDetails = new ArrayList<>();
@@ -100,7 +100,7 @@ public class TTSService_team_api {
      * @param ttsSaveDto 프로젝트 데이터를 포함한 DTO
      * @return 저장된 프로젝트 엔티티
      */
-    private TTSProject saveOrUpdateProject(TTSSaveDto ttsSaveDto) {
+    private TTSProject saveOrUpdateProject(TTSSaveDto ttsSaveDto, Long memberId) {
         // 프로젝트 ID가 존재하는 경우 업데이트, 없으면 새로 생성
         Long projectId = Optional.ofNullable(ttsSaveDto.getProjectId())
                 .map(id -> {
@@ -110,7 +110,7 @@ public class TTSService_team_api {
                 })
                 .orElseGet(() -> {
                     // 새로운 프로젝트 생성
-                    return ttsServiceTeamMulti.createNewProjectCustom(ttsSaveDto);
+                    return ttsServiceTeamMulti.createNewProjectCustom(ttsSaveDto, memberId);
                 });
 
         // ID를 통해 프로젝트를 조회하고 반환

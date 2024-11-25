@@ -263,7 +263,7 @@ public class TTSService_team_multi {
 
     // 프로젝트 생성 커스텀 메서드 - 원우
     @Transactional
-    public Long createNewProjectCustom(TTSSaveDto dto) {
+    public Long createNewProjectCustom(TTSSaveDto dto, Long memberId) {
 
         validateSaveDto(dto);
 
@@ -277,7 +277,7 @@ public class TTSService_team_multi {
 
 
         // 받아온 멤버 id (세션에서) 로 멤버 찾기
-        Member member = memberRepository.findById(dto.getMemberId())
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // TTSProject 생성

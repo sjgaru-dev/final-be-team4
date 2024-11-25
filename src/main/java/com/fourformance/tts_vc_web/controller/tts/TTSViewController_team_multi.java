@@ -2,12 +2,14 @@ package com.fourformance.tts_vc_web.controller.tts;
 
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
+import com.fourformance.tts_vc_web.domain.entity.Member;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSDetailDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSProjectDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSProjectWithDetailsDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSSaveDto;
+import com.fourformance.tts_vc_web.repository.MemberRepository;
 import com.fourformance.tts_vc_web.service.common.ProjectService_team_multi;
 import com.fourformance.tts_vc_web.service.tts.TTSService_team_multi;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,11 +26,9 @@ import org.springframework.web.servlet.view.RedirectView;
 @RequiredArgsConstructor
 public class TTSViewController_team_multi {
 
-    @Autowired
-    TTSService_team_multi ttsService;
-
-    @Autowired
-    ProjectService_team_multi projectService;
+    private final TTSService_team_multi ttsService;
+    private final ProjectService_team_multi projectService;
+    private final MemberRepository memberRepository;
 
 
     // TTS 상태 로드 메서드
@@ -62,9 +62,13 @@ public class TTSViewController_team_multi {
     @PostMapping("/save")
     public RedirectView ttsSave(@RequestBody TTSSaveDto ttsSaveDto, HttpSession session) {
         try {
+            // 세션에 임의의 memberId 설정
+            if (session.getAttribute("memberId") == null) {
+                session.setAttribute("memberId", 1L);
+            }
 
-//            Long memberId = (Long) session.getAttribute("memberId");
-            Long memberId = 1L; // 개발 단계 임시 하드코딩
+            Long memberId = (Long) session.getAttribute("memberId");
+
 
             Long projectId;
             if (ttsSaveDto.getProjectId() == null) {
