@@ -60,14 +60,11 @@ public class S3Service {
     private final AmazonS3 amazonS3;
 
 
-    // OutputAudioMeta isdeleted update, S3File Delete
-    public void deleteOutputAudioMeta(Long outputAudioMetaId, Long memberId) {
-        // 1. OutputAudioMeta 조회
-        OutputAudioMeta outputAudioMeta = outputAudioMetaRepository.findById(outputAudioMetaId)
-                .orElseThrow(() -> new RuntimeException("OutputAudioMeta 데이터를 찾을 수 없습니다."));
+    //프로젝트 단위 삭제
+    public void deleteAudioPerProject(Long projectId) {
 
-        // 2. 디렉토리 경로 추출
-        String filePath = outputAudioMeta.getBucketRoute(); // 예: "Generated/123/TTS/456/789.wav"
+        // 2. 디렉토리 경로 추출 "Generated/" + memberid
+//        String filePath = outputAudioMeta.getBucketRoute(); // 예: "Generated/123/TTS/456/789.wav"
         String directoryPrefix = extractProjectDirectoryPrefix(filePath); // "Generated/123/TTS/456/"
 
         /**
@@ -86,7 +83,7 @@ public class S3Service {
 
     }
 
-    // MemberAudioMeta isdeleted update, S3File Delete
+    // MemberAudioMeta isdeleted update, S3File Delete//  멤버오디오메타 경로추출 + 삭제
     public void deleteMemberAudio(Long memberId, Long projectId) {
         MemberAudioMeta memberAudioMeta = memberAudioMetaRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("멤버 오디오를 찾을 수 없습니다."));
@@ -104,21 +101,22 @@ public class S3Service {
         deleteDirectoryFromS3(prefix);
         // DB 업데이트
         memberAudioMeta.delete();// isDeleted = ture, 삭제시간 업데이트 메서드
+        memberAudioMetaRepository.save(memberAudioMeta);
     }
 
-    // 경로 추출 헬프메서드
-    private String extractProjectDirectoryPrefix(String filePath) {
-        // 슬래시(`/`) 기준으로 분리
-        String[] parts = filePath.split("/");
-
-        // 경로의 최소 길이를 확인
-        if (parts.length < 4) {
-            throw new RuntimeException("Invalid file path: " + filePath);
-        }
-
-        // projectId까지 포함된 경로를 반환
-        return String.join("/", parts[0], parts[1], parts[2], parts[3]) + "/";
-    }
+//    // 경로 추출 헬프메서드 - OutputAudioMeta경로 추출
+//    private String extractProjectDirectoryPrefix(String filePath) {
+//        // 슬래시(`/`) 기준으로 분리
+//        String[] parts = filePath.split("/");
+//
+//        // 경로의 최소 길이를 확인
+//        if (parts.length < 4) {
+//            throw new RuntimeException("Invalid file path: " + filePath);
+//        }
+//
+//        // projectId까지 포함된 경로를 반환
+//        return String.join("/", parts[0], parts[1], parts[2], parts[3]) + "/";
+//    }
 
 
     // Prefix + bucket 값만 있으면 S3에서 삭제 가능
