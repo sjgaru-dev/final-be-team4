@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -103,13 +104,26 @@ public class S3Controller {
         return DataResponseDto.of(uploadedUrls);
     }
 
+//    @DeleteMapping("/delete")
+//    public ResponseEntity<String> deleteOutputAudioMetaByS3(
+//            @RequestParam("projectId") Long projectId
+//    ) {
+//        s3Service.deleteAudioPerProject(projectId);
+//        return ResponseEntity.ok("삭제 성공하였습니다.");
+//    }
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("/delete/{projectId}")
     public ResponseEntity<String> deleteOutputAudioMetaByS3(
-            @RequestParam Long projectId,
-            @RequestParam Long memberId
+            @PathVariable("projectId") Long projectId
     ) {
-        s3Service.deleteOutputAudioMeta(projectId, memberId);
+        System.out.println("projectId = " + projectId);
+        s3Service.deleteAudioPerProject(projectId);
         return ResponseEntity.ok("삭제 성공하였습니다.");
+    }
+
+    @DeleteMapping("/deleteMemberAudioMeta")
+    public ResponseEntity<String> deleteMemberAudio(@RequestParam Long meberId, @RequestParam Long projectId) {
+        s3Service.deleteMemberAudio(meberId, projectId);
+        return ResponseEntity.ok("삭제성공");
     }
 }
