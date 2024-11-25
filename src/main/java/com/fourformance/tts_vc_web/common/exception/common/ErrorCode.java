@@ -55,7 +55,6 @@ public enum ErrorCode {
     TTS_CONVERSION_FAILED(5009, HttpStatus.INTERNAL_SERVER_ERROR, "TTS 변환 중 오류가 발생했습니다."),
     AUDIO_FILE_SAVE_ERROR(5010, HttpStatus.INTERNAL_SERVER_ERROR, "오디오 파일 저장 중 오류가 발생했습니다."),
     INVALID_TEXT_FOR_KO_KR(5011, HttpStatus.BAD_REQUEST, "언어 코드가 'ko-KR'로 설정되었지만, 텍스트는 한국어가 아닙니다."),
-
     INVALID_TEXT_FOR_ZH_CN(5012, HttpStatus.BAD_REQUEST, "언어 코드가 'zh-CN'로 설정되었지만, 텍스트는 중국어(간체)가 아닙니다."),
     INVALID_TEXT_FOR_CMN_TW(5013, HttpStatus.BAD_REQUEST, "언어 코드가 'cmn-TW'로 설정되었지만, 텍스트는 중국어(번체)가 아닙니다."),
     INVALID_TEXT_FOR_YUE_HK(5014, HttpStatus.BAD_REQUEST, "언어 코드가 'yue-HK'로 설정되었지만, 텍스트는 광둥어가 아닙니다."),
