@@ -1,5 +1,7 @@
 package com.fourformance.tts_vc_web.service.tts;
 
+import com.fourformance.tts_vc_web.common.constant.APIStatusConst;
+import com.fourformance.tts_vc_web.common.constant.APIUnitStatusConst;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.common.util.CommonFileUtils;
@@ -8,6 +10,7 @@ import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.TTSProject;
 import com.fourformance.tts_vc_web.dto.tts.TTSDetailDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSResponseDetailDto;
+import com.fourformance.tts_vc_web.dto.tts.TTSResponseDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSSaveDto;
 import com.fourformance.tts_vc_web.repository.APIStatusRepository;
 import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
@@ -46,11 +49,23 @@ public class TTSService_team_api {
      * @param ttsSaveDto 프로젝트와 디테일 데이터를 포함한 DTO
      * @return 생성된 오디오 파일 경로 리스트
      */
-    public List<TTSResponseDetailDto> convertAllTtsDetails(TTSSaveDto ttsSaveDto) {
+    public TTSResponseDto convertAllTtsDetails(TTSSaveDto ttsSaveDto) {
         LOGGER.info("convertAllTtsDetails 호출: " + ttsSaveDto);
 
-        // 프로젝트 저장 또는 업데이트
+        // 1. 프로젝트 저장 또는 업데이트
         TTSProject ttsProject = saveOrUpdateProject(ttsSaveDto);
+
+        // 2. 응답 DTO 생성 및 초기화
+        TTSResponseDto ttsResponseDto = TTSResponseDto.builder()
+                .projectId(ttsProject.getId())
+                .projectName(ttsProject.getProjectName())
+                .globalVoiceStyleId(ttsProject.getVoiceStyle().getId())
+                .fullScript(ttsProject.getFullScript())
+                .globalSpeed(ttsProject.getGlobalSpeed())
+                .globalPitch(ttsProject.getGlobalPitch())
+                .globalVolume(ttsProject.getGlobalVolume())
+                .apiStatus(ttsProject.getApiStatus())
+                .build();
 
         // 프로젝트의 TTS 디테일 데이터 처리
         List<TTSResponseDetailDto> responseDetails = new ArrayList<>();
@@ -90,8 +105,15 @@ public class TTSService_team_api {
             }
         }
 
-        LOGGER.info("convertAllTtsDetails 완료: 생성된 Response Details = " + responseDetails);
-        return responseDetails;
+        // 여기까지 진행되면 API는 성공으로 처리 및 DB 반영
+        ttsProject.updateAPIStatus(APIStatusConst.SUCCESS);
+        ttsProjectRepository.save(ttsProject);
+
+        // ttsResponseDto 나머지 정보 값 처리
+        ttsResponseDto.setApiStatus(ttsProject.getApiStatus());
+        ttsResponseDto.setTtsDetails(responseDetails);
+        LOGGER.info("convertAllTtsDetails 완료: 생성된 ResponseDto = " + ttsResponseDto);
+        return ttsResponseDto;
     }
 
     /**
@@ -207,13 +229,38 @@ public class TTSService_team_api {
             // Google TTS API 호출
             SynthesizeSpeechResponse response = textToSpeechClient.synthesizeSpeech(input, voice, audioConfig);
 
+            // 응답 데이터를 JSON으로 변환
+            String responsePayload = String.format(
+                    "{ \"audioSize\": \"%d\", \"contentType\": \"audio/linear16\", \"request\": %s }",
+                    response.getAudioContent().size(),
+                    requestPayload
+            );
+
             // 응답 검증 및 처리
             if (response.getAudioContent().isEmpty()) {
+                apiStatus.updateResponseInfo(requestPayload, 500, APIUnitStatusConst.FAILURE);
+                apiStatusRepository.save(apiStatus); // 상태 저장
+
+                ttsProject.updateAPIStatus(APIStatusConst.FAILURE);
+                ttsProjectRepository.save(ttsProject);
+
                 throw new BusinessException(ErrorCode.TTS_CONVERSION_FAILED_EMPTY_CONTENT);
             }
+
+            // 성공적인 처리
+            apiStatus.updateResponseInfo(responsePayload, 200, APIUnitStatusConst.SUCCESS);
+            apiStatusRepository.save(apiStatus);
+
             LOGGER.info("Google TTS API 호출 성공");
             return response.getAudioContent();
         } catch (IOException e) {
+
+            apiStatus.updateResponseInfo(requestPayload, 500, APIUnitStatusConst.FAILURE);
+            apiStatusRepository.save(apiStatus); // 상태 저장
+
+            ttsProject.updateAPIStatus(APIStatusConst.FAILURE);
+            ttsProjectRepository.save(ttsProject);
+
             LOGGER.severe("Google TTS API 호출 중 오류: " + e.getMessage());
             throw new BusinessException(ErrorCode.TTS_CONVERSION_FAILED);
         }

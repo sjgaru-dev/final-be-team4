@@ -4,7 +4,7 @@ import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
-import com.fourformance.tts_vc_web.dto.tts.TTSResponseDetailDto;
+import com.fourformance.tts_vc_web.dto.tts.TTSResponseDto;
 import com.fourformance.tts_vc_web.dto.tts.TTSSaveDto;
 import com.fourformance.tts_vc_web.service.tts.TTSService_team_api;
 import io.swagger.v3.oas.annotations.Operation; // Swagger Operation 어노테이션
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -66,17 +65,17 @@ public class TTSController_team_api {
 
         try {
             // 서비스 계층에서 TTS 변환 로직 실행
-            List<TTSResponseDetailDto> responseDetails = ttsService.convertAllTtsDetails(ttsSaveDto);
+            TTSResponseDto ttsResponseDto = ttsService.convertAllTtsDetails(ttsSaveDto);
 
             // 변환 결과가 비어있으면 실패로 간주하고 예외 처리
-            if (responseDetails.isEmpty()) {
+            if (ttsResponseDto.getTtsDetails().isEmpty()) {
                 LOGGER.warning("TTS 변환 실패"); // 변환 실패 로그
                 throw new BusinessException(ErrorCode.TTS_CREATE_FAILED); // 커스텀 예외 발생
             }
 
             LOGGER.info("TTS 변환 성공"); // 변환 성공 로그
             // 성공적인 응답 데이터 반환
-            return DataResponseDto.of(responseDetails);
+            return DataResponseDto.of(ttsResponseDto);
 
         } catch (Exception e) {
             // 변환 과정에서 발생한 예외 처리
