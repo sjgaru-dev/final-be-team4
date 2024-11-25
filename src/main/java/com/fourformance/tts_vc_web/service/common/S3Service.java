@@ -392,7 +392,7 @@ public class S3Service {
 
 
     public String uploadAndSaveMemberFile(MultipartFile file, Long memberId, Long projectId,
-                                          AudioType audioType, String voiceId, Long detailId) {
+                                          AudioType audioType, String voiceId) {
 
         try {
             if (file.isEmpty()) {
@@ -420,23 +420,6 @@ public class S3Service {
             MemberAudioMeta memberAudioMeta = MemberAudioMeta.createMemberAudioMeta(member, filename, fileUrl,
                     audioType, finalVoiceId);
             memberAudioMetaRepository.save(memberAudioMeta);
-
-            // 오디오 타입에 따른 연관 엔티티 업데이트
-            if (audioType.equals(AudioType.VC_TRG)) {
-                VCProject vcProject = (VCProject) project;
-                vcProject.injectTargetAudioMeta(memberAudioMeta);
-                vcProjectRepository.save(vcProject);
-            } else if (audioType.equals(AudioType.VC_SRC)) {
-                VCDetail vcDetail = vcDetailRepository.findById(detailId)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.DETAIL_NOT_FOUND));
-                vcDetail.injectLocalAudio(memberAudioMeta); // inject 메서드 참고
-                vcDetailRepository.save(vcDetail);
-            } else if (audioType.equals(AudioType.CONCAT)) {
-                ConcatDetail concatDetail = concatDetailRepository.findById(detailId)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.DETAIL_NOT_FOUND));
-                concatDetail.injectMemberAudioMeta(memberAudioMeta); // inject 메서드 참고
-                concatDetailRepository.save(concatDetail);
-            }
 
             return fileUrl;
 
