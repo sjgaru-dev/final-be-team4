@@ -475,6 +475,7 @@ public class S3Service {
 
         if (project instanceof TTSProject) {
             projectType = "TTS";
+
         } else if (project instanceof VCProject) {
             projectType = "VC";
         } else if (project instanceof ConcatProject) {
@@ -507,6 +508,41 @@ public class S3Service {
 //        outputAudioMetaUpdate(projectId);
     }
 
+    // DB update로직
+    private void outputAudioMetaUpdate(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(()->new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+
+        if (project instanceof TTSProject) {
+            // 프로젝트에서 OutputAudioMeta를 찾아서 OutputAudioMeta의 isDeleted업뎃 + 삭제시간업뎃
+            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByProjectId(projectId);
+            for(OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {
+                if(outputAudioMeta.getProjectType() == ProjectType.TTS) {
+                    // 업데이트 치고, 저장.
+                    outputAudioMeta.deleteOutputAudioMeta();
+                    outputAudioMetaRepository.save(outputAudioMeta);
+                }
+            }
+        } else if (project instanceof VCProject) {
+            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByProjectId(projectId);
+            for(OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {
+                if(outputAudioMeta.getProjectType() == ProjectType.VC) {
+                    outputAudioMeta.deleteOutputAudioMeta();
+                    outputAudioMetaRepository.save(outputAudioMeta);
+                }
+            }
+
+        } else if (project instanceof ConcatProject) {
+            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByProjectId(projectId);
+            for(OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {
+                if(outputAudioMeta.getProjectType() == ProjectType.CONCAT) {
+                    outputAudioMeta.deleteOutputAudioMeta();
+                    outputAudioMetaRepository.save(outputAudioMeta);
+                }
+            }
+        }
+
+    }
 //    private void VCProjectDelete(Long projectId) {
 //
 //        Project project = projectRepository.findById(projectId)
