@@ -76,12 +76,13 @@ jobs:
             echo "=== Docker Container Logs ==="
             sudo docker logs --tail 50 backend
 
-      # - name: Notify Slack - Success
-      #   if: success()
-      #   run: |
-      #     curl -X POST -H 'Content-type: application/json' --data '{
-      #       "text": ":white_check_mark: 백엔드 배포가 성공적으로 완료되었습니다."
-      #     }' ${{ secrets.SLACK_WEBHOOK_URL }}
+      - name: Notify Slack - Success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": ":white_check_mark: 백엔드 배포가 성공적으로 완료되었습니다."
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
+
 
       # - name: Notify Slack - Failure
       #   if: failure()
