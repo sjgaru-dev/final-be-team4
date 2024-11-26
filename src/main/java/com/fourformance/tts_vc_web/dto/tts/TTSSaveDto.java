@@ -18,7 +18,6 @@ public class TTSSaveDto {
     private Float globalSpeed;
     private Float globalPitch;
     private Float globalVolume;
-//    private APIStatusConst apiStatus;
 
     private List<TTSDetailDto> ttsDetails;
 }
