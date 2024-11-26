@@ -169,4 +169,8 @@ public class WorkspaceService {
                 .map(APIStatus::getApiUnitStatusConst) // APIUnitStatusConst 추출
                 .orElse(null); // 없을 경우 null 반환
     }
+
+    // =========================  프로젝트 목록 ==========================
+
+
 }

@@ -2,15 +2,19 @@ package com.fourformance.tts_vc_web.controller.workspace;
 
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
+import com.fourformance.tts_vc_web.dto.workspace.ProjectListDto;
 import com.fourformance.tts_vc_web.dto.workspace.RecentExportDto;
 import com.fourformance.tts_vc_web.dto.workspace.RecentProjectDto;
+import com.fourformance.tts_vc_web.service.common.ProjectService_team_aws;
 import com.fourformance.tts_vc_web.service.workspace.WorkspaceService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class WorkSpaceController {
 
     private final WorkspaceService workspaceService;
+    private final ProjectService_team_aws projectService;
 
     // 최근 5개의 프로젝트를 조회하는 api
     @Operation(summary = "최근 프로젝트 5개 조회", description = "해당 유저의 최근 프로젝트 5개를 조회합니다. <br>"
@@ -39,5 +44,15 @@ public class WorkSpaceController {
         Long memberId = 1L; // 임시 하드코딩 (세션 구현 후 교체)
         List<RecentExportDto> exports = workspaceService.getRecentExports(memberId);
         return DataResponseDto.of(exports);
+    }
+
+    @GetMapping("/api/v1/projects")
+    public ResponseEntity<List<ProjectListDto>> getProjects(
+            @RequestParam(name = "keyword", required = false) String keyword,
+            HttpSession session) {
+//        Long memberId = (Long) session.getAttribute("memberId");
+        Long memberId = 1L; // 개발단계 임시 하드코딩
+        List<ProjectListDto> projects = projectService.getProjects(memberId, keyword);
+        return ResponseEntity.ok(projects);
     }
 }
