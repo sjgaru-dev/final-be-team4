@@ -112,7 +112,7 @@ public class TTSViewController_team_multi {
         if(ttsDeleteDto.getDetailIds() != null) {  projectService.deleteTTSDetail(ttsDeleteDto.getDetailIds()); }
 
         // 선택된 오디오 삭제
-        if(ttsDeleteDto.getAudioIds() != null ) {  projectService.deleteTTSAudios(ttsDeleteDto.getAudioIds());}
+        if(ttsDeleteDto.getAudioIds() != null ) {  projectService.deleteAudioIds(ttsDeleteDto.getAudioIds());}
 
 
         return DataResponseDto.of("","선택된 모든 항목이 정상적으로 삭제되었습니다.");

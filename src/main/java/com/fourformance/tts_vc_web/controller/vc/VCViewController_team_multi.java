@@ -111,15 +111,19 @@ public class VCViewController_team_multi {
         return DataResponseDto.of("","VC 프로젝트가 정상적으로 삭제되었습니다.");
     }
 
+
     // VC 선택된 모든 항목 삭제
     @Operation(
             summary = "VC 선택된 항목 삭제",
             description = "VC 프로젝트에서 선택된 모든 항목을 삭제합니다." )
     @DeleteMapping("/delete/details")
-    public ResponseDto deleteVCDetail(@RequestBody List<Long> vcDetailsId) {
+    public ResponseDto deleteVCDetail(@RequestBody VCDeleteReqDto vcDeleteDto) {
 
-        // 프로젝트 삭제
-        projectService.deleteVCDetail(vcDetailsId);
+        // VC 선택된 항목 삭제
+        if(vcDeleteDto.getDetailIds() != null) {  projectService.deleteVCDetail(vcDeleteDto.getDetailIds()); }
+
+        // 선택된 오디오 삭제
+        if(vcDeleteDto.getAudioIds() != null ) {  projectService.deleteAudioIds(vcDeleteDto.getAudioIds());}
 
         // 작업 상태 : Terminated(종료) - 코드 추가 예정
 

@@ -108,9 +108,9 @@ public class ProjectService_team_multi {
         }
     }
 
-    // TTS 선택된 오디오 모든 항목 삭제
+    // TTS, VC 선택된 오디오 모든 항목 삭제
     @Transactional
-    public void deleteTTSAudios(List<Long> audioIds) {
+    public void deleteAudioIds(List<Long> audioIds) {
 
         // OutputAudioMeta 삭제 처리
         try {
@@ -226,6 +226,5 @@ public class ProjectService_team_multi {
             throw new BusinessException(ErrorCode.SERVER_ERROR);
         }
     }
-
 
 }
