@@ -74,7 +74,7 @@ public class WorkspaceService {
                 return "Concat";
             default:
                 throw new BusinessException(ErrorCode.UNSUPPORTED_PROJECT_TYPE); // 지원하지 않는 타입 처리
-        }
+        } //
     }
 
     /**
