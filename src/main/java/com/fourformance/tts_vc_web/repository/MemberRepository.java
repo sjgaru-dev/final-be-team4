@@ -8,7 +8,9 @@ import java.util.Optional;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
-    /**
+
+
+    /*
      * 이메일로 사용자 찾기
      * @param email 회원의 이메일
      * @return 이메일에 해당하는 회원(Optional)
@@ -29,4 +31,5 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
      * @return 이메일이 존재하면 true, 그렇지 않으면 false
      */
     boolean existsByEmail(String email);
+
 }
