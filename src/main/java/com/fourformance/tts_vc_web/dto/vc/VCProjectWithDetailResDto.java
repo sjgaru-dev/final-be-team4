@@ -9,9 +9,9 @@ import java.util.List;
 @Setter
 public class VCProjectWithDetailResDto {
     private VCProjectResDto vcProjectRes;
-    private List<VCDetailResDto> vcDetailsRes;
+    private List<VCDetailLoadDto> vcDetailsRes;
 
-    public VCProjectWithDetailResDto(VCProjectResDto vcProject, List<VCDetailResDto> vcDetails) {
+    public VCProjectWithDetailResDto(VCProjectResDto vcProject, List<VCDetailLoadDto> vcDetails) {
         this.vcProjectRes = vcProject;
         this.vcDetailsRes = vcDetails;
     }

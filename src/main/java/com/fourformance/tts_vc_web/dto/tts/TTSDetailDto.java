@@ -2,12 +2,14 @@ package com.fourformance.tts_vc_web.dto.tts;
 
 import com.fourformance.tts_vc_web.domain.entity.TTSDetail;
 import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
+import com.fourformance.tts_vc_web.dto.common.GeneratedAudioDto;
 import com.fourformance.tts_vc_web.dto.member.MemberTestDto;
 import lombok.*;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.config.Configuration;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -25,6 +27,7 @@ public class TTSDetailDto {
     private Boolean isDeleted; // 삭제 여부
     private Integer unitSequence; // 단위 시퀀스
     private Long UnitVoiceStyleId; // 스타일 이름 (optional, lazy load 대신 포함할 수 있는 필드)
+    private List<GeneratedAudioDto> genAudios;
 
 
     private static ModelMapper modelMapper = new ModelMapper();
