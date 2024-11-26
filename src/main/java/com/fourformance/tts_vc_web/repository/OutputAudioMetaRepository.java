@@ -17,6 +17,10 @@ public interface OutputAudioMetaRepository extends JpaRepository<OutputAudioMeta
     List<OutputAudioMeta> findTop5RecentOutputAudioMeta();
 
     // TTS Detail Id로 생성된 오디오들을 찾아 리스트로 반환 - 승민
+    @Query("SELECT o FROM OutputAudioMeta o WHERE o.ttsDetail.id = :ttsDetailIds AND o.isDeleted = false")
+    List<OutputAudioMeta> findByTtsDetailIdAndIsDeletedFalse(@Param("ttsDetailIds") Long ttsDetailIds);
+
+    // TTS Detail Id 리스트로 생성된 오디오들을 찾아 리스트로 반환 - 승민
     @Query("SELECT o FROM OutputAudioMeta o WHERE o.ttsDetail.id IN :ttsDetailIds AND o.isDeleted = false")
     List<OutputAudioMeta> findByTtsDetailAndIsDeletedFalse(@Param("ttsDetailIds") List<Long> ttsDetailIds);
 
