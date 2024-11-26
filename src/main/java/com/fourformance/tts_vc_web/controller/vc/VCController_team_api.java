@@ -1,14 +1,10 @@
 package com.fourformance.tts_vc_web.controller.vc;
 
-import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
-import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
-import com.fourformance.tts_vc_web.domain.entity.Member;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
 import com.fourformance.tts_vc_web.dto.vc.VCDetailResDto;
 import com.fourformance.tts_vc_web.service.vc.VCService_team_api;
-import com.fourformance.tts_vc_web.service.vc.VCService_team_api2;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,7 +25,7 @@ public class VCController_team_api {
 
     private static final Logger LOGGER = Logger.getLogger(VCController_team_api.class.getName());
     private final VCService_team_api vcService;
-    private final VCService_team_api2 new_vcService;
+
 
 
 
@@ -42,7 +38,7 @@ public class VCController_team_api {
             @RequestPart("vcSaveDto") VCSaveDto vcSaveDto,
             @RequestPart("files") List<MultipartFile> files) {
 
-            List<VCDetailResDto> response = new_vcService.processVCProject(vcSaveDto, files, memberId);
+            List<VCDetailResDto> response = vcService.processVCProject(vcSaveDto, files, memberId);
             return DataResponseDto.of(response);
 
     }
