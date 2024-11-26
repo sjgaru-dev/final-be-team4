@@ -314,6 +314,7 @@ public class S3Service {
     // ================================= 버킷 오디오 삭제 구현중 =============================================
 
 
+
     public void deleteAudioPerProject(Long projectId) {
 
         Project project = projectRepository.findById(projectId)
@@ -351,30 +352,23 @@ public class S3Service {
 
         if (project instanceof TTSProject) {
             // 프로젝트에서 OutputAudioMeta를 찾아서 OutputAudioMeta의 isDeleted업뎃 + 삭제시간업뎃
-            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByProjectId(projectId);
+            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByAnyProjectId(projectId);
             for(OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {
-                if(outputAudioMeta.getProjectType() == ProjectType.TTS) {
-                    // 업데이트 치고, 저장.
-                    outputAudioMeta.deleteOutputAudioMeta();
-                    outputAudioMetaRepository.save(outputAudioMeta);
-                }
+                outputAudioMeta.deleteOutputAudioMeta();
+                outputAudioMetaRepository.save(outputAudioMeta);
             }
         } else if (project instanceof VCProject) {
-            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByProjectId(projectId);
+            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByAnyProjectId(projectId);
             for(OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {
-                if(outputAudioMeta.getProjectType() == ProjectType.VC) {
-                    outputAudioMeta.deleteOutputAudioMeta();
-                    outputAudioMetaRepository.save(outputAudioMeta);
-                }
+                outputAudioMeta.deleteOutputAudioMeta();
+                outputAudioMetaRepository.save(outputAudioMeta);
             }
 
         } else if (project instanceof ConcatProject) {
-            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByProjectId(projectId);
+            List<OutputAudioMeta> outputAudioMetaByProjectId = outputAudioMetaRepository.findOutputAudioMetaByAnyProjectId(projectId);
             for(OutputAudioMeta outputAudioMeta : outputAudioMetaByProjectId) {
-                if(outputAudioMeta.getProjectType() == ProjectType.CONCAT) {
-                    outputAudioMeta.deleteOutputAudioMeta();
-                    outputAudioMetaRepository.save(outputAudioMeta);
-                }
+                outputAudioMeta.deleteOutputAudioMeta();
+                outputAudioMetaRepository.save(outputAudioMeta);
             }
         }
 

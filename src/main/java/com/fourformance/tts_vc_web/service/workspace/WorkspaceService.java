@@ -130,6 +130,7 @@ public class WorkspaceService {
         dto.setUpdatedAt(meta.getLastModifiedDate());
 
 
+
         if(meta.getTtsDetail() != null) {
             dto.setProjectName(meta.getTtsDetail().getTtsProject().getProjectName());
             dto.setScript(meta.getTtsDetail().getUnitScript());
@@ -163,7 +164,7 @@ public class WorkspaceService {
     }
     private APIUnitStatusConst getLatestApiStatus(List<APIStatus> apiStatuses) {
         return apiStatuses.stream()
-                .max(Comparator.comparing(APIStatus::getRequestAt)) // 가장 최신 APIStatus를 가져옴
+                .max(Comparator.comparing(APIStatus::getResponseAt)) // 가장 최신 APIStatus를 가져옴
                 .map(APIStatus::getApiUnitStatusConst) // APIUnitStatusConst 추출
                 .orElse(null); // 없을 경우 null 반환
     }

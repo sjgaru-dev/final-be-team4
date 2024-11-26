@@ -43,7 +43,7 @@ public interface OutputAudioMetaRepository extends JpaRepository<OutputAudioMeta
             WHERE (tp.member.id = :memberId AND tp IS NOT NULL)
                OR (vp.member.id = :memberId AND vp IS NOT NULL)
                OR (c.member.id = :memberId AND c IS NOT NULL)
-            ORDER BY o.createdAt DESC
+            ORDER BY o.createdAt DESC 
             """)
     List<OutputAudioMeta> findTop5ByMemberId(@Param("memberId") Long memberId);
 
@@ -70,16 +70,13 @@ public interface OutputAudioMetaRepository extends JpaRepository<OutputAudioMeta
 //    List<OutputAudioMeta> findAudioUrlsByConcatProject(@Param("concatProjectId") Long concatProjectId);
 
 
-    @Query("SELECT oam " +
-            "FROM OutputAudioMeta oam " +
-            "LEFT JOIN oam.ttsDetail td " +
-            "LEFT JOIN td.project p1 " +
-            "LEFT JOIN oam.vcDetail vd " +
-            "LEFT JOIN vd.project p2 " +
-            "LEFT JOIN oam.concatProject cp " +
-            "LEFT JOIN cp.project p3 " +
-            "WHERE p1.id = :projectId OR p2.id = :projectId OR p3.id = :projectId")
-    List<OutputAudioMeta> findOutputAudioMetaByProjectId(@Param("projectId") Long projectId);
+    @Query("SELECT oam FROM OutputAudioMeta oam " +
+            "LEFT JOIN oam.ttsDetail td ON td.ttsProject.id = :projectId " +
+            "LEFT JOIN oam.vcDetail vd ON vd.vcProject.id = :projectId " +
+            "LEFT JOIN oam.concatProject cp ON cp.id = :projectId " +
+            "WHERE td.ttsProject.id = :projectId OR vd.vcProject.id = :projectId OR cp.id = :projectId")
+    List<OutputAudioMeta> findOutputAudioMetaByAnyProjectId(@Param("projectId") Long projectId);
+
 
     @Query("SELECT oam FROM OutputAudioMeta oam " +
             "JOIN oam.ttsDetail td " +

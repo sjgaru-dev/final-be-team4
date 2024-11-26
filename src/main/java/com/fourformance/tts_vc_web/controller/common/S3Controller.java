@@ -126,4 +126,10 @@ public class S3Controller {
         s3Service.deleteMemberAudio(meberId, projectId);
         return ResponseEntity.ok("삭제성공");
     }
+//    @DeleteMapping("/{detailId}")
+//    public ResponseEntity<String> deleteDetailAudio(@RequestParam Long detailId, @RequestParam Long projectId) {
+//        s3Service.deleteDetail(detailId, projectId);
+//        return ResponseEntity.ok("디테일 삭제 성공! ");
+//    }
+
 }
