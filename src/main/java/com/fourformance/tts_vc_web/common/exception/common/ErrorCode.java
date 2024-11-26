@@ -109,7 +109,7 @@ public enum ErrorCode {
     INVALID_REQUEST_TEXT_DETAIL_DATA(5060, HttpStatus.BAD_REQUEST, "요청 데이터에 유효한 텍스트 디테일이 없습니다."),
     UNSUPPORTED_LANGUAGE_CODE(5061, HttpStatus.BAD_REQUEST, "지원되지 않는 언어 코드입니다."),
     INVALID_TEXT_FOR_EN(5062, HttpStatus.BAD_REQUEST, "언어 코드가 'en-US', 'en-GB', 'en-AU', 'en-IN'로 설정되었지만, 텍스트는 영어가 아닙니다."),
-
+    VC_DETAIL_NOT_FOUND(5063, HttpStatus.NOT_FOUND, "VC 디테일을 찾을 수 없습니다."),
     // 9999 : 테스트용 커스텀 예외
     TEST_ERROR(9999, HttpStatus.BAD_REQUEST, "테스트용 커스텀 예외입니다."),
 

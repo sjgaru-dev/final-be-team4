@@ -34,8 +34,13 @@ public class VCDetailDto {
 
     // VCDetail -> VCDetailDto 매핑 메서드
     public static VCDetailDto createVCDetailDto(VCDetail vcDetail) {
-        // ModelMapper를 사용하되 필요한 경우 수동 설정
-        VCDetailDto dto = modelMapper.map(vcDetail, VCDetailDto.class);
+        // 기본 ModelMapper를 활용한 변환만 수행
+        return modelMapper.map(vcDetail, VCDetailDto.class);
+    }
+
+    public static VCDetailDto createVCDetailDtoWithLocalFileName(VCDetail vcDetail) {
+        // 기본 변환 호출
+        VCDetailDto dto = createVCDetailDto(vcDetail);
 
         // MemberAudioMeta에서 localFileName 설정
         if (vcDetail.getMemberAudioMeta() != null) {
@@ -46,4 +51,5 @@ public class VCDetailDto {
 
         return dto;
     }
+
 }
