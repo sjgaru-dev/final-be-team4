@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation; // Swagger Operation 어노테�
 import io.swagger.v3.oas.annotations.tags.Tag; // Swagger Tag 어노테이션
 import io.swagger.v3.oas.annotations.responses.ApiResponse; // Swagger ApiResponse 어노테이션
 import io.swagger.v3.oas.annotations.responses.ApiResponses; // Swagger ApiResponses 어노테이션
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,8 +56,15 @@ public class TTSController_team_api {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류") // 서버 오류 응답
     })
     @PostMapping("/convert/batch") // HTTP POST 메서드와 엔드포인트 매핑
-    public ResponseDto convertBatchTexts(@RequestBody TTSSaveDto ttsSaveDto) { // 요청 데이터로 TTSSaveDto 사용
+    public ResponseDto convertBatchTexts(@RequestBody TTSSaveDto ttsSaveDto, HttpSession session) { // 요청 데이터로 TTSSaveDto 사용
         LOGGER.info("컨트롤러 메서드 호출됨: " + ttsSaveDto); // 요청 데이터 로깅
+
+        // 세션에 임의의 memberId 설정
+        if (session.getAttribute("memberId") == null) {
+            session.setAttribute("memberId", 1L);
+        }
+        // 임시 하드 코딩 -> 회원/로그인 개발 구현 후 수정 필요
+        Long memberId = (Long) session.getAttribute("memberId");
 
         // 유효성 검증: 요청 데이터가 null이거나 텍스트 세부사항 리스트가 비어있는 경우 예외 처리
         if (ttsSaveDto == null || ttsSaveDto.getTtsDetails() == null || ttsSaveDto.getTtsDetails().isEmpty()) {
@@ -66,7 +74,7 @@ public class TTSController_team_api {
 
         try {
             // 서비스 계층에서 TTS 변환 로직 실행
-            List<TTSResponseDetailDto> responseDetails = ttsService.convertAllTtsDetails(ttsSaveDto);
+            List<TTSResponseDetailDto> responseDetails = ttsService.convertAllTtsDetails(ttsSaveDto, memberId);
 
             // 변환 결과가 비어있으면 실패로 간주하고 예외 처리
             if (responseDetails.isEmpty()) {

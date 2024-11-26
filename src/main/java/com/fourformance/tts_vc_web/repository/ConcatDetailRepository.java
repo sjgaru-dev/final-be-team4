@@ -18,10 +18,15 @@ public interface ConcatDetailRepository extends JpaRepository<ConcatDetail, Long
     List<ConcatDetail> findByIdIn(List<Long> concatDetailIds);
 //    List<ConcatDetail> findByConcatDetailIds(@Param("concatDetailIdList") List<Long> concatDetailIdList);
 
-    // 특정 ConcatProject와 연관된 모든 ConcatDetail 조회
+    // 특정 ConcatProject와 연관된 모든 ConcatDetail 조회 - 의준
     List<ConcatDetail> findByConcatProjectId(Long projectId);
 
     // 특정 ConcatProject와 연관된 ConcatDetail의 script만 조회
     @Query("SELECT d.unitScript FROM ConcatDetail d WHERE d.concatProject.id = :projectId")
     List<String> findScriptsByConcatProjectId(@Param("projectId") Long projectId);
+
+    // concat 프로젝트 id로 모든 concat 유닛 조회 - 의준
+    @Query("SELECT c FROM ConcatDetail c WHERE c.concatProject.id = :projectId")
+    List<ConcatDetail> findAllByProjectId(@Param("projectId") Long projectId);
+
 }

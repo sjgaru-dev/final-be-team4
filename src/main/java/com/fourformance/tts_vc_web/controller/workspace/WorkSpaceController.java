@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,6 +33,7 @@ public class WorkSpaceController {
         List<RecentProjectDto> projects = workspaceService.getRecentProjects(memberId);
         return DataResponseDto.of(projects);
     }
+
     @GetMapping("/export-list")
     public ResponseDto getRecentExports(HttpSession session) {
         Long memberId = 1L; // 임시 하드코딩 (세션 구현 후 교체)

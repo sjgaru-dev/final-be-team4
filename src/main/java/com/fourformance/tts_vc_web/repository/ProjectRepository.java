@@ -17,11 +17,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     // 멤버 아이디가 같고 project의 컬럼이 isDeleted인지 확인.
     @Query("""
-    SELECT p
-    FROM Project p
-    WHERE p.member.id = :memberId AND p.isDeleted = false
-    ORDER BY p.createdAt DESC
-    """)
+            SELECT p
+            FROM Project p
+            WHERE p.member.id = :memberId AND p.isDeleted = false
+            ORDER BY p.createdAt DESC LIMIT 5
+            """)
     List<Project> findTop5ByMemberIdOrderByCreatedAtDesc(@Param("memberId") Long memberId);
 
 }

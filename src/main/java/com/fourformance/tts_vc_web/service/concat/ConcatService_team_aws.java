@@ -1,15 +1,17 @@
 package com.fourformance.tts_vc_web.service.concat;
 
+import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
-import com.fourformance.tts_vc_web.domain.entity.ConcatDetail;
-import com.fourformance.tts_vc_web.domain.entity.ConcatProject;
-import com.fourformance.tts_vc_web.domain.entity.Member;
+import com.fourformance.tts_vc_web.domain.entity.*;
 import com.fourformance.tts_vc_web.dto.concat.ConcatDetailDto;
 import com.fourformance.tts_vc_web.dto.concat.ConcatSaveDto;
+import com.fourformance.tts_vc_web.dto.vc.AudioFileDto;
 import com.fourformance.tts_vc_web.repository.ConcatDetailRepository;
 import com.fourformance.tts_vc_web.repository.ConcatProjectRepository;
+import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
+import com.fourformance.tts_vc_web.service.common.S3Service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional
@@ -25,102 +28,89 @@ public class ConcatService_team_aws {
 
     private final ConcatProjectRepository concatProjectRepository;
     private final ConcatDetailRepository concatDetailRepository;
+    private final MemberAudioMetaRepository memberAudioMetaRepository;
     private final MemberRepository memberRepository;
+    private final S3Service s3Service;
 
-    // Concat 프로젝트 생성
-    @Transactional
-    public Long createNewProject(ConcatSaveDto dto, Long memberId) {
+    // concat 프로젝트 저장하는 메서드
+    public Long saveConcatProject(ConcatSaveDto dto, List<MultipartFile> localFiles, Member member) {
+        // 1. ConcatProject 생성/업데이트
+        ConcatProject concatProject = dto.getProjectId() == null
+                ? createNewConcatProject(dto, member)
+                : updateExistingConcatProject(dto);
 
-        validateSaveDto(dto);
-
-        // 멤버 id로 멤버 객체 찾기
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-
-        // 프로젝트 생성
-        ConcatProject concatProject = ConcatProject.createConcatProject(
-                member, // 멤버 ID를 주입
-                dto.getProjectName()
-        );
-        concatProject = concatProjectRepository.save(concatProject);
-
-        // 디테일 생성
-        if (dto.getConcatDetails() != null) {
-            for (ConcatDetailDto detailDto : dto.getConcatDetails()) {
-                createConcatDetail(detailDto, concatProject);
-            }
-        }
+        // 2. Concat Detail(==Concat src) 생성&저장
+        processFiles(dto.getConcatDetails(), localFiles, concatProject);
 
         return concatProject.getId();
+    }
+
+    // Concat 프로젝트 생성
+    private ConcatProject createNewConcatProject(ConcatSaveDto dto, Member member) {
+
+        ConcatProject concatProject = ConcatProject.createConcatProject(member, dto.getProjectName());
+        concatProjectRepository.save(concatProject);
+        return concatProject;
     }
 
     // Concat 프로젝트 업데이트
-    @Transactional
-    public Long updateProject(ConcatSaveDto dto, Long memberId) {
-
-        validateSaveDto(dto);
-
+    private ConcatProject updateExistingConcatProject(ConcatSaveDto dto){
         ConcatProject concatProject = concatProjectRepository.findById(dto.getProjectId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT));
 
-        // 소유권 확인
-        if (!concatProject.getMember().getId().equals(memberId)) {
-            throw new BusinessException(ErrorCode.MEMBER_PROJECT_NOT_MATCH);
-        }
+        concatProject.updateConcatProject(dto.getProjectName(), dto.getGlobalFrontSilenceLength(), dto.getGlobalTotalSilenceLength());
 
-        // 프로젝트 업데이트
-        concatProject.updateConcatProject(
-                dto.getProjectName(),
-                dto.getGlobalFrontSilenceLength(),
-                dto.getGlobalTotalSilenceLength()
-        );
-
-        // 디테일 업데이트
-        if (dto.getConcatDetails() != null) {
-            for (ConcatDetailDto detailDto : dto.getConcatDetails()) {
-                processConcatDetail(detailDto, concatProject);
-            }
-        }
-
-        return concatProject.getId();
+        return concatProject;
     }
 
-    // 디테일 생성
-    private void createConcatDetail(ConcatDetailDto detailDto, ConcatProject concatProject) {
-        ConcatDetail concatDetail = ConcatDetail.createConcatDetail(
-                concatProject,
-                detailDto.getAudioSeq(),
-                detailDto.isChecked(),
-                detailDto.getUnitScript(),
-                detailDto.getEndSilence(),
-                null // 이거 나중에 멤버 오디오 메타 추가해야함 + 오디오 메타에 올려야 함
-        );
-        concatDetailRepository.save(concatDetail);
-    }
+    // detail 저장하는 메서드
+    /**
+     * MultipartFile이 들어오면 로컬 파일이므로 s3에 저장하고 db에 저장해야함
+     *
+     * @param fileDtos
+     * @param files
+     * @param concatProject
+     */
+    private void processFiles(List<ConcatDetailDto> fileDtos, List<MultipartFile> files, ConcatProject concatProject) {
 
-    // 디테일 업데이트
-    private void processConcatDetail(ConcatDetailDto detailDto, ConcatProject concatProject) {
-        if (detailDto.getId() != null) {
-            ConcatDetail concatDetail = concatDetailRepository.findById(detailDto.getId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL));
+        if (fileDtos == null || fileDtos.isEmpty()) { // 업로드 된 파일이 없을 때
+            return;
+        }
 
-            // 디테일이 해당 프로젝트의 디테일인지 검증
-            if (!concatDetail.getConcatProject().getId().equals(concatProject.getId())) {
-                throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT_DETAIL);
+        for (ConcatDetailDto fileDto : fileDtos) {
+            MemberAudioMeta audioMeta = null;
+
+            if (fileDto.getLocalFileName() != null) {
+            // 로컬 파일 처리
+            MultipartFile localFile = findMultipartFileByName(files, fileDto.getLocalFileName());
+            String uploadedUrl = s3Service.uploadAndSaveMemberFile(
+                    localFile, concatProject.getMember().getId(), concatProject.getId(), AudioType.CONCAT); // voiceId를 받아오는 api 호출해서 null을 반환값으로 채우면 될 듯
+
+            audioMeta = memberAudioMetaRepository.findFirstByAudioUrl(uploadedUrl)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXISTS_AUDIO));
             }
 
-            concatDetail.updateDetails(
-                    detailDto.getAudioSeq(),
-                    detailDto.isChecked(),
-                    detailDto.getUnitScript(),
-                    detailDto.getEndSilence(),
-                    false
-            );
+            if (audioMeta == null) {
+                throw new BusinessException(ErrorCode.INVALID_PROJECT_DATA);
+            }
+
+
+            //파일은 concatDetail에 저장
+            ConcatDetail concatDetail = ConcatDetail.createConcatDetail(concatProject, fileDto.getAudioSeq(), fileDto.getIsChecked(),fileDto.getUnitScript(), fileDto.getEndSilence(), audioMeta);
+
+            concatDetail.updateDetails(fileDto.getAudioSeq(), fileDto.getIsChecked(),fileDto.getUnitScript(),fileDto.getEndSilence());
+
             concatDetailRepository.save(concatDetail);
-        } else {
-            createConcatDetail(detailDto, concatProject);
+
         }
     }
+    private MultipartFile findMultipartFileByName(List<MultipartFile> files, String localFileName) {
+        return files.stream()
+                .filter(file -> file.getOriginalFilename().equals(localFileName))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.FILE_PROCESSING_ERROR));
+    }
+
 
     // DTO 유효성 검증
     private void validateSaveDto(ConcatSaveDto dto) {
@@ -159,4 +149,5 @@ public class ConcatService_team_aws {
             }
         }
     }
+
 }

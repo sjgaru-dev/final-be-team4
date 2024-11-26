@@ -29,6 +29,9 @@ public enum ErrorCode {
             "trgVoiceId가 설정된 경우, audioFiles에 VC_TRG 파일이 포함될 수 없습니다."),
     MISSING_TRG_FILE(1013, HttpStatus.BAD_REQUEST, "VC_TRG 파일은 반드시 하나여야 합니다."),
     S3_DOWNLOAD_FAILED(1014, HttpStatus.BAD_REQUEST, "VC_TRG 파일은 반드시 하나여야 합니다."),
+    DETAIL_MISMATCH(1015, HttpStatus.BAD_REQUEST, "유닛 수와 파일 수가 일치하지 않습니다."),
+    UNSUPPORTED_AUDIO_TYPE(1016, HttpStatus.BAD_REQUEST, "지원하지 않는 형식의 오디오 타입입니다."),
+    INVALID_FILE_COUNT(1017, HttpStatus.BAD_REQUEST, "VC_TRG는 단일 파일만 허용합니다."),
 
     // 3000번대 코드 : DB 관련
     NOT_EXISTS_PROJECT(3000, HttpStatus.BAD_REQUEST, "해당 프로젝트를 찾을 수 없습니다."),
@@ -63,10 +66,8 @@ public enum ErrorCode {
     TTS_PROJECT_NOT_FOUND(5020, HttpStatus.INTERNAL_SERVER_ERROR, "TTS Project를 찾을 수 없습니다."),
     FILE_NOT_FOUND(5021, HttpStatus.INTERNAL_SERVER_ERROR, "FILE를 찾을 수 없습니다."),
 
-    MEMBER_AUDIO_META_NOT_FOUND(5022, HttpStatus.INTERNAL_SERVER_ERROR,"Member audio meta가 존재하지 않습니다."),
-    NO_FILES_TO_MERGE(5023, HttpStatus.INTERNAL_SERVER_ERROR,"병합할 파일이 없습니다."),
-
-
+    MEMBER_AUDIO_META_NOT_FOUND(5022, HttpStatus.INTERNAL_SERVER_ERROR, "Member audio meta가 존재하지 않습니다."),
+    NO_FILES_TO_MERGE(5023, HttpStatus.INTERNAL_SERVER_ERROR, "병합할 파일이 없습니다."),
 
 
     // 9999 : 테스트용 커스텀 예외

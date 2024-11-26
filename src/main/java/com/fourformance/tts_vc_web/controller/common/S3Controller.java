@@ -96,11 +96,9 @@ public class S3Controller {
             "/concat/upload-local-to-bucket"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseDto uploadFiles(
             @RequestParam("files") List<MultipartFile> files, @RequestParam("memberId") Long memberId,
-            @RequestParam("projectId") Long projectId, @RequestParam("audioType") String audioType,
-            @RequestParam("voiceId") String voiceId) {
+            @RequestParam("projectId") Long projectId, @RequestParam("audioType") String audioType) {
         AudioType enumAudioType = AudioType.valueOf(audioType);
-        List<String> uploadedUrls = s3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType,
-                voiceId);
+        List<String> uploadedUrls = s3Service.uploadAndSaveMemberFile(files, memberId, projectId, enumAudioType);
         return DataResponseDto.of(uploadedUrls);
     }
 
@@ -121,15 +119,9 @@ public class S3Controller {
         return ResponseEntity.ok("삭제 성공하였습니다.");
     }
 
-    @DeleteMapping("/deleteMemberAudioMeta")
-    public ResponseEntity<String> deleteMemberAudio(@RequestParam Long meberId, @RequestParam Long projectId) {
-        s3Service.deleteMemberAudio(meberId, projectId);
-        return ResponseEntity.ok("삭제성공");
-    }
-//    @DeleteMapping("/{detailId}")
-//    public ResponseEntity<String> deleteDetailAudio(@RequestParam Long detailId, @RequestParam Long projectId) {
-//        s3Service.deleteDetail(detailId, projectId);
-//        return ResponseEntity.ok("디테일 삭제 성공! ");
+//    @DeleteMapping("/deleteMemberAudioMeta")
+//    public ResponseEntity<String> deleteMemberAudio(@RequestParam Long meberId, @RequestParam Long projectId) {
+//        s3Service.deleteMemberAudio(meberId, projectId);
+//        return ResponseEntity.ok("삭제성공");
 //    }
-
 }

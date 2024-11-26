@@ -270,8 +270,7 @@ public class ConcatService_team_api {
                 detailDto.getAudioSeq(),
                 detailDto.isChecked(),
                 detailDto.getUnitScript(),
-                detailDto.getEndSilence(),
-                false
+                detailDto.getEndSilence()
         );
     }
 
@@ -284,8 +283,7 @@ public class ConcatService_team_api {
                 Collections.singletonList(detailDto.getSourceAudio()),
                 concatProject.getMember().getId(),
                 concatProject.getId(),
-                AudioType.CONCAT,
-                null
+                AudioType.CONCAT
         );
 
         // 업로드된 첫 번째 파일의 MemberAudioMeta를 반환
