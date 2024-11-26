@@ -3,6 +3,7 @@ package com.fourformance.tts_vc_web.controller.tts;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.Member;
+import com.fourformance.tts_vc_web.dto.common.DeleteReqDto;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.dto.tts.*;
@@ -106,7 +107,7 @@ public class TTSViewController_team_multi {
             summary = "TTS 선택된 항목 삭제",
             description = "TTS 프로젝트에서 선택된 모든 항목을 삭제합니다." )
     @DeleteMapping("/delete/details")
-    public ResponseDto deleteTTSDetails(@RequestBody TTSDeleteReqDto ttsDeleteDto) {
+    public ResponseDto deleteTTSDetails(@RequestBody DeleteReqDto ttsDeleteDto) {
 
         // TTS 선택된 항목 삭제
         if(ttsDeleteDto.getDetailIds() != null) {  projectService.deleteTTSDetail(ttsDeleteDto.getDetailIds()); }

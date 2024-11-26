@@ -4,6 +4,7 @@ import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.*;
 import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
+import com.fourformance.tts_vc_web.dto.common.GeneratedAudioDto;
 import com.fourformance.tts_vc_web.dto.tts.*;
 import com.fourformance.tts_vc_web.repository.*;
 import lombok.RequiredArgsConstructor;

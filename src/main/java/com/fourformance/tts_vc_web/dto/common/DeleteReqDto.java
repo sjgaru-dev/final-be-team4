@@ -1,4 +1,4 @@
-package com.fourformance.tts_vc_web.dto.vc;
+package com.fourformance.tts_vc_web.dto.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class VCDeleteReqDto {
+public class DeleteReqDto {
     private Long projectId;
     private List<Long> detailIds;
     private List<Long> audioIds;

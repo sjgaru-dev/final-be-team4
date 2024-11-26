@@ -1,5 +1,6 @@
 package com.fourformance.tts_vc_web.dto.vc;
 
+import com.fourformance.tts_vc_web.dto.common.GeneratedAudioDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

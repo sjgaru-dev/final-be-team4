@@ -5,6 +5,7 @@ import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.*;
+import com.fourformance.tts_vc_web.dto.common.GeneratedAudioDto;
 import com.fourformance.tts_vc_web.dto.vc.*;
 import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta;

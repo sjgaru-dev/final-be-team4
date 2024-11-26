@@ -3,6 +3,7 @@ package com.fourformance.tts_vc_web.controller.vc;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.Member;
+import com.fourformance.tts_vc_web.dto.common.DeleteReqDto;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.dto.vc.VCDetailResDto;
@@ -117,7 +118,7 @@ public class VCViewController_team_multi {
             summary = "VC 선택된 항목 삭제",
             description = "VC 프로젝트에서 선택된 모든 항목을 삭제합니다." )
     @DeleteMapping("/delete/details")
-    public ResponseDto deleteVCDetail(@RequestBody VCDeleteReqDto vcDeleteDto) {
+    public ResponseDto deleteVCDetail(@RequestBody DeleteReqDto vcDeleteDto) {
 
         // VC 선택된 항목 삭제
         if(vcDeleteDto.getDetailIds() != null) {  projectService.deleteVCDetail(vcDeleteDto.getDetailIds()); }

@@ -1,4 +1,4 @@
-package com.fourformance.tts_vc_web.dto.tts;
+package com.fourformance.tts_vc_web.dto.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
