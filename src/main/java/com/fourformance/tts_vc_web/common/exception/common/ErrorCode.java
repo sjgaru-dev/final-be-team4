@@ -55,7 +55,6 @@ public enum ErrorCode {
     TTS_CONVERSION_FAILED(5009, HttpStatus.INTERNAL_SERVER_ERROR, "TTS 변환 중 오류가 발생했습니다."),
     AUDIO_FILE_SAVE_ERROR(5010, HttpStatus.INTERNAL_SERVER_ERROR, "오디오 파일 저장 중 오류가 발생했습니다."),
     INVALID_TEXT_FOR_KO_KR(5011, HttpStatus.BAD_REQUEST, "언어 코드가 'ko-KR'로 설정되었지만, 텍스트는 한국어가 아닙니다."),
-
     INVALID_TEXT_FOR_ZH_CN(5012, HttpStatus.BAD_REQUEST, "언어 코드가 'zh-CN'로 설정되었지만, 텍스트는 중국어(간체)가 아닙니다."),
     INVALID_TEXT_FOR_CMN_TW(5013, HttpStatus.BAD_REQUEST, "언어 코드가 'cmn-TW'로 설정되었지만, 텍스트는 중국어(번체)가 아닙니다."),
     INVALID_TEXT_FOR_YUE_HK(5014, HttpStatus.BAD_REQUEST, "언어 코드가 'yue-HK'로 설정되었지만, 텍스트는 광둥어가 아닙니다."),
@@ -109,7 +108,7 @@ public enum ErrorCode {
     INVALID_REQUEST_TEXT_DETAIL_DATA(5060, HttpStatus.BAD_REQUEST, "요청 데이터에 유효한 텍스트 디테일이 없습니다."),
     UNSUPPORTED_LANGUAGE_CODE(5061, HttpStatus.BAD_REQUEST, "지원되지 않는 언어 코드입니다."),
     INVALID_TEXT_FOR_EN(5062, HttpStatus.BAD_REQUEST, "언어 코드가 'en-US', 'en-GB', 'en-AU', 'en-IN'로 설정되었지만, 텍스트는 영어가 아닙니다."),
-
+    VC_DETAIL_NOT_FOUND(5063, HttpStatus.NOT_FOUND, "VC 디테일을 찾을 수 없습니다."),
     // 9999 : 테스트용 커스텀 예외
     TEST_ERROR(9999, HttpStatus.BAD_REQUEST, "테스트용 커스텀 예외입니다."),
 
