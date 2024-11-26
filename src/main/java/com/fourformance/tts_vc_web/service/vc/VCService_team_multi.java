@@ -75,7 +75,7 @@ public class VCService_team_multi {
 
     // VC 프로젝트 상세 값 조회하기
     @Transactional(readOnly = true)
-    public List<VCDetailResDto> getVCDetailsDto(Long projectId) {
+    public List<VCDetailLoadDto> getVCDetailsDto(Long projectId) {
         List<VCDetail> vcDetails = vcDetailRepository.findByVcProject_Id(projectId);
 
         // isDeleted가 false인 경우에만 VCDetailResDto 목록으로 변환
@@ -86,7 +86,7 @@ public class VCService_team_multi {
     }
 
     // VCDetail 엔티티를 VCDetailResDto로 변환하는 메서드
-    private VCDetailResDto convertToVCDetailResDto(VCDetail vcDetail) {
+    private VCDetailLoadDto convertToVCDetailResDto(VCDetail vcDetail) {
 
         // src 오디오 url 추가하기
         List<GeneratedAudioDto> audioUrls = outputAudioMetaRepository.findAudioUrlsByVcDetail(vcDetail.getId())
@@ -96,7 +96,7 @@ public class VCService_team_multi {
                 .collect(Collectors.toList()); // Stream 결과를 List<GeneratedAudioDto>로 변환
 
 
-        VCDetailResDto resDto = new VCDetailResDto();
+        VCDetailLoadDto resDto = new VCDetailLoadDto();
                        resDto.setId(vcDetail.getId());
                        resDto.setProjectId(vcDetail.getVcProject().getId());
                        resDto.setIsChecked(vcDetail.getIsChecked());

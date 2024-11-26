@@ -6,7 +6,6 @@ import com.fourformance.tts_vc_web.domain.entity.Member;
 import com.fourformance.tts_vc_web.dto.common.DeleteReqDto;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
-import com.fourformance.tts_vc_web.dto.vc.VCDetailResDto;
 import com.fourformance.tts_vc_web.dto.vc.VCProjectResDto;
 import com.fourformance.tts_vc_web.dto.vc.VCProjectWithDetailResDto;
 import com.fourformance.tts_vc_web.dto.vc.VCSaveDto;
@@ -45,7 +44,7 @@ public class VCViewController_team_multi {
 
         // VCProjectDTO와 VCDetailDTO 리스트 가져오기
         VCProjectResDto vcProjectDTO = vcService.getVCProjectDto(projectId);
-        List<VCDetailResDto> vcDetailsDTO = vcService.getVCDetailsDto(projectId);
+        List<VCDetailLoadDto> vcDetailsDTO = vcService.getVCDetailsDto(projectId);
 
         if (vcProjectDTO == null) {
             throw new BusinessException(ErrorCode.NOT_EXISTS_PROJECT);
