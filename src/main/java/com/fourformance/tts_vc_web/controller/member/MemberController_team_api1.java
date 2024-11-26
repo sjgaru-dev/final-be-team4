@@ -1,6 +1,10 @@
 package com.fourformance.tts_vc_web.controller.member;
 
+import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.dto.member.*;
+import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
+import com.fourformance.tts_vc_web.dto.response.ResponseDto;
 import com.fourformance.tts_vc_web.service.member.MemberService_team_api1;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -20,18 +24,18 @@ public class MemberController_team_api1 {
      * 세션을 생성하여 로그인 상태를 유지합니다.
      */
     @PostMapping("/login")
-    public ResponseEntity<MemberLoginResponseDto> login(
+    public ResponseDto login(
             @RequestBody MemberLoginRequestDto requestDto,
             HttpSession session) {
 
         // 로그인 처리
-        MemberLoginResponseDto responseDto = memberService.login(requestDto);
+        MemberLoginResponseDto memberLoginResponseDto = memberService.login(requestDto);
 
         // 세션에 로그인 정보 저장
-        session.setAttribute("memberId", responseDto.getId());
-        session.setAttribute("email", responseDto.getEmail());
+        session.setAttribute("memberId", memberLoginResponseDto.getId());
+        session.setAttribute("email", memberLoginResponseDto.getEmail());
 
-        return ResponseEntity.ok(responseDto);
+        return DataResponseDto.of(memberLoginResponseDto);
     }
 
     /**
@@ -39,10 +43,10 @@ public class MemberController_team_api1 {
      * 세션을 무효화하여 로그아웃 처리합니다.
      */
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpSession session) {
+    public ResponseDto logout(HttpSession session) {
         // 세션 무효화
         session.invalidate();
-        return ResponseEntity.ok("로그아웃 성공");
+        return DataResponseDto.of("로그아웃 성공");
     }
 
 
@@ -51,7 +55,7 @@ public class MemberController_team_api1 {
      * 세션에서 이메일을 얻고, 비밀번호를 확인하여 회원 정보를 반환합니다.
      */
     @PostMapping("/info")
-    public ResponseEntity<MemberUpdateResponseDto> getMemberInfo(
+    public ResponseDto getMemberInfo(
             @RequestBody MemberInfoRequestDto requestDto,
             HttpSession session) {
 
@@ -59,12 +63,12 @@ public class MemberController_team_api1 {
         String email = (String) session.getAttribute("email");
 
         if (email == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); // 세션 없음
+            throw new BusinessException(ErrorCode.UNAUTHORIZED); // 세션 없음
         }
 
         // 비밀번호 확인 후 회원 정보 조회
-        MemberUpdateResponseDto responseDto = memberService.getMemberInfo(email, requestDto.getPwd());
-        return ResponseEntity.ok(responseDto);
+        MemberUpdateResponseDto memberUpdateResponseDto = memberService.getMemberInfo(email, requestDto.getPwd());
+        return DataResponseDto.of(memberUpdateResponseDto);
     }
 
     /**

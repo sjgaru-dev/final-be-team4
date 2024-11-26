@@ -42,6 +42,7 @@ public enum ErrorCode {
     SERVER_ERROR(4000, HttpStatus.BAD_REQUEST, "서버 내부 오류가 발생했습니다."),
     INVALID_REQUEST_DATA(4001, HttpStatus.BAD_REQUEST, "유효하지 않은 요청 데이터입니다."),
     INVALID_PROJECT_ID(40001, HttpStatus.BAD_REQUEST, "유효하지 않은 프로젝트 ID입니다."),
+    UNAUTHORIZED(4010, HttpStatus.UNAUTHORIZED, "사용자 인증이 필요합니다."),
 
     // 5000번대 코드 : 서버 내부 오류 관련
     INTERNAL_SERVER_ERROR(5001, HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
