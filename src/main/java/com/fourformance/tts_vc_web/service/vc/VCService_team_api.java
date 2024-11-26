@@ -109,21 +109,29 @@ public class VCService_team_api {
             throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
         }
         try {
-            // 하드코딩된 Voice ID 사용
-            String voiceId = "U179o4j7jr5TWWnU3DJy"; // 테스트용 하드코딩
-            LOGGER.info("[Voice ID 하드코딩 적용] Voice ID: " + voiceId);
+            // Step 1: Target 파일 URL 확인
+            if (memberAudio == null || memberAudio.getAudioUrl() == null) {
+                throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
+            }
+            String targetFileUrl = memberAudio.getAudioUrl();
+            LOGGER.info("[타겟 오디오 업로드 시작] URL: " + targetFileUrl);
 
-            // Voice ID를 MemberAudioMeta에 업데이트
+            // Step 2: Voice ID 생성
+            String voiceId = elevenLabsClient.uploadVoice(targetFileUrl);
+            LOGGER.info("[Voice ID 생성 완료] Voice ID: " + voiceId);
+
+            // Step 3: Voice ID 저장
             memberAudio.update(voiceId);
             memberAudioMetaRepository.save(memberAudio);
             LOGGER.info("[MemberAudioMeta 업데이트 완료] Voice ID: " + voiceId);
 
             return voiceId;
-        } catch (Exception e) {
-            LOGGER.severe("[타겟 파일 처리 실패] " + e.getMessage());
+        } catch (IOException e) {
+            LOGGER.severe("[Voice ID 생성 실패] " + e.getMessage());
             throw new BusinessException(ErrorCode.FILE_PROCESSING_ERROR);
         }
     }
+
 
     /**
      * 소스 파일 처리 및 변환
