@@ -5,6 +5,7 @@ import com.fourformance.tts_vc_web.common.constant.AudioType;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.*;
+import com.fourformance.tts_vc_web.dto.common.GeneratedAudioDto;
 import com.fourformance.tts_vc_web.dto.vc.*;
 import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta;
@@ -74,7 +75,7 @@ public class VCService_team_multi {
 
     // VC 프로젝트 상세 값 조회하기
     @Transactional(readOnly = true)
-    public List<VCDetailResDto> getVCDetailsDto(Long projectId) {
+    public List<VCDetailLoadDto> getVCDetailsDto(Long projectId) {
         List<VCDetail> vcDetails = vcDetailRepository.findByVcProject_Id(projectId);
 
         // isDeleted가 false인 경우에만 VCDetailResDto 목록으로 변환
@@ -85,16 +86,17 @@ public class VCService_team_multi {
     }
 
     // VCDetail 엔티티를 VCDetailResDto로 변환하는 메서드
-    private VCDetailResDto convertToVCDetailResDto(VCDetail vcDetail) {
+    private VCDetailLoadDto convertToVCDetailResDto(VCDetail vcDetail) {
 
         // src 오디오 url 추가하기
-        List<String> audioUrls = outputAudioMetaRepository.findAudioUrlsByVcDetail(vcDetail.getId())
+        List<GeneratedAudioDto> audioUrls = outputAudioMetaRepository.findAudioUrlsByVcDetail(vcDetail.getId())
                 .stream() // List<OutputAudioMeta>를 Stream으로 변환
                 .filter(meta -> meta.getAudioUrl() != null) // audioUrl이 null이 아닌 경우만 필터링
-                .map(OutputAudioMeta::getAudioUrl) // OutputAudioMeta의 audioUrl만 추출
-                .collect(Collectors.toList()); // Stream 결과를 List<String>으로 변환
+                .map(meta -> new GeneratedAudioDto(meta.getId(), meta.getAudioUrl())) // OutputAudioMeta의 id와 audioUrl을 GeneratedAudioDto로 매핑
+                .collect(Collectors.toList()); // Stream 결과를 List<GeneratedAudioDto>로 변환
 
-        VCDetailResDto resDto = new VCDetailResDto();
+
+        VCDetailLoadDto resDto = new VCDetailLoadDto();
                        resDto.setId(vcDetail.getId());
                        resDto.setProjectId(vcDetail.getVcProject().getId());
                        resDto.setIsChecked(vcDetail.getIsChecked());

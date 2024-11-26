@@ -4,20 +4,16 @@ import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.*;
 import com.fourformance.tts_vc_web.domain.entity.VoiceStyle;
-import com.fourformance.tts_vc_web.dto.tts.TTSDetailDto;
-import com.fourformance.tts_vc_web.dto.tts.TTSProjectDto;
-import com.fourformance.tts_vc_web.dto.tts.TTSProjectWithDetailsDto;
-import com.fourformance.tts_vc_web.dto.tts.TTSSaveDto;
-import com.fourformance.tts_vc_web.repository.MemberRepository;
-import com.fourformance.tts_vc_web.repository.TTSDetailRepository;
-import com.fourformance.tts_vc_web.repository.TTSProjectRepository;
-import com.fourformance.tts_vc_web.repository.VoiceStyleRepository;
+import com.fourformance.tts_vc_web.dto.common.GeneratedAudioDto;
+import com.fourformance.tts_vc_web.dto.tts.*;
+import com.fourformance.tts_vc_web.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,6 +31,7 @@ public class TTSService_team_multi {
     private final TTSProjectRepository ttsProjectRepository;
     private final TTSDetailRepository ttsDetailRepository;
     private final VoiceStyleRepository voiceStyleRepository;
+    private final OutputAudioMetaRepository outputAudioMetaRepository;
     private final MemberRepository memberRepository;
 
     // TTS 프로젝트 값 조회하기
@@ -53,10 +50,25 @@ public class TTSService_team_multi {
     public List<TTSDetailDto> getTTSDetailsDto(Long projectId) {
         List<TTSDetail> ttsDetails = ttsDetailRepository.findByTtsProject_Id(projectId);
 
+        // 생성된 오디오 추가하기
+        
         // isDeleted가 false인 경우에만 TTSDetailDTO 목록으로 변환
         return ttsDetails.stream()
-                .filter(detail -> !detail.getIsDeleted()) // isDeleted가 false인 경우만 필터링
-                .map(TTSDetailDto::createTTSDetailDto) // ModelMapper를 통해 TTSDetailDto로 변환
+                .filter(detail -> !detail.getIsDeleted()) // 삭제되지 않은 항목만 필터링
+                .map(detail -> {
+                    // OutputAudioMeta를 ttsDetailId로 조회
+                    List<OutputAudioMeta> outputAudioMetas = outputAudioMetaRepository.findByTtsDetailIdAndIsDeletedFalse(detail.getId());
+
+                    // OutputAudioMeta를 GeneratedAudioDto로 변환
+                    List<GeneratedAudioDto> generatedAudioDtos = outputAudioMetas.stream()
+                            .map(meta -> new GeneratedAudioDto(meta.getId(), meta.getAudioUrl()))
+                            .toList();
+
+                    // TTSDetailDto 생성 및 GeneratedAudioDto 추가
+                    TTSDetailDto ttsDetailDto = TTSDetailDto.createTTSDetailDto(detail);
+                    ttsDetailDto.setGenAudios(generatedAudioDtos);
+                    return ttsDetailDto;
+                })
                 .collect(Collectors.toList());
     }
 
