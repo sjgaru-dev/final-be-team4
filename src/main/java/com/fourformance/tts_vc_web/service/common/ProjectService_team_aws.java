@@ -6,6 +6,7 @@ import com.fourformance.tts_vc_web.domain.entity.ConcatDetail;
 import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.Project;
+import com.fourformance.tts_vc_web.dto.workspace.ProjectListDto;
 import com.fourformance.tts_vc_web.repository.ConcatDetailRepository;
 import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
@@ -99,6 +100,10 @@ public class ProjectService_team_aws {
             throw new BusinessException(ErrorCode.SERVER_ERROR);
         }
 
+    }
+
+    public List<ProjectListDto> getProjects(Long memberId, String keyword) {
+        return projectRepository.findProjectsBySearchCriteria(memberId, keyword);
     }
 
 
