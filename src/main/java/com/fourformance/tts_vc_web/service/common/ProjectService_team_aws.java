@@ -101,5 +101,22 @@ public class ProjectService_team_aws {
 
     }
 
+    // Concat 선택된 오디오 모든 항목 삭제
+    @Transactional
+    public void deleteAudioIds(List<Long> audioIds) {
+
+        // OutputAudioMeta 삭제 처리
+        try {
+            List<OutputAudioMeta> outputAudio = outputAudioMetaRepository.findByIds(audioIds);
+
+            for (OutputAudioMeta audio : outputAudio) {
+                audio.deleteOutputAudioMeta();
+                outputAudioMetaRepository.save(audio);
+            }
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
+    }
+
 
 }

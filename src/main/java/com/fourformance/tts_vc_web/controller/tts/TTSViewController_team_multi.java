@@ -3,12 +3,10 @@ package com.fourformance.tts_vc_web.controller.tts;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.Member;
+import com.fourformance.tts_vc_web.dto.common.DeleteReqDto;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
-import com.fourformance.tts_vc_web.dto.tts.TTSDetailDto;
-import com.fourformance.tts_vc_web.dto.tts.TTSProjectDto;
-import com.fourformance.tts_vc_web.dto.tts.TTSProjectWithDetailsDto;
-import com.fourformance.tts_vc_web.dto.tts.TTSSaveDto;
+import com.fourformance.tts_vc_web.dto.tts.*;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
 import com.fourformance.tts_vc_web.service.common.ProjectService_team_multi;
 import com.fourformance.tts_vc_web.service.tts.TTSService_team_multi;
@@ -109,10 +107,14 @@ public class TTSViewController_team_multi {
             summary = "TTS 선택된 항목 삭제",
             description = "TTS 프로젝트에서 선택된 모든 항목을 삭제합니다." )
     @DeleteMapping("/delete/details")
-    public ResponseDto deleteTTSDetail(@RequestBody List<Long> ttsDetailsId) {
+    public ResponseDto deleteTTSDetails(@RequestBody DeleteReqDto ttsDeleteDto) {
 
-        // 선택 항목 삭제
-        projectService.deleteTTSDetail(ttsDetailsId);
+        // TTS 선택된 항목 삭제
+        if(ttsDeleteDto.getDetailIds() != null) {  projectService.deleteTTSDetail(ttsDeleteDto.getDetailIds()); }
+
+        // 선택된 오디오 삭제
+        if(ttsDeleteDto.getAudioIds() != null ) {  projectService.deleteAudioIds(ttsDeleteDto.getAudioIds());}
+
 
         return DataResponseDto.of("","선택된 모든 항목이 정상적으로 삭제되었습니다.");
     }
