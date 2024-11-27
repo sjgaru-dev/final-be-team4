@@ -24,10 +24,23 @@ jobs:
             echo "${{ secrets.SECRET_PROPERTIES }}" > src/main/resources/secret.properties
             echo "${{ secrets.SOUND_JSON }}" > src/main/resources/StableFurnaceProject1.json
 
-
             chmod +x gradlew
-            ./gradlew build -x test
+            ./gradlew build
 
             sudo pkill -f "java -jar"
             java -jar build/libs/tts_vc_web-0.0.1-SNAPSHOT.jar
+
+      - name: Notify Slack - Success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": ":white_check_mark: 백엔드 배포가 성공적으로 완료되었습니다."
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack - Failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "text": ":x: 백엔드 배포 중 오류가 발생했습니다."
+          }' ${{ secrets.SLACK_WEBHOOK_URL }}
 
