@@ -3,6 +3,7 @@ package com.fourformance.tts_vc_web.controller.concat;
 import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
 import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.Member;
+import com.fourformance.tts_vc_web.dto.common.DeleteReqDto;
 import com.fourformance.tts_vc_web.dto.concat.ConcatSaveDto;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
@@ -83,10 +84,14 @@ public class ConcatViewController_team_aws {
             summary = "Concat 선택된 항목 삭제",
             description = "Concat 프로젝트에서 선택된 모든 항목을 삭제합니다.")
     @PostMapping("/delete/details")
-    public ResponseDto deleteConcatDetails(@RequestBody List<Long> concatDetailsId) {
+    public ResponseDto deleteConcatDetails(@RequestBody DeleteReqDto deleteDto) {
 
-        // 선택 항목 삭제
-        projectService.deleteSelectedDetails(concatDetailsId);
+
+        // Concat 선택된 항목 삭제
+        if(deleteDto.getDetailIds() != null) {  projectService.deleteSelectedDetails(deleteDto.getDetailIds()); }
+
+        // 선택된 오디오 삭제
+        if(deleteDto.getAudioIds() != null ) {  projectService.deleteAudioIds(deleteDto.getAudioIds());}
 
         return DataResponseDto.of("", "선택된 모든 항목이 정상적으로 삭제되었습니다.");
     }

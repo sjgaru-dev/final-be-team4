@@ -102,7 +102,7 @@ public class S3Service {
                 projectType = ProjectType.VC;
                 fileName =
                         "Generated/" + userId + "/" + projectType + "/" + projectId + "/" + detailId + "/" + timeStamp
-                                + ".wav";
+                                + ".mp3";
             } else {
                 throw new BusinessException(ErrorCode.UNSUPPORTED_PROJECT_TYPE);
             }
