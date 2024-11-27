@@ -66,6 +66,8 @@ public class QTTSProject extends EntityPathBase<TTSProject> {
     //inherited
     public final StringPath projectName;
 
+    public final StringPath projectType = createString("projectType");
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt;
 
