@@ -35,7 +35,25 @@ public class VCViewController_team_multi {
     private final MemberRepository memberRepository;
 
 
-    // VC 상태 로드 메서드
+    // VC Trg 오디오 불러오기
+    @Operation(
+            summary = "VC TRG 오디오 리스트 로드",
+            description = "VC TRG 오디오 리스트를 가져옵니다." )
+    @GetMapping("/trg-audio")
+    public ResponseDto trgAudioLoad(HttpSession session) {
+        Long memberId = (Long) session.getAttribute("member_id");
+
+        if (memberId != null) {
+
+        } else {
+            // 에러
+        }
+
+        return DataResponseDto.of("");
+    }
+
+
+        // VC 상태 로드 메서드
     @Operation(
             summary = "VC 상태 로드",
             description = "VC 프로젝트 상태를 가져옵니다." )
