@@ -1,5 +1,7 @@
 package com.fourformance.tts_vc_web.service.member;
 
+import com.fourformance.tts_vc_web.common.exception.common.BusinessException;
+import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.domain.entity.Member;
 import com.fourformance.tts_vc_web.dto.member.*;
 import com.fourformance.tts_vc_web.repository.MemberRepository;
@@ -8,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class MemberService_team_api1 {
+public class MemberService_team_api_wonwoo {
     private final MemberRepository memberRepository;
 
 
@@ -20,11 +22,11 @@ public class MemberService_team_api1 {
     public MemberLoginResponseDto login(MemberLoginRequestDto requestDto) {
         // 이메일로 회원 검색
         Member member = memberRepository.findByEmail(requestDto.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 비밀번호 검증
         if (!member.getPwd().equals(requestDto.getPwd())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new BusinessException(ErrorCode.PASSWORD_MISMATCH);
         }
 
         // 로그인 응답 DTO 생성
@@ -44,11 +46,11 @@ public class MemberService_team_api1 {
     public MemberUpdateResponseDto getMemberInfo(String email, String pwd) {
         // 이메일로 회원 검색
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 비밀번호 검증
         if (!member.getPwd().equals(pwd)) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new BusinessException(ErrorCode.PASSWORD_MISMATCH);
         }
 
         // 회원 정보 반환
@@ -68,7 +70,7 @@ public class MemberService_team_api1 {
      */
     public MemberUpdateResponseDto updateMemberInfo(String email, MemberUpdateRequestDto requestDto) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 이름과 전화번호 수정
         member.updateMemberName(requestDto.getName());
@@ -90,20 +92,20 @@ public class MemberService_team_api1 {
      */
     public void updatePassword(String email, PasswordUpdateRequestDto requestDto) {
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 현재 비밀번호 검증
         if (!member.getPwd().equals(requestDto.getCurrentPassword())) {
-            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            throw new BusinessException(ErrorCode.CURRENT_PASSWORD_MISMATCH);
         }
 
         // 새 비밀번호 확인
         if (!requestDto.getNewPassword().equals(requestDto.getConfirmPassword())) {
-            throw new IllegalArgumentException("새 비밀번호가 일치하지 않습니다.");
+            throw new BusinessException(ErrorCode.NEW_PASSWORD_MISMATCH);
         }
 
         // 비밀번호 업데이트
-        member.updateMember(requestDto.getNewPassword(), null, null);
+        member.updateMemberPwd(requestDto.getNewPassword());
         memberRepository.save(member);
     }
 
