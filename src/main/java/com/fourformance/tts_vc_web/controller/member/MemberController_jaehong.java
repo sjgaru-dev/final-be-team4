@@ -5,7 +5,7 @@ import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.dto.member.*;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
-import com.fourformance.tts_vc_web.service.member.MemberService_team_api2;
+import com.fourformance.tts_vc_web.service.member.MemberService_jaehong;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +15,10 @@ import java.util.logging.Logger;
 @RestController
 @RequestMapping("/api/members")
 @RequiredArgsConstructor
-public class MemberController_team_api2 {
+public class MemberController_jaehong {
 
-    private static final Logger LOGGER = Logger.getLogger(MemberController_team_api2.class.getName());
-    private final MemberService_team_api2 memberService;
+    private static final Logger LOGGER = Logger.getLogger(MemberController_jaehong.class.getName());
+    private final MemberService_jaehong memberService;
 
     /**
      * 회원가입

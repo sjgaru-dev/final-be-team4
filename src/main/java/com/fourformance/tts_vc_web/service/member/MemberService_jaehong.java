@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class MemberService_team_api2 {
+public class MemberService_jaehong {
 
     private final MemberRepository memberRepository;
 
