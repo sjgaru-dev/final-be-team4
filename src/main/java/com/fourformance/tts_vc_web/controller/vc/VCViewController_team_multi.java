@@ -42,14 +42,16 @@ public class VCViewController_team_multi {
     @GetMapping("/trg-audio")
     public ResponseDto trgAudioLoad(HttpSession session) {
         Long memberId = (Long) session.getAttribute("member_id");
+        memberId = 1L;
+        List<TrgAudioDto> trgAudioDtoList;
 
         if (memberId != null) {
-
+            trgAudioDtoList = vcService.getTrgAudioList(memberId);
         } else {
-            // 에러
+            throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
         }
 
-        return DataResponseDto.of("");
+        return DataResponseDto.of(trgAudioDtoList, "Trg 오디오 리스트가 성공적으로 반환되었습니다.");
     }
 
 
