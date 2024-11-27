@@ -60,6 +60,8 @@ public class QVCProject extends EntityPathBase<VCProject> {
     //inherited
     public final StringPath projectName;
 
+    public final StringPath projectType = createString("projectType");
+
     public final StringPath trgVoiceId = createString("trgVoiceId");
 
     //inherited
