@@ -1,39 +1,32 @@
 package com.fourformance.tts_vc_web.dto.workspace;
 
-import com.fourformance.tts_vc_web.service.common.S3Service;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import java.time.LocalDateTime;
-
 
 @Data
 @AllArgsConstructor
-@RequiredArgsConstructor
 public class ExportListDto {
 
-
-    private S3Service s3Service;
-
-    Long outputAudioMetaId;
+    Long outputAudioMetaId; // 추가된 필드
     String projectType;
     String projectName;
     String fileName;
     String script;
     String unitStatus;
-    String downloadLink; // generatedPresignedUrL로 만들어전달
+    String downloadLink;
     LocalDateTime updateAt;
 
-    public ExportListDto(String projectType, String projectName, String filename, String script,
-                         String unitStatus, LocalDateTime updateAt, String audioPath) {
+    // 생성자 수정
+    public ExportListDto(Long outputAudioMetaId, String projectType, String projectName, String filename, String script,
+                         String unitStatus, LocalDateTime updateAt, String downloadLink) {
+        this.outputAudioMetaId = outputAudioMetaId; // 추가된 필드 초기화
         this.projectType = projectType;
         this.projectName = projectName;
-        this.fileName = fileName;
+        this.fileName = filename;
         this.script = script;
         this.unitStatus = unitStatus;
         this.updateAt = updateAt;
-        this.downloadLink = s3Service.generatePresignedUrl(audioPath); // Presigned URL 생성
+        this.downloadLink = downloadLink;
     }
 }

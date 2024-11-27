@@ -2,7 +2,7 @@ package com.fourformance.tts_vc_web.controller.workspace;
 
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
-import com.fourformance.tts_vc_web.dto.workspace.ExportListDto;
+import com.fourformance.tts_vc_web.dto.workspace.ExportListDto2;
 import com.fourformance.tts_vc_web.dto.workspace.ProjectListDto;
 import com.fourformance.tts_vc_web.dto.workspace.RecentExportDto;
 import com.fourformance.tts_vc_web.dto.workspace.RecentProjectDto;
@@ -85,7 +85,7 @@ public class WorkSpaceController {
         //        Long memberId = (Long) session.getAttribute("memberId");
         Long memberId = 1L; // 개발단계 임시 하드코딩
 
-        List<ExportListDto> exports = outputAudioMetaRepository.findExportHistoryBySearchCriteria(memberId, keyword);
+        List<ExportListDto2> exports = outputAudioMetaRepository.findExportHistoryBySearchCriteria2(memberId, keyword);
         return DataResponseDto.of(exports);
     }
 }
