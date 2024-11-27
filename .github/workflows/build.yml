@@ -18,13 +18,26 @@ jobs:
           script: |
             cd ~/backend
             git pull
-            
+
             chmod +x gradlew
             ./gradlew build
 
-            sudo pkill -f "java -jar"
-            nohup java -jar build/libs/tts_vc_web-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
-  
+            if pgrep -f "tts_vc_web-0.0.1-SNAPSHOT.jar" > /dev/null; then
+              sudo pkill -f "tts_vc_web-0.0.1-SNAPSHOT.jar"
+              sleep 5
+            fi
+
+            nohup java -jar build/libs/tts_vc_web-0.0.1-SNAPSHOT.jar > app.log 2>&1 & 
+            sleep 5
+
+            if pgrep -f "tts_vc_web-0.0.1-SNAPSHOT.jar" > /dev/null; then
+              echo "Application started successfully"
+              exit 0
+            else
+              echo "Failed to start application"
+              exit 1
+            fi
+
       - name: Notify Slack - Success
         if: success()
         run: |
@@ -38,4 +51,3 @@ jobs:
           curl -X POST -H 'Content-type: application/json' --data '{
             "text": ":x: 백엔드 배포 중 오류가 발생했습니다."
           }' ${{ secrets.SLACK_WEBHOOK_URL }}
-
