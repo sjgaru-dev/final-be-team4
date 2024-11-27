@@ -6,7 +6,6 @@ import com.fourformance.tts_vc_web.domain.entity.ConcatDetail;
 import com.fourformance.tts_vc_web.domain.entity.MemberAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.OutputAudioMeta;
 import com.fourformance.tts_vc_web.domain.entity.Project;
-import com.fourformance.tts_vc_web.dto.workspace.ProjectListDto;
 import com.fourformance.tts_vc_web.repository.ConcatDetailRepository;
 import com.fourformance.tts_vc_web.repository.MemberAudioMetaRepository;
 import com.fourformance.tts_vc_web.repository.OutputAudioMetaRepository;
@@ -102,8 +101,25 @@ public class ProjectService_team_aws {
 
     }
 
-    public List<ProjectListDto> getProjects(Long memberId, String keyword) {
-        return projectRepository.findProjectsBySearchCriteria(memberId, keyword);
+//    public List<ProjectListDto> getProjects(Long memberId, String keyword) {
+//        return projectRepository.findProjectsBySearchCriteria(memberId, keyword);
+//    }
+
+    // Concat 선택된 오디오 모든 항목 삭제
+    @Transactional
+    public void deleteAudioIds(List<Long> audioIds) {
+
+        // OutputAudioMeta 삭제 처리
+        try {
+            List<OutputAudioMeta> outputAudio = outputAudioMetaRepository.findByIds(audioIds);
+
+            for (OutputAudioMeta audio : outputAudio) {
+                audio.deleteOutputAudioMeta();
+                outputAudioMetaRepository.save(audio);
+            }
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SERVER_ERROR);
+        }
     }
 
 
