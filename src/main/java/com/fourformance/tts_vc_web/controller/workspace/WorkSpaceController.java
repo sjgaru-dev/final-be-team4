@@ -57,12 +57,12 @@ public class WorkSpaceController {
             HttpSession session) {
 //        Long memberId = (Long) session.getAttribute("memberId");
         Long memberId = 1L; // 개발단계 임시 하드코딩
-        List<ProjectListDto> projects = projectService.getProjects(memberId, keyword);
+        List<ProjectListDto> projects = projectRepository.findProjectsBySearchCriteria(memberId, keyword);
         return ResponseEntity.ok(projects);
     }
 
     @GetMapping("/projects")
-    public ResponseEntity<Page<ProjectListDto>> getProjects(
+    public ResponseDto getProjects(
             @RequestParam(name = "keyword", required = false) String keyword,
             @PageableDefault(size = 10) Pageable pageable,
             HttpSession session
@@ -71,6 +71,6 @@ public class WorkSpaceController {
         Long memberId = 1L; // 개발단계 임시 하드코딩
 
         Page<ProjectListDto> projects = projectRepository.findProjectsBySearchCriteria(memberId, keyword, pageable);
-        return ResponseEntity.ok(projects);
+        return DataResponseDto.of(projects);
     }
 }
