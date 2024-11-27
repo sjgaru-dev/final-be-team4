@@ -69,7 +69,9 @@ jobs:
             sudo docker pull popomance/backend:latest
             sudo docker stop backend || true
             sudo docker rm backend || true
-            sudo docker run -d -p 8080:8080 --name backend popomance/backend:latest
+            sudo docker run -d -p 8080:8080 --name backend \
+              -e GOOGLE_APPLICATION_CREDENTIALS=/app/StableFurnaceProject1.json \
+              popomance/backend:latest
             sudo docker system prune -f -a
 
                    컨테이너 로그 출력
@@ -82,7 +84,6 @@ jobs:
           curl -X POST -H 'Content-type: application/json' --data '{
             "text": ":white_check_mark: 백엔드 배포가 성공적으로 완료되었습니다."
           }' ${{ secrets.SLACK_WEBHOOK_URL }}
-
 
       # - name: Notify Slack - Failure
       #   if: failure()
