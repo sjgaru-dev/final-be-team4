@@ -36,9 +36,6 @@ jobs:
           echo "${{ secrets.SECRET_PROPERTIES }}" > src/main/resources/secret.properties
           echo "${{ secrets.SOUND_JSON }}" > src/main/resources/StableFurnaceProject1.json
 
-      - name: Set GOOGLE_APPLICATION_CREDENTIALS
-        run: echo "GOOGLE_APPLICATION_CREDENTIALS=src/main/resources/StableFurnaceProject1.json" >> $GITHUB_ENV
-
       - name: Build with Gradle
         run: ./gradlew build -x test
 
