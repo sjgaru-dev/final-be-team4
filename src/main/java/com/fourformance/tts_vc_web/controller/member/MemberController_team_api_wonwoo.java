@@ -5,24 +5,32 @@ import com.fourformance.tts_vc_web.common.exception.common.ErrorCode;
 import com.fourformance.tts_vc_web.dto.member.*;
 import com.fourformance.tts_vc_web.dto.response.DataResponseDto;
 import com.fourformance.tts_vc_web.dto.response.ResponseDto;
-import com.fourformance.tts_vc_web.service.member.MemberService_team_api1;
+import com.fourformance.tts_vc_web.service.member.MemberService_team_api_wonwoo;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/member")
 @RequiredArgsConstructor
-public class MemberController_team_api1 {
+@Tag(name = "Member Controller", description = "회원 관리와 관련된 작업")
+public class MemberController_team_api_wonwoo {
 
-    private final MemberService_team_api1 memberService;
+    private final MemberService_team_api_wonwoo memberService;
 
     /**
      * 회원 로그인
      * 세션을 생성하여 로그인 상태를 유지합니다.
      */
+    @Operation(summary = "회원 로그인", description = "회원 인증을 수행하고 세션을 생성합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그인 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 잘못된 자격 증명")
+    })
     @PostMapping("/login")
     public ResponseDto login(
             @RequestBody MemberLoginRequestDto requestDto,
@@ -42,6 +50,10 @@ public class MemberController_team_api1 {
      * 회원 로그아웃
      * 세션을 무효화하여 로그아웃 처리합니다.
      */
+    @Operation(summary = "회원 로그아웃", description = "세션을 무효화하여 회원을 로그아웃 처리합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공")
+    })
     @PostMapping("/logout")
     public ResponseDto logout(HttpSession session) {
         // 세션 무효화
@@ -54,6 +66,11 @@ public class MemberController_team_api1 {
      * 회원 정보 조회
      * 세션에서 이메일을 얻고, 비밀번호를 확인하여 회원 정보를 반환합니다.
      */
+    @Operation(summary = "회원 정보 조회", description = "인증된 회원의 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "회원 정보 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 세션 없음")
+    })
     @PostMapping("/info")
     public ResponseDto getMemberInfo(
             @RequestBody MemberInfoRequestDto requestDto,
@@ -75,18 +92,23 @@ public class MemberController_team_api1 {
      * 회원 정보 수정
      * 이름과 전화번호를 수정할 수 있습니다.
      */
+    @Operation(summary = "회원 정보 수정", description = "인증된 회원의 개인 정보를 수정합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "회원 정보 수정 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 세션 없음")
+    })
     @PutMapping("/info/update")
-    public ResponseEntity<MemberUpdateResponseDto> updateMemberInfo(
+    public ResponseDto updateMemberInfo(
             @RequestBody MemberUpdateRequestDto requestDto, HttpSession session) {
         String email = (String) session.getAttribute("email");
 
         if (email == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); // 세션 없음
+            throw new BusinessException(ErrorCode.UNAUTHORIZED); // 세션 없음
         }
 
         // 회원 정보 수정
-        MemberUpdateResponseDto responseDto = memberService.updateMemberInfo(email, requestDto);
-        return ResponseEntity.ok(responseDto);
+        MemberUpdateResponseDto memberUpdateResponseDto = memberService.updateMemberInfo(email, requestDto);
+        return DataResponseDto.of(memberUpdateResponseDto);
     }
 
 
@@ -94,18 +116,23 @@ public class MemberController_team_api1 {
      * 비밀번호 수정
      * 현재 비밀번호와 새 비밀번호, 새 비밀번호 확인을 처리합니다.
      */
+    @Operation(summary = "비밀번호 수정", description = "인증된 회원의 비밀번호를 변경합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 - 세션 없음")
+    })
     @PutMapping("/password/update")
-    public ResponseEntity<String> updatePassword(
+    public ResponseDto updatePassword(
             @RequestBody PasswordUpdateRequestDto requestDto, HttpSession session) {
         String email = (String) session.getAttribute("email");
 
         if (email == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED); // 세션 없음
         }
 
         // 비밀번호 수정
         memberService.updatePassword(email, requestDto);
-        return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
+        return DataResponseDto.of("비밀번호가 성공적으로 변경되었습니다.");
     }
 }
 
