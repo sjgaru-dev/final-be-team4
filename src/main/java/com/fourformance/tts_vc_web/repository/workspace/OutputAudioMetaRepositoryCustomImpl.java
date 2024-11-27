@@ -2,6 +2,7 @@ package com.fourformance.tts_vc_web.repository.workspace;
 
 import com.fourformance.tts_vc_web.domain.entity.*;
 import com.fourformance.tts_vc_web.dto.workspace.ExportListDto;
+import com.fourformance.tts_vc_web.service.common.S3Service;
 import com.fourformance.tts_vc_web.service.workspace.WorkspaceService;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OutputAudioMetaRepositoryCustomImpl implements OutputAudioMetaRepositoryCustom {
 
@@ -37,7 +39,7 @@ public class OutputAudioMetaRepositoryCustomImpl implements OutputAudioMetaRepos
     QAPIStatus apiStatus = QAPIStatus.aPIStatus;
 
 
-    public List<OutputAudioMeta> findExportHistoryBySearchCriteria(Long memberId, String keyword){
+    public List<ExportListDto> findExportHistoryBySearchCriteria(Long memberId, String keyword){
         BooleanBuilder whereClause = new BooleanBuilder();
         whereClause.and(outputAudioMeta.ttsDetail.ttsProject.member.id.eq(memberId))
                 .or(outputAudioMeta.vcDetail.vcProject.member.id.eq(memberId))
@@ -90,7 +92,7 @@ public class OutputAudioMetaRepositoryCustomImpl implements OutputAudioMetaRepos
 
 
         }
-        List<ExportListDto> result = queryFactory.select(
+        List<ExportListDto> outputAudioMetas = queryFactory.select(
                         Projections.constructor(ExportListDto.class,
                                 outputAudioMeta.projectType,
                                 concatProject.projectName.coalesce(ttsDetail.ttsProject.projectName, vcDetail.vcProject.projectName),
@@ -104,19 +106,31 @@ public class OutputAudioMetaRepositoryCustomImpl implements OutputAudioMetaRepos
                                         .where(apiStatus.ttsDetail.eq(ttsDetail)
                                                 .or(apiStatus.vcDetail.eq(vcDetail)))
                                         .orderBy(apiStatus.responseAt.desc())
-                                        .limit(1), // 최신 상태
-                                outputAudioMeta.createdAt,
-                                outputAudioMeta.audioUrl
+                                        .limit(1), // 최신 상태의 1개 status 받기
+                                outputAudioMeta.createdAt, // 생성날짜 기준
+                                outputAudioMeta.audioUrl // 오디오 url
                         )
                 )
                 .from(outputAudioMeta)
                 .leftJoin(outputAudioMeta.ttsDetail, ttsDetail)
                 .leftJoin(outputAudioMeta.vcDetail, vcDetail)
                 .leftJoin(outputAudioMeta.concatProject, concatProject)
-                .leftJoin(concatProject.concatDetail, concatDetail) // ConcatDetails를 조인
-                .where(keywordConditions)
+                .leftJoin(concatDetail).on(concatDetail.concatProject.eq(outputAudioMeta.concatProject)) // ConcatDetail 조인
+                .where(whereClause)
                 .fetch();
-        return null;
+        List<ExportListDto> dtos = outputAudioMetas.stream()
+                .map(o -> new ExportListDto(
+                        o.getProjectType(),
+                        o.getProjectName(),
+                        o.getFileName(),
+                        o.getScript(),
+                        o.getUnitStatus(),
+                        o.getUpdateAt(),
+                        o.getDownloadLink()// audioPath 전달
+                         // S3Service를 전달하여 presigned URL 생성
+                ))
+                .collect(Collectors.toList());
+        return dtos;
     }
 
 }
