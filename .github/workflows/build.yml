@@ -17,18 +17,18 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-
-            # 기존 애플리케이션 종료
             echo "Stopping existing application if running..."
             PID=$(pgrep -f "java -jar")
             if [ -n "$PID" ]; then
               echo "Stopping existing application with PID $PID..."
-              sudo kill $PID
-              while ps -p $PID > /dev/null; do
-                echo "Waiting for process $PID to terminate..."
-                sleep 1
-              done
-              echo "Process $PID has been terminated."
+              sudo kill -9 $PID
+              sleep 2
+              if ps -p $PID > /dev/null; then
+                echo "Process $PID could not be terminated"
+                exit 1
+              else
+                echo "Process $PID has been terminated."
+              fi
             else
               echo "No application was running."
             fi
