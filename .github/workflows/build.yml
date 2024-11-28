@@ -56,7 +56,13 @@ jobs:
 
             # 기존 애플리케이션 종료
             echo "Stopping existing application if running..."
-            pgrep -f "java -jar" && sudo pkill -f "java -jar" || echo "No application was running."
+            PID=$(pgrep -f "java -jar")
+            if [ -n "$PID" ]; then
+              echo "Stopping existing application with PID $PID..."
+              sudo kill $PID
+            else
+              echo "No application was running."
+            fi
 
             # 새 애플리케이션 실행
             echo "Starting the new application..."
