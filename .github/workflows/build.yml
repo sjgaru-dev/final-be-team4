@@ -60,6 +60,11 @@ jobs:
             if [ -n "$PID" ]; then
               echo "Stopping existing application with PID $PID..."
               sudo kill $PID
+              while ps -p $PID > /dev/null; do
+                echo "Waiting for process $PID to terminate..."
+                sleep 1
+              done
+              echo "Process $PID has been terminated."
             else
               echo "No application was running."
             fi
@@ -68,7 +73,11 @@ jobs:
             echo "Starting the new application..."
             nohup java -jar build/libs/*.jar > app.log 2>&1 &
             sleep 5
-            pgrep -f "java -jar" && echo "Application started successfully." || echo "Failed to start application."
+            if pgrep -f "java -jar" > /dev/null; then
+              echo "Application started successfully."
+            else
+              echo "Application failed to start."
+            fi
 
             # 명시적인 성공 상태 반환
             exit 0
