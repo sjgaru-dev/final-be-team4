@@ -1,8 +1,8 @@
 name: Deploy to EC2
 
 on:
-  # push:
-  #   branches: ["main"]
+  push:
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -16,38 +16,40 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # 기존 백엔드 디렉토리 삭제 및 새로 클론
+            rm -rf ~/backend
+            git clone https://github.com/FC-DEV-FinalProject/final-be-team4.git ~/backend
             cd ~/backend
-            git pull
+            mkdir -p src/main/resources
+
+            # secret.properties 파일 생성
+            echo "${{ secrets.SECRET_PROPERTIES }}" > src/main/resources/secret.properties
+
+            # StableFurnaceProject1.json 파일 생성
+            cat <<EOF > src/main/resources/StableFurnaceProject1.json
+            {
+              "type": "service_account",
+              "project_id": "${{ secrets.PROJECT_ID }}",
+              "private_key_id": "${{ secrets.PRIVATE_KEY_ID }}",
+              "private_key": "${{ secrets.PRIVATE_KEY }}",
+              "client_email": "${{ secrets.CLIENT_EMAIL }}",
+              "client_id": "${{ secrets.CLIENT_ID }}",
+              "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+              "token_uri": "${{ secrets.TOKEN_URI }}",
+              "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+              "client_x509_cert_url": "${{ secrets.CLIENT_X509_CERT_URL }}",
+              "universe_domain": "googleapis.com"
+            }
+            EOF
+
+            # 의존성 설치 및 빌드 실행
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jdk
 
             chmod +x gradlew
-            ./gradlew build
 
-            if pgrep -f "tts_vc_web-0.0.1-SNAPSHOT.jar" > /dev/null; then
-              sudo pkill -f "tts_vc_web-0.0.1-SNAPSHOT.jar"
-              sleep 5
-            fi
+            ./gradlew build -x test
 
-            nohup java -jar build/libs/tts_vc_web-0.0.1-SNAPSHOT.jar > app.log 2>&1 & 
-            sleep 5
-
-            if pgrep -f "tts_vc_web-0.0.1-SNAPSHOT.jar" > /dev/null; then
-              echo "Application started successfully"
-              exit 0
-            else
-              echo "Failed to start application"
-              exit 1
-            fi
-
-      - name: Notify Slack - Success
-        if: success()
-        run: |
-          curl -X POST -H 'Content-type: application/json' --data '{
-            "text": ":white_check_mark: 백엔드 배포가 성공적으로 완료되었습니다."
-          }' ${{ secrets.SLACK_WEBHOOK_URL }}
-
-      - name: Notify Slack - Failure
-        if: failure()
-        run: |
-          curl -X POST -H 'Content-type: application/json' --data '{
-            "text": ":x: 백엔드 배포 중 오류가 발생했습니다."
-          }' ${{ secrets.SLACK_WEBHOOK_URL }}
+            # 기존 애플리케이션 종료 및 새 애플리케이션 실행
+            sudo pkill -f "java -jar"
+            nohup java -jar build/libs/*.jar > app.log 2>&1 &
