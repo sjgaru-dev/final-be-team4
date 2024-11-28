@@ -56,15 +56,13 @@ jobs:
 
             # 기존 애플리케이션 종료
             echo "Stopping existing application if running..."
-            sudo pkill -f "java -jar" || echo "No application was running."
+            pgrep -f "java -jar" && sudo pkill -f "java -jar" || echo "No application was running."
 
             # 새 애플리케이션 실행
             echo "Starting the new application..."
             nohup java -jar build/libs/*.jar > app.log 2>&1 &
+            sleep 5
+            pgrep -f "java -jar" && echo "Application started successfully." || echo "Failed to start application."
 
-            # 애플리케이션 실행 상태 확인
-            echo "Checking application status..."
-            ps aux | grep "java -jar" || echo "Application did not start correctly."
-
-            # 종료 코드 명시
+            # 명시적인 성공 상태 반환
             exit 0
