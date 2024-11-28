@@ -11,29 +11,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Java 설정
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+    #   # 1. Java 설정
+    #   - name: Set up JDK
+    #     uses: actions/setup-java@v3
+    #     with:
+    #       java-version: '17'
+    #       distribution: 'temurin'
 
-      # 2. Gradle 캐시 설정
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+    #   # 2. Gradle 캐시 설정
+    #   - name: Cache Gradle dependencies
+    #     uses: actions/cache@v3
+    #     with:
+    #       path: ~/.gradle/caches
+    #       key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+    #       restore-keys: |
+    #         ${{ runner.os }}-gradle-
 
-      # 3. 소스 코드 체크아웃
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    #   # 3. 소스 코드 체크아웃
+    #   - name: Checkout repository
+    #     uses: actions/checkout@v3
 
-      # 4. Gradle 빌드
-      - name: Build project
-        run: ./gradlew build -x test
+    #   # 4. Gradle 빌드
+    #   - name: Build project
+    #     run: ./gradlew build -x test
 
       # 5. EC2 배포
       - name: Deploy to EC2
@@ -75,9 +75,9 @@ jobs:
             EOF
 
             # 의존성 설치 및 빌드
-            echo "Updating system and installing Java 17..."
-            sudo apt-get update
-            sudo apt-get install -y openjdk-17-jdk
+            # echo "Updating system and installing Java 17..."
+            # sudo apt-get update
+            # sudo apt-get install -y openjdk-17-jdk
 
             echo "Building the project with Gradle..."
             chmod +x gradlew
@@ -103,7 +103,7 @@ jobs:
 
             # 새 애플리케이션 실행
             echo "Starting the new application..."
-            nohup java -jar build/libs/*.jar > app.log 2>&1 &
+            nohup java -jar build/libs/tts_vc_web-0.0.1-SNAPSHOT.jar &
             sleep 5
             if pgrep -f "java -jar" > /dev/null; then
               echo "Application started successfully."
