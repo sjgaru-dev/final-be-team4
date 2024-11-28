@@ -17,32 +17,20 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 상세 로깅 및 오류 핸들링
-            set -e  # 스크립트에서 오류 발생 시 즉시 종료
-            
-            echo "Stopping existing Java applications..."
-            
-            # 현재 실행 중인 Java 프로세스 확인
+            set -e 
             PIDS=$(sudo ps aux | grep "java -jar" | grep -v grep | awk '{print $2}')
-            
             if [ ! -z "$PIDS" ]; then
               echo "Found Java processes: $PIDS"
               for PID in $PIDS; do
                 echo "Attempting to stop process $PID"
                 sudo kill -SIGTERM $PID || sudo kill -9 $PID || true
               done
-              
-              # 프로세스 종료 대기
               sleep 5
             else
               echo "No Java processes found"
             fi
-            
-            # 최종 프로세스 확인
-            echo "Checking remaining Java processes:"
             sudo ps aux | grep "java -jar" || true
-            
-            exit 0  # 명시적 성공 종료
+            exit 0 
       - name: Build and Deploy Application
         uses: appleboy/ssh-action@master
         with:
@@ -50,21 +38,74 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |     
+            # 환경 설정
             APP_DIR=~/backend
+
+            echo "Removing old backend directory and cloning repository..."
+            rm -rf $APP_DIR
+            git clone https://github.com/FC-DEV-FinalProject/final-be-team4.git $APP_DIR
             cd $APP_DIR
+            mkdir -p src/main/resources
 
-            # 최신 코드 pull
-            git pull origin main
+            # secret.properties 파일 생성
+            echo "Creating secret.properties file..."
+            echo "${{ secrets.SECRET_PROPERTIES }}" > src/main/resources/secret.properties
 
-            # gradlew 권한 설정
+            # StableFurnaceProject1.json 파일 생성
+            echo "Creating StableFurnaceProject1.json file..."
+            cat <<EOF > src/main/resources/StableFurnaceProject1.json
+            {
+              "type": "service_account",
+              "project_id": "${{ secrets.PROJECT_ID }}",
+              "private_key_id": "${{ secrets.PRIVATE_KEY_ID }}",
+              "private_key": "${{ secrets.PRIVATE_KEY }}",
+              "client_email": "${{ secrets.CLIENT_EMAIL }}",
+              "client_id": "${{ secrets.CLIENT_ID }}",
+              "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+              "token_uri": "${{ secrets.TOKEN_URI }}",
+              "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+              "client_x509_cert_url": "${{ secrets.CLIENT_X509_CERT_URL }}",
+              "universe_domain": "googleapis.com"
+            }
+            EOF
+
+            # 의존성 설치 및 빌드
+            # echo "Updating system and installing Java 17..."
+            # sudo apt-get update
+            # sudo apt-get install -y openjdk-17-jdk
+
+            echo "Building the project with Gradle..."
             chmod +x gradlew
+            ./gradlew build -x test
 
-            # 빌드 (테스트 제외)
-            ./gradlew clean build -x test
+            # 기존 애플리케이션 종료
+            echo "Stopping existing application if running..."
+            PID=$(pgrep -f "java -jar")
+            if [ -n "$PID" ]; then
+              echo "Stopping existing application with PID $PID..."
+              sudo kill $PID
+              while ps -p $PID > /dev/null; do
+                echo "Waiting for process $PID to terminate..."
+                sleep 1
+              done
+              echo "Process $PID has been terminated."
+            else
+              echo "No application was running."
+            fi
+
+            # 안정화 시간 추가
+            sleep 5
 
             # 새 애플리케이션 실행
+            echo "Starting the new application..."
             nohup java -jar build/libs/tts_vc_web-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
-
-            # 잠시 대기 후 프로세스 확인
             sleep 5
-            pgrep -f "java -jar"
+            if pgrep -f "java -jar" > /dev/null; then
+              echo "Application started successfully."
+            else
+              echo "Application failed to start."
+              exit 1
+            fi
+
+            # 명시적인 성공 상태 반환
+            exit 0
