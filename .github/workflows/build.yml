@@ -17,10 +17,32 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 더 안전한 프로세스 종료 방식
-            pkill -f "java -jar" || true
-            sleep 3
-
+            # 상세 로깅 및 오류 핸들링
+            set -e  # 스크립트에서 오류 발생 시 즉시 종료
+            
+            echo "Stopping existing Java applications..."
+            
+            # 현재 실행 중인 Java 프로세스 확인
+            PIDS=$(sudo ps aux | grep "java -jar" | grep -v grep | awk '{print $2}')
+            
+            if [ ! -z "$PIDS" ]; then
+              echo "Found Java processes: $PIDS"
+              for PID in $PIDS; do
+                echo "Attempting to stop process $PID"
+                sudo kill -SIGTERM $PID || sudo kill -9 $PID || true
+              done
+              
+              # 프로세스 종료 대기
+              sleep 5
+            else
+              echo "No Java processes found"
+            fi
+            
+            # 최종 프로세스 확인
+            echo "Checking remaining Java processes:"
+            sudo ps aux | grep "java -jar" || true
+            
+            exit 0  # 명시적 성공 종료
       - name: Build and Deploy Application
         uses: appleboy/ssh-action@master
         with:
