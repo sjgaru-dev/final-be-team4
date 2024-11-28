@@ -10,16 +10,24 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: deploy
+      - name: Stop existing application
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "Stopping existing application if running..."
-            sudo pkill -f "java -jar" || true
-            
+            sudo pkill -f "java -jar"
+            sleep 2
+            exit 0
+      
+      - name: Verify application stopped
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |     
             APP_DIR=~/backend
 
             echo "Removing old backend directory and cloning repository..."
