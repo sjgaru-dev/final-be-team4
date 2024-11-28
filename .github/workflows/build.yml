@@ -10,49 +10,39 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Stop and Verify Application
+      - name: Stop Existing Application
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          debug: true
           script: |
-            set -x  # 모든 명령어 출력
-            
-            echo "Finding Java processes..."
-            PIDS=$(pgrep -f "java -jar" || true)
-            
-            if [ ! -z "$PIDS" ]; then
-              echo "Processes found: $PIDS"
-              for PID in $PIDS; do
-                echo "Killing process $PID"
-                sudo kill -9 $PID || true
-              done
-              sleep 3
-            else
-              echo "No processes found"
-            fi
-            
-            echo "Final process check:"
-            pgrep -f "java -jar" || true
-            
-            exit 0
-    
-      - name: Verify application stopped
+            # 더 안전한 프로세스 종료 방식
+            pkill -f "java -jar" || true
+            sleep 3
+
+      - name: Build and Deploy Application
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          debug: true
           script: |     
             APP_DIR=~/backend
-
             cd $APP_DIR
 
+            # 최신 코드 pull
+            git pull origin main
+
+            # gradlew 권한 설정
             chmod +x gradlew
-            ./gradlew build -x test
-            sleep 5
+
+            # 빌드 (테스트 제외)
+            ./gradlew clean build -x test
+
+            # 새 애플리케이션 실행
             nohup java -jar build/libs/tts_vc_web-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
-        
+
+            # 잠시 대기 후 프로세스 확인
+            sleep 5
+            pgrep -f "java -jar"
