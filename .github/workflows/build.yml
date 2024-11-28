@@ -2,13 +2,24 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
+      # 1. 소스 코드 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Gradle 빌드
+      - name: Build project
+        run: ./gradlew build -x test
+
+      # 3. EC2에 배포
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
@@ -16,11 +27,13 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 기존 백엔드 디렉토리 삭제 및 새로 클론
+            # 환경 설정
+            APP_DIR=~/backend
+
             echo "Removing old backend directory and cloning repository..."
-            rm -rf ~/backend
-            git clone https://github.com/FC-DEV-FinalProject/final-be-team4.git ~/backend
-            cd ~/backend
+            rm -rf $APP_DIR
+            git clone https://github.com/FC-DEV-FinalProject/final-be-team4.git $APP_DIR
+            cd $APP_DIR
             mkdir -p src/main/resources
 
             # secret.properties 파일 생성
@@ -45,7 +58,7 @@ jobs:
             }
             EOF
 
-            # 의존성 설치 및 빌드 실행
+            # 의존성 설치 및 빌드
             echo "Updating system and installing Java 17..."
             sudo apt-get update
             sudo apt-get install -y openjdk-17-jdk
@@ -69,6 +82,9 @@ jobs:
               echo "No application was running."
             fi
 
+            # 안정화 시간 추가
+            sleep 5
+
             # 새 애플리케이션 실행
             echo "Starting the new application..."
             nohup java -jar build/libs/*.jar > app.log 2>&1 &
@@ -77,6 +93,7 @@ jobs:
               echo "Application started successfully."
             else
               echo "Application failed to start."
+              exit 1
             fi
 
             # 명시적인 성공 상태 반환
