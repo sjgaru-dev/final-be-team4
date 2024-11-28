@@ -18,20 +18,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "Stopping existing application if running..."
-            PID=$(pgrep -f "java -jar")
-            if [ -n "$PID" ]; then
-              echo "Stopping existing application with PID $PID..."
-              sudo kill -9 $PID
-              sleep 2
-              if ps -p $PID > /dev/null; then
-                echo "Process $PID could not be terminated"
-                exit 1
-              else
-                echo "Process $PID has been terminated."
-              fi
-            else
-              echo "No application was running."
-            fi
+            pkill -f "java -jar" || true
+            sleep 5
 
   deploy:
     runs-on: ubuntu-latest
